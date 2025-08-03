@@ -1,8 +1,10 @@
 """Test fixtures and configuration."""
-import pytest
+
 import os
 import tempfile
 from pathlib import Path
+
+import pytest
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -12,9 +14,9 @@ def test_environment():
     original_cwd = os.getcwd()
     repo_root = Path(__file__).parent.parent
     os.chdir(repo_root)
-    
+
     yield
-    
+
     # Cleanup
     os.chdir(original_cwd)
 
@@ -32,5 +34,5 @@ def mock_env_vars():
     return {
         "EQUINIX_CLIENT_ID": "test_client_id",
         "EQUINIX_CLIENT_SECRET": "test_client_secret",
-        "EQUINIX_METAL_TOKEN": "test_metal_token"
+        "EQUINIX_METAL_TOKEN": "test_metal_token",
     }

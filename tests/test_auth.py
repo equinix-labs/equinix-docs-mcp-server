@@ -1,10 +1,12 @@
 """Test authentication functionality."""
-import os
-import pytest
-from unittest.mock import patch, AsyncMock
 
-from equinix_mcp_server.config import Config
+import os
+from unittest.mock import AsyncMock, patch
+
+import pytest
+
 from equinix_mcp_server.auth import AuthManager
+from equinix_mcp_server.config import Config
 
 
 @pytest.fixture
@@ -31,9 +33,9 @@ async def test_metal_auth_header(auth_manager):
     """Test Metal API authentication header."""
     # Reinitialize the auth manager with the patched environment
     auth_manager.metal_token = os.getenv("EQUINIX_METAL_TOKEN")
-    
+
     header = await auth_manager.get_auth_header("metal")
-    
+
     assert "X-Auth-Token" in header
     assert header["X-Auth-Token"] == "test_metal_token"
 
@@ -46,10 +48,13 @@ async def test_metal_auth_missing_token(auth_manager):
             await auth_manager.get_auth_header("metal")
 
 
-@patch.dict(os.environ, {
-    "EQUINIX_CLIENT_ID": "test_client_id",
-    "EQUINIX_CLIENT_SECRET": "test_client_secret"
-})
+@patch.dict(
+    os.environ,
+    {
+        "EQUINIX_CLIENT_ID": "test_client_id",
+        "EQUINIX_CLIENT_SECRET": "test_client_secret",
+    },
+)
 @pytest.mark.asyncio
 async def test_client_credentials_auth_missing_vars(auth_manager):
     """Test client credentials authentication setup."""
@@ -70,7 +75,7 @@ def test_clear_token_cache(auth_manager):
     """Test clearing token cache."""
     auth_manager._token_cache["test"] = "token"
     assert len(auth_manager._token_cache) == 1
-    
+
     auth_manager.clear_token_cache()
     assert len(auth_manager._token_cache) == 0
 
