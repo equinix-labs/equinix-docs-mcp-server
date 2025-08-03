@@ -109,9 +109,12 @@ class SpecManager:
 
         # Handle Metal API special case
         if api_name == "metal":
-            overlay["actions"].extend(
-                [{"target": "$.paths.*", "update": {"path_prefix": "/metal/v1"}}]
-            )
+            # Ensure actions is a list and extend it
+            actions_list = overlay["actions"]
+            if isinstance(actions_list, list):
+                actions_list.extend(
+                    [{"target": "$.paths.*", "update": {"path_prefix": "/metal/v1"}}]
+                )
 
         # Ensure directory exists
         overlay_path.parent.mkdir(parents=True, exist_ok=True)

@@ -30,7 +30,7 @@ class AuthenticatedClient:
     async def request(self, method: str, url: str, **kwargs: Any) -> httpx.Response:
         """Make an authenticated request."""
         # Determine service from URL/operation
-        service_name = self._get_service_from_url(url)
+        service_name = self._get_service_from_url(str(url))
 
         # Get auth header
         try:
@@ -89,11 +89,15 @@ class EquinixMCPServer:
         client = AuthenticatedClient(self.auth_manager)
 
         # Use FastMCP's built-in OpenAPI integration instead of manual tool creation
-        self.mcp = FastMCP.from_openapi(  # type: ignore
+        # Note: client expects AsyncClient interface, our wrapper provides compatibility
+        self.mcp = FastMCP.from_openapi(
             openapi_spec=merged_spec,
-            client=client,
+            client=client,  # type: ignore[arg-type]
             name="Equinix API Server",
-            instructions="This server provides unified access to Equinix's API ecosystem including Metal, Fabric, Network Edge, and Billing services.",
+            instructions=(
+                "This server provides unified access to Equinix's API ecosystem "
+                "including Metal, Fabric, Network Edge, and Billing services."
+            ),
         )
 
         # Register additional documentation tools that aren't part of the API

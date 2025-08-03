@@ -61,7 +61,11 @@ class DocsManager:
                     "title": self._extract_title_from_url(loc.text or ""),
                     "category": self._categorize_url(loc.text or ""),
                 }
-                self.sitemap_cache.append(url_info)
+                # Ensure all values are strings for type safety
+                url_info_safe = {
+                    k: v if v is not None else "" for k, v in url_info.items()
+                }
+                self.sitemap_cache.append(url_info_safe)
 
     def _extract_title_from_url(self, url: str) -> str:
         """Extract a human-readable title from a URL."""
