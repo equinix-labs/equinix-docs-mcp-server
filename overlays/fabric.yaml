@@ -1,0 +1,45 @@
+# Basic overlay for Fabric API normalization
+overlay: "1.0.0"
+info:
+  title: "Overlay for Fabric API"
+  version: "1.0.0"
+  description: "Overlay spec to normalize Fabric API for merging"
+
+actions:
+  # Normalize the title
+  - target: "$.info.title"
+    update: "Equinix Fabric API"
+    
+  # Standardize servers to use common base URL
+  - target: "$.servers"
+    update:
+      - url: "https://api.equinix.com"
+        description: "Equinix API Server"
+        
+  # Ensure all paths start with /fabric/v4
+  - target: "$.paths"
+    transform: "prefix_paths"
+    options:
+      prefix: "/fabric/v4"
+      
+  # Add consistent tags
+  - target: "$.paths.*.*.tags"
+    update: ["fabric"]
+    merge: true
+    
+  # Normalize authentication to OAuth2
+  - target: "$.components.securitySchemes"
+    update:
+      ClientCredentials:
+        type: "oauth2"
+        flows:
+          clientCredentials:
+            tokenUrl: "https://api.equinix.com/oauth2/v1/token"
+            scopes:
+              read: "Read access to Fabric resources"
+              write: "Write access to Fabric resources"
+        
+  # Set default security
+  - target: "$.security"
+    update:
+      - ClientCredentials: ["read", "write"]
