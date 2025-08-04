@@ -123,7 +123,9 @@ class EquinixMCPServer:
         """Run the MCP server."""
         await self.initialize()
         assert self.mcp is not None, "MCP server must be initialized first"
-        await self.mcp.run()
+        
+        # Use stdio_server for MCP transport to avoid asyncio loop conflicts
+        await self.mcp.run_stdio_async(show_banner=True)
 
 
 @click.command()
