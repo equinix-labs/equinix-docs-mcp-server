@@ -10,7 +10,7 @@ import yaml
 class OverlayManager:
     """Manages OpenAPI overlay loading, creation, and application."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the overlay manager."""
         self.overlays_cache: Dict[str, Dict[str, Any]] = {}
 

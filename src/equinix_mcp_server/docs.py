@@ -125,13 +125,13 @@ class DocsManager:
                 scored_docs = []
                 for doc in self.sitemap_cache:
                     doc_text = f"{doc['title']} {doc['category']} {doc['url']}".lower()
-                    score = 0
+                    score = 0.0
 
                     # Count how many filter words appear in the document
                     for word in filter_words:
                         word_lower = word.lower()
                         if word_lower in doc_text:
-                            score += 1
+                            score += 1.0
                         # Also check for common word variations (handle singular/plural)
                         elif word_lower.endswith("s") and word_lower[:-1] in doc_text:
                             score += 0.8  # Slightly lower score for stem matches
@@ -145,7 +145,7 @@ class DocsManager:
                     if filter_term in doc_text:
                         score += 0.5
 
-                    if score > 0:
+                    if score > 0.0:
                         scored_docs.append((score, doc))
 
                 # Sort by score (highest first) and extract documents
@@ -195,7 +195,7 @@ class DocsManager:
         scored_docs = []
 
         for doc in self.sitemap_cache:
-            score = 0
+            score = 0.0
 
             # Title matches are most important
             if query in doc["title"].lower():

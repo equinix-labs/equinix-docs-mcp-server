@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Hashable, List, Mapping, Optional
 
 import aiofiles
 import httpx
@@ -77,7 +77,7 @@ class SpecManager:
 
             # Validate the spec
             try:
-                validate_spec(spec)
+                validate_spec(spec)  # type: ignore[arg-type]
                 print(f"✓ Spec validation passed for {api_name}")
             except Exception as e:
                 print(f"Warning: Spec validation failed for {api_name}: {e}")
