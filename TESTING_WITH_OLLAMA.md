@@ -189,6 +189,47 @@ PYTHONPATH=/Users/mjohansson/dev/equinix-mcp-server/src python -m equinix_mcp_se
 - Check Equinix console for correct client credentials
 - Verify OAuth2 scope requirements
 
+### "No tools available"
+
+If you see "no tools available" when using the bridge:
+
+1. **Check server startup**: Look for FastMCP initialization messages:
+   ```
+   Created FastMCP OpenAPI server with 441 routes
+   ```
+
+2. **Verify MCP connection**: The bridge should show:
+   ```
+   Connected to MCP server successfully
+   ```
+
+3. **Test tool availability**: You can test the server directly:
+   ```bash
+   python -c "
+   import asyncio
+   import sys
+   sys.path.insert(0, 'src')
+   from equinix_mcp_server.main import EquinixMCPServer
+   
+   async def test():
+       server = EquinixMCPServer('config/apis.yaml')
+       await server.initialize()
+       tools = await server.mcp.get_tools()
+       print(f'Tools available: {len(tools)}')
+       # Test specific Network Edge device listing
+       if 'network_edge_getVirtualDevicesUsingGET_1' in tools:
+           tool = tools['network_edge_getVirtualDevicesUsingGET_1']
+           print(f'✅ Network Edge device listing tool found: {tool._route.method} {tool._route.path}')
+   
+   asyncio.run(test())
+   "
+   ```
+
+4. **Verify tool exposure**: The server should expose 441 tools including Network Edge device listing:
+   - `network_edge_getVirtualDevicesUsingGET_1` - List all Network Edge devices
+   - 63 total Network Edge tools
+   - 441 total tools across all Equinix APIs
+
 ## Next Steps
 
 1. **Test basic connectivity** (bridge connects to MCP server and Ollama)
