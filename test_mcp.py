@@ -4,9 +4,9 @@ Simple test script to verify MCP server functionality
 """
 
 import asyncio
+import json
 import subprocess
 import sys
-import json
 import time
 from pathlib import Path
 

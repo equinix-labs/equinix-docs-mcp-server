@@ -16,8 +16,8 @@ import os
 from pathlib import Path
 
 from equinix_mcp_server.config import Config
-from equinix_mcp_server.spec_manager import SpecManager
 from equinix_mcp_server.docs import DocsManager
+from equinix_mcp_server.spec_manager import SpecManager
 
 
 async def main():

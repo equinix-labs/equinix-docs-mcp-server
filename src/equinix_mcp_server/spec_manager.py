@@ -6,9 +6,9 @@ from typing import Any, Dict, List, Optional
 
 import aiofiles
 import httpx
+import prance
 import yaml
 from openapi_spec_validator import validate_spec
-import prance
 from prance.convert import convert_spec
 
 from .config import Config

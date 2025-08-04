@@ -3,11 +3,11 @@
 Integration test script to verify Ollama + mcp-client-for-ollama + Equinix MCP Server
 """
 
-import subprocess
-import time
-import sys
 import json
 import os
+import subprocess
+import sys
+import time
 from pathlib import Path
 
 
