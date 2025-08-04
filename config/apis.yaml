@@ -37,7 +37,6 @@ auth:
   # Client Credentials flow for most APIs
   client_credentials:
     token_url: "https://api.equinix.com/oauth2/v1/token"
-    scope: "read write"
     
   # Metal API uses different auth
   metal_token:

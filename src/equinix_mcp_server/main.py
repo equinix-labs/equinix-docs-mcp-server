@@ -17,9 +17,11 @@ from .spec_manager import SpecManager
 class AuthenticatedClient:
     """HTTP client wrapper that adds authentication headers."""
 
-    def __init__(self, auth_manager: AuthManager):
+    def __init__(self, auth_manager: AuthManager, base_url: str = "https://api.equinix.com"):
         self.auth_manager = auth_manager
+        self.base_url = base_url
         self._client = httpx.AsyncClient(
+            base_url=base_url,
             timeout=30.0,
             headers={
                 "User-Agent": "Equinix-MCP-Server/1.0.0",
@@ -29,8 +31,17 @@ class AuthenticatedClient:
 
     async def request(self, method: str, url: str, **kwargs: Any) -> httpx.Response:
         """Make an authenticated request."""
+        # If URL is just a path, let the base_url handle it
+        # If URL is absolute, use it as-is
+        if url.startswith("http://") or url.startswith("https://"):
+            # Absolute URL, use as-is
+            request_url = url
+        else:
+            # Relative URL, let httpx handle with base_url
+            request_url = url
+            
         # Determine service from URL/operation
-        service_name = self._get_service_from_url(str(url))
+        service_name = self._get_service_from_url(str(request_url))
 
         # Get auth header
         try:
@@ -42,7 +53,7 @@ class AuthenticatedClient:
         except Exception as e:
             print(f"Auth error for {service_name}: {e}")
 
-        return await self._client.request(method, url, **kwargs)
+        return await self._client.request(method, request_url, **kwargs)
 
     def _get_service_from_url(self, url: str) -> str:
         """Determine service name from URL."""
@@ -86,7 +97,7 @@ class EquinixMCPServer:
         merged_spec = await self.spec_manager.get_merged_spec()
 
         # Create authenticated HTTP client for API calls
-        client = AuthenticatedClient(self.auth_manager)
+        client = AuthenticatedClient(self.auth_manager, base_url="https://api.equinix.com")
 
         # Use FastMCP's built-in OpenAPI integration instead of manual tool creation
         # Note: client expects AsyncClient interface, our wrapper provides compatibility

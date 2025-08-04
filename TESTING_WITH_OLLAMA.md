@@ -38,6 +38,7 @@ Make sure you have a model with tool support:
 ```bash
 # Install a compatible model (choose one)
 ollama pull qwen2.5:7b
+ollama pull qwen3:8b
 ollama pull llama3.1:8b
 ```
 
@@ -175,6 +176,16 @@ python -m equinix_mcp_server.main --test-update-specs
 # Check for Python path issues
 PYTHONPATH=/Users/mjohansson/dev/equinix-mcp-server/src python -m equinix_mcp_server.main
 ```
+
+### "Request URL is missing protocol" Error
+
+If you see an error like:
+
+```text
+UnsupportedProtocol: Request URL is missing an 'http://' or 'https://' protocol.
+```
+
+This indicates a URL construction issue in the HTTP client. The fix is to ensure the base URL is properly set in the AuthenticatedClient. The server has been updated to handle this properly by setting `base_url="https://api.equinix.com"` in the HTTP client.
 
 ### Bridge Connection Issues
 

@@ -35,11 +35,9 @@ actions:
         flows:
           clientCredentials:
             tokenUrl: "https://api.equinix.com/oauth2/v1/token"
-            scopes:
-              read: "Read access to Billing resources"
-              write: "Write access to Billing resources"
+            scopes: {}
         
   # Set default security
   - target: "$.security"
     update:
-      - ClientCredentials: ["read", "write"]
+      - ClientCredentials: []

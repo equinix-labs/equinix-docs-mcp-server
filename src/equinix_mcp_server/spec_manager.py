@@ -166,10 +166,7 @@ class SpecManager:
                         "flows": {
                             "clientCredentials": {
                                 "tokenUrl": "https://api.equinix.com/oauth2/v1/token",
-                                "scopes": {
-                                    "read": "Read access",
-                                    "write": "Write access",
-                                },
+                                "scopes": {},
                             }
                         },
                     },
@@ -180,7 +177,7 @@ class SpecManager:
                     },
                 },
             },
-            "security": [{"ClientCredentials": ["read", "write"]}, {"MetalToken": []}],
+            "security": [{"ClientCredentials": []}, {"MetalToken": []}],
         }
 
         # Merge each API spec

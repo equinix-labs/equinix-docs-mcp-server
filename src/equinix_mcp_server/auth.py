@@ -71,24 +71,20 @@ class AuthManager:
         token_url = self.config.auth.client_credentials.get(
             "token_url", "https://api.equinix.com/oauth2/v1/token"
         )
-        scope = self.config.auth.client_credentials.get("scope", "read write")
 
-        # Prepare basic auth header
-        credentials = f"{self.client_id}:{self.client_secret}"
-        encoded_credentials = base64.b64encode(credentials.encode()).decode()
-
+        # Equinix uses JSON body for client credentials flow (non-standard)
         headers = {
-            "Authorization": f"Basic {encoded_credentials}",
-            "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Type": "application/json",
         }
 
         data = {
             "grant_type": "client_credentials",
-            "scope": scope,
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
         }
 
         async with httpx.AsyncClient() as client:
-            response = await client.post(token_url, headers=headers, data=data)
+            response = await client.post(token_url, headers=headers, json=data)
             response.raise_for_status()
 
             token_data = response.json()
