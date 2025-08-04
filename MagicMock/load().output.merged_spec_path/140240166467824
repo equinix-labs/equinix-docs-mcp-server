@@ -1,0 +1,32 @@
+components:
+  schemas: {}
+  securitySchemes:
+    ClientCredentials:
+      flows:
+        clientCredentials:
+          scopes:
+            read: Read access
+            write: Write access
+          tokenUrl: https://api.equinix.com/oauth2/v1/token
+      type: oauth2
+    MetalToken:
+      in: header
+      name: X-Auth-Token
+      type: apiKey
+info:
+  contact:
+    name: Equinix API Support
+    url: https://docs.equinix.com
+  description: Merged Equinix APIs for MCP Server
+  title: Equinix Unified API
+  version: 1.0.0
+openapi: 3.0.3
+paths: {}
+security:
+- ClientCredentials:
+  - read
+  - write
+- MetalToken: []
+servers:
+- description: Equinix API Server
+  url: https://api.equinix.com

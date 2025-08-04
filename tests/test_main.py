@@ -64,7 +64,7 @@ class TestEquinixMCPServer:
     @pytest.mark.asyncio
     async def test_server_initialization_with_fastmcp(self):
         """Test server initialization uses FastMCP.from_openapi."""
-        with patch("equinix_mcp_server.main.Config.load") as mock_load, patch(
+        with patch("equinix_mcp_server.main.Config") as mock_config_class, patch(
             "equinix_mcp_server.main.SpecManager"
         ) as mock_spec_mgr, patch(
             "equinix_mcp_server.main.AuthManager"
@@ -76,7 +76,7 @@ class TestEquinixMCPServer:
 
             # Setup mocks
             mock_config = MagicMock()
-            mock_load.return_value = mock_config
+            mock_config_class.load.return_value = mock_config
 
             mock_spec_instance = MagicMock()
             mock_spec_instance.update_specs = AsyncMock()
@@ -99,7 +99,7 @@ class TestEquinixMCPServer:
             mock_mcp.tool = MagicMock()
             mock_fastmcp_class.from_openapi.return_value = mock_mcp
 
-            # Test initialization
+            # Test initialization - create server inside the patch context
             server = EquinixMCPServer("test_config.yaml")
             await server.initialize()
 
