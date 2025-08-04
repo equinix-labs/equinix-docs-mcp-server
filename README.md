@@ -47,7 +47,9 @@ export EQUINIX_METAL_TOKEN="your_metal_token"
 equinix-mcp-server
 ```
 
-#### Test with MCP Clients (Claude Desktop, Continue.dev, etc.)
+#### Test with MCP Clients
+
+**Claude Desktop, Continue.dev, etc.:**
 
 1. **Copy the MCP configuration** to your client's config file:
    ```bash
@@ -60,12 +62,26 @@ equinix-mcp-server
 3. **Test Network Edge device listing**:
    Ask your AI: *"Can you list the available Network Edge devices using the Equinix API?"*
 
+**Ollama (via mcp-client-for-ollama bridge):**
+
+1. **Install the bridge**:
+   ```bash
+   pip install --upgrade ollmcp
+   ```
+
+2. **Create MCP config** (see `TESTING_WITH_OLLAMA.md` for details)
+
+3. **Connect Ollama to MCP server**:
+   ```bash
+   ollmcp --servers-json equinix-mcp-config.json --model qwen2.5:7b
+   ```
+
 4. **Expected behavior**:
    - ✅ MCP server connects and tools are available
    - ✅ API call is attempted to Network Edge API
    - ❌ Authentication failure (without credentials) - this proves it's working!
 
-See `TESTING_WITH_OLLAMA.md` for detailed testing instructions.
+See `TESTING_WITH_OLLAMA.md` for detailed Ollama integration instructions.
 
 #### Test API Spec Fetching
 

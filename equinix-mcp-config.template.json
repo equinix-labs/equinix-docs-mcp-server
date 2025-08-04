@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "equinix": {
+      "command": "python",
+      "args": ["-m", "equinix_mcp_server.main"],
+      "cwd": "/path/to/your/equinix-mcp-server",
+      "env": {
+        "PYTHONPATH": "/path/to/your/equinix-mcp-server/src"
+      },
+      "disabled": false
+    }
+  }
+}

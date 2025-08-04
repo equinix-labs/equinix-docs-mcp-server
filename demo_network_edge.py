@@ -65,10 +65,10 @@ async def demonstrate_network_edge_tools():
             print()
     
     # Show what a typical MCP query would look like
-    print("💬 Example prompt for Ollama/Claude:")
+    print("💬 Example prompt for Claude/Ollama:")
     print('   "Can you list the Network Edge devices using the Equinix API?"')
     print("\n🔧 What should happen:")
-    print("   1. MCP client identifies relevant tool (e.g., 'network-edge_getNetworkEdgeV1Ves')")
+    print("   1. MCP client identifies relevant tool (e.g., 'network-edge_network-edge_getVirtualDevicesUsingGET_1')")
     print("   2. Calls the tool with appropriate parameters")
     print("   3. Gets authentication error (without credentials) or device list (with credentials)")
     
@@ -77,7 +77,12 @@ async def demonstrate_network_edge_tools():
     print("   export EQUINIX_CLIENT_ID='your_client_id'")
     print("   export EQUINIX_CLIENT_SECRET='your_client_secret'")
     
-    print("\n✅ Demo completed! The MCP server is ready for Ollama integration.")
+    print("\n🔌 MCP Client Options:")
+    print("   • Claude Desktop - Native MCP support")
+    print("   • Continue.dev - VS Code extension with MCP")
+    print("   • Ollama - Use mcp-client-for-ollama bridge: pip install ollmcp")
+    
+    print("\n✅ Demo completed! The MCP server is ready for integration.")
     
     return network_edge_ops
 
