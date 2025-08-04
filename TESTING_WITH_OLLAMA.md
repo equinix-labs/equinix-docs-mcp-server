@@ -58,13 +58,17 @@ Create a config file `equinix-mcp-config.json`:
       "args": ["-m", "equinix_mcp_server.main"],
       "cwd": "/path/to/equinix-mcp-server",
       "env": {
-        "PYTHONPATH": "/path/to/equinix-mcp-server/src"
+        "PYTHONPATH": "/path/to/equinix-mcp-server/src",
+        "EQUINIX_CLIENT_ID": "${EQUINIX_CLIENT_ID}",
+        "EQUINIX_CLIENT_SECRET": "${EQUINIX_CLIENT_SECRET}"
       },
       "disabled": false
     }
   }
 }
 ```
+
+**Important**: Replace `/path/to/equinix-mcp-server` with your actual path, and make sure your environment variables are exported before starting the bridge.
 
 ### Option B: Use Installed Package (if using pip install -e .)
 
@@ -107,25 +111,29 @@ ollmcp --mcp-server /path/to/equinix-mcp-server/src/equinix_mcp_server/main.py -
 Once the bridge starts, you'll see an interactive terminal. Try asking about Network Edge devices:
 
 1. **Basic query**:
+
    ```
    Can you list the available Network Edge devices using the Equinix API?
    ```
 
 2. **More specific query**:
+
    ```
    Show me all virtual network functions in the Network Edge API
    ```
 
 3. **Explore available tools**:
+
    ```
    What Network Edge API operations are available?
    ```
 
 4. **Search documentation**:
+
    ```
    What docs are available for Fabric providers?
    ```
-   
+
    Note: The docs search supports flexible matching - "Fabric providers" will find "Fabric Provider Guide", "Provider Management", etc.
 
 ## Expected Behavior
@@ -133,15 +141,29 @@ Once the bridge starts, you'll see an interactive terminal. Try asking about Net
 ### Without API Credentials
 
 You should see:
-1. ✅ **MCP Server connects** successfully 
-2. ✅ **Bridge shows available tools** (441 API operations including Network Edge)
-3. ✅ **Ollama identifies relevant tools** (e.g., `network-edge_network-edge_getVirtualDevicesUsingGET_1`)
-4. ✅ **API call is attempted** to list Network Edge devices
-5. ❌ **Authentication failure** (401/403 error) - this proves it's working!
+
+1. ✅ **MCP Server connects** successfully
+2. ✅ **Bridge shows available tools** (441 API operations including Fabric, Metal, Network Edge, Billing)
+3. ✅ **Ollama identifies relevant tools** (e.g., `fabric_searchConnections`, `networkEdge_getDevices`)
+4. ✅ **API call is attempted** to the Equinix API endpoints
+5. ❌ **Authentication failure** (401 Unauthorized - Invalid access token) - this proves it's working!
+
+**Expected Error Message:**
+
+```text
+HTTP error 401: Unauthorized - {'errorDomain': 'api-platform', 'errorTitle': 'Invalid access token', 'errorCode': '401', 'developerMessage': 'Please pass a valid access token', 'errorMessage': 'Invalid access token'}
+```
+
+This error confirms that:
+
+- The MCP server successfully loaded and exposed all Equinix API tools
+- The HTTP requests are reaching Equinix's servers  
+- OAuth2 authentication is working (just needs valid credentials)
 
 ### With API Credentials
 
 Set your credentials before starting:
+
 ```bash
 export EQUINIX_CLIENT_ID="your_client_id"
 export EQUINIX_CLIENT_SECRET="your_client_secret"
@@ -151,6 +173,7 @@ ollmcp --servers-json equinix-mcp-config.json --model qwen2.5:7b
 ```
 
 Then you should see:
+
 1. ✅ **Successful authentication**
 2. ✅ **Actual API response** with Network Edge devices (if any)
 
@@ -200,27 +223,68 @@ This indicates a URL construction issue in the HTTP client. The fix is to ensure
 - Check model supports tools: [Ollama models with tools](https://ollama.com/search?c=tools)
 - Try different models if one doesn't work well
 
-### API Authentication
+### "401 Unauthorized" with Valid Credentials
 
-- Set environment variables before starting the bridge
-- Check Equinix console for correct client credentials
-- Verify OAuth2 scope requirements
+If you're getting 401 errors despite having valid `EQUINIX_CLIENT_ID` and `EQUINIX_CLIENT_SECRET` environment variables:
+
+1. **Test authentication directly**:
+
+   ```bash
+   cd /path/to/equinix-mcp-server
+   python3 test_live_auth.py
+   ```
+
+   If this works but the bridge fails, it's an environment variable issue.
+
+2. **Ensure environment variables are in the bridge config**:
+   Update your `equinix-mcp-config.json` to explicitly pass the environment variables:
+
+   ```json
+   {
+     "mcpServers": {
+       "equinix": {
+         "command": "python",
+         "args": ["-m", "equinix_mcp_server.main"],
+         "cwd": "/path/to/equinix-mcp-server",
+         "env": {
+           "PYTHONPATH": "/path/to/equinix-mcp-server/src",
+           "EQUINIX_CLIENT_ID": "${EQUINIX_CLIENT_ID}",
+           "EQUINIX_CLIENT_SECRET": "${EQUINIX_CLIENT_SECRET}"
+         },
+         "disabled": false
+       }
+     }
+   }
+   ```
+
+3. **Alternative: Use actual values in config** (less secure):
+
+   ```json
+   "env": {
+     "PYTHONPATH": "/path/to/equinix-mcp-server/src",
+     "EQUINIX_CLIENT_ID": "your_actual_client_id",
+     "EQUINIX_CLIENT_SECRET": "your_actual_client_secret"
+   }
+   ```
 
 ### "No tools available"
 
 If you see "no tools available" when using the bridge:
 
 1. **Check server startup**: Look for FastMCP initialization messages:
+
    ```
    Created FastMCP OpenAPI server with 441 routes
    ```
 
 2. **Verify MCP connection**: The bridge should show:
+
    ```
    Connected to MCP server successfully
    ```
 
 3. **Test tool availability**: You can test the server directly:
+
    ```bash
    python -c "
    import asyncio
@@ -284,6 +348,7 @@ ollmcp --servers-json equinix-mcp-config.json --model qwen2.5:7b --help
 ### Without API Credentials
 
 You should see:
+
 1. ✅ **MCP Server connects** successfully
 2. ✅ **API tools are available** (Network Edge operations)
 3. ✅ **API call is attempted** to list Network Edge devices
@@ -292,12 +357,14 @@ You should see:
 ### With API Credentials
 
 Set your credentials first:
+
 ```bash
 export EQUINIX_CLIENT_ID="your_client_id"
 export EQUINIX_CLIENT_SECRET="your_client_secret"
 ```
 
 Then you should see:
+
 1. ✅ **Successful authentication**
 2. ✅ **Actual API response** with Network Edge devices (if any)
 
@@ -306,6 +373,7 @@ Then you should see:
 ### MCP Tools Available
 
 The server should expose tools like:
+
 - `get_networkedge_v1_ves` - List virtual network functions
 - `get_networkedge_v1_ves_ve_id` - Get specific VNF details
 - `post_networkedge_v1_ves` - Create new VNF
