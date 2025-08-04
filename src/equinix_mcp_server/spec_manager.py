@@ -8,6 +8,8 @@ import aiofiles
 import httpx
 import yaml
 from openapi_spec_validator import validate_spec
+import prance
+from prance.convert import convert_spec
 
 from .config import Config
 from .openapi_overlays import OverlayManager
@@ -38,14 +40,48 @@ class SpecManager:
             response = await client.get(api_config.url)
             response.raise_for_status()
 
-            # Parse YAML content
-            spec = yaml.safe_load(response.text)
+            # Parse YAML content with error handling
+            try:
+                spec = yaml.safe_load(response.text)
+            except yaml.YAMLError as e:
+                print(f"Warning: YAML parsing failed for {api_name}: {e}")
+                print(f"Attempting to fix common YAML issues...")
+                
+                # Try to fix common YAML issues
+                fixed_content = response.text
+                
+                # Fix various malformed YAML patterns
+                yaml_fixes = [
+                    ("example: =", "example: ''"),
+                    ("operator: =", "operator: ''"),
+                    ("default: =", "default: ''"),
+                    ("value: =", "value: ''"),
+                    ("- =", "- ''"),  # Array elements with just =
+                    (": =\n", ": ''\n"),  # General pattern
+                ]
+                
+                for old_pattern, new_pattern in yaml_fixes:
+                    fixed_content = fixed_content.replace(old_pattern, new_pattern)
+                
+                try:
+                    spec = yaml.safe_load(fixed_content)
+                    print(f"✓ YAML parsing succeeded after fixing for {api_name}")
+                except yaml.YAMLError as e2:
+                    print(f"Error: Could not fix YAML for {api_name}: {e2}")
+                    # Try to skip the problematic spec for now
+                    print(f"Skipping {api_name} due to unfixable YAML errors")
+                    return {}
+
+            # Convert Swagger v2 to OpenAPI v3 if needed
+            spec = await self._convert_swagger_to_openapi(spec, api_name)
 
             # Validate the spec
             try:
                 validate_spec(spec)
+                print(f"✓ Spec validation passed for {api_name}")
             except Exception as e:
                 print(f"Warning: Spec validation failed for {api_name}: {e}")
+                # Continue processing despite validation warnings
 
             # Cache the spec
             self.specs_cache[api_name] = spec
@@ -57,6 +93,28 @@ class SpecManager:
             async with aiofiles.open(cache_dir / f"{api_name}.yaml", "w") as f:
                 await f.write(yaml.dump(spec, default_flow_style=False))
 
+            return spec
+
+    async def _convert_swagger_to_openapi(self, spec: Dict[str, Any], api_name: str) -> Dict[str, Any]:
+        """Convert Swagger v2 to OpenAPI v3 if needed."""
+        # Check if this is a Swagger v2 spec
+        if spec.get("swagger") == "2.0":
+            print(f"Converting Swagger v2 to OpenAPI v3 for {api_name}...")
+            try:
+                # Use prance to convert Swagger v2 to OpenAPI v3
+                # convert_spec returns a parser, we need the specification from it
+                converted_parser = convert_spec(spec, prance.BaseParser)
+                converted_spec = converted_parser.specification
+                
+                print(f"✓ Successfully converted {api_name} from Swagger v2 to OpenAPI v3")
+                return converted_spec
+                    
+            except Exception as e:
+                print(f"Error: Failed to convert {api_name} from Swagger v2: {e}")
+                # Return original spec if conversion fails
+                return spec
+        else:
+            # Already OpenAPI v3 or other format
             return spec
 
     async def _load_overlay(self, api_name: str) -> Optional[Dict[str, Any]]:
