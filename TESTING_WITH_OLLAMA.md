@@ -56,9 +56,9 @@ Create a config file `equinix-mcp-config.json`:
     "equinix": {
       "command": "python",
       "args": ["-m", "equinix_mcp_server.main"],
-      "cwd": "/Users/mjohansson/dev/equinix-mcp-server",
+      "cwd": "/path/to/equinix-mcp-server",
       "env": {
-        "PYTHONPATH": "/Users/mjohansson/dev/equinix-mcp-server/src"
+        "PYTHONPATH": "/path/to/equinix-mcp-server/src"
       },
       "disabled": false
     }
@@ -84,7 +84,7 @@ Create a config file `equinix-mcp-config.json`:
 Before connecting to Ollama, verify the MCP server works:
 
 ```bash
-cd /Users/mjohansson/dev/equinix-mcp-server
+cd /path/to/equinix-mcp-server
 python -m equinix_mcp_server.main --test-update-specs
 ```
 
@@ -99,7 +99,7 @@ Now use the bridge to connect Ollama to our MCP server:
 ollmcp --servers-json equinix-mcp-config.json --model qwen2.5:7b
 
 # Or directly specify the server
-ollmcp --mcp-server /Users/mjohansson/dev/equinix-mcp-server/src/equinix_mcp_server/main.py --model qwen2.5:7b
+ollmcp --mcp-server /path/to/equinix-mcp-server/src/equinix_mcp_server/main.py --model qwen2.5:7b
 ```
 
 ## Step 6: Test Network Edge Device Listing
@@ -174,7 +174,7 @@ The bridge provides useful interactive commands:
 python -m equinix_mcp_server.main --test-update-specs
 
 # Check for Python path issues
-PYTHONPATH=/Users/mjohansson/dev/equinix-mcp-server/src python -m equinix_mcp_server.main
+PYTHONPATH=/path/to/equinix-mcp-server/src python -m equinix_mcp_server.main
 ```
 
 ### "Request URL is missing protocol" Error
@@ -328,7 +328,7 @@ The specific operation for listing Network Edge devices would be something like:
 python -m equinix_mcp_server.main --test-update-specs
 
 # Check for Python path issues
-PYTHONPATH=/Users/mjohansson/dev/equinix-mcp-server/src python -m equinix_mcp_server.main
+PYTHONPATH=/path/to/equinix-mcp-server/src python -m equinix_mcp_server.main
 ```
 
 ### MCP Connection Issues
