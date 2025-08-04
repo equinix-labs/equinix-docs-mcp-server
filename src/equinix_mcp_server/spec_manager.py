@@ -46,10 +46,10 @@ class SpecManager:
             except yaml.YAMLError as e:
                 print(f"Warning: YAML parsing failed for {api_name}: {e}")
                 print(f"Attempting to fix common YAML issues...")
-                
+
                 # Try to fix common YAML issues
                 fixed_content = response.text
-                
+
                 # Fix various malformed YAML patterns
                 yaml_fixes = [
                     ("example: =", "example: ''"),
@@ -59,10 +59,10 @@ class SpecManager:
                     ("- =", "- ''"),  # Array elements with just =
                     (": =\n", ": ''\n"),  # General pattern
                 ]
-                
+
                 for old_pattern, new_pattern in yaml_fixes:
                     fixed_content = fixed_content.replace(old_pattern, new_pattern)
-                
+
                 try:
                     spec = yaml.safe_load(fixed_content)
                     print(f"✓ YAML parsing succeeded after fixing for {api_name}")
@@ -95,7 +95,9 @@ class SpecManager:
 
             return spec
 
-    async def _convert_swagger_to_openapi(self, spec: Dict[str, Any], api_name: str) -> Dict[str, Any]:
+    async def _convert_swagger_to_openapi(
+        self, spec: Dict[str, Any], api_name: str
+    ) -> Dict[str, Any]:
         """Convert Swagger v2 to OpenAPI v3 if needed."""
         # Check if this is a Swagger v2 spec
         if spec.get("swagger") == "2.0":
@@ -105,10 +107,12 @@ class SpecManager:
                 # convert_spec returns a parser, we need the specification from it
                 converted_parser = convert_spec(spec, prance.BaseParser)
                 converted_spec = converted_parser.specification
-                
-                print(f"✓ Successfully converted {api_name} from Swagger v2 to OpenAPI v3")
+
+                print(
+                    f"✓ Successfully converted {api_name} from Swagger v2 to OpenAPI v3"
+                )
                 return converted_spec
-                    
+
             except Exception as e:
                 print(f"Error: Failed to convert {api_name} from Swagger v2: {e}")
                 # Return original spec if conversion fails

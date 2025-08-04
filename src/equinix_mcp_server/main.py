@@ -17,7 +17,9 @@ from .spec_manager import SpecManager
 class AuthenticatedClient:
     """HTTP client wrapper that adds authentication headers."""
 
-    def __init__(self, auth_manager: AuthManager, base_url: str = "https://api.equinix.com"):
+    def __init__(
+        self, auth_manager: AuthManager, base_url: str = "https://api.equinix.com"
+    ):
         self.auth_manager = auth_manager
         self.base_url = base_url
         self._client = httpx.AsyncClient(
@@ -39,7 +41,7 @@ class AuthenticatedClient:
         else:
             # Relative URL, let httpx handle with base_url
             request_url = url
-            
+
         # Determine service from URL/operation
         service_name = self._get_service_from_url(str(request_url))
 
@@ -97,7 +99,9 @@ class EquinixMCPServer:
         merged_spec = await self.spec_manager.get_merged_spec()
 
         # Create authenticated HTTP client for API calls
-        client = AuthenticatedClient(self.auth_manager, base_url="https://api.equinix.com")
+        client = AuthenticatedClient(
+            self.auth_manager, base_url="https://api.equinix.com"
+        )
 
         # Use FastMCP's built-in OpenAPI integration instead of manual tool creation
         # Note: client expects AsyncClient interface, our wrapper provides compatibility
@@ -119,11 +123,12 @@ class EquinixMCPServer:
         assert self.mcp is not None, "MCP server must be initialized first"
 
         @self.mcp.tool(
-            name="list_docs", description="List and filter Equinix documentation by topic, product, or keywords. Supports flexible word matching (e.g., 'Fabric providers' will find 'Fabric Provider Guide', 'Provider Management', etc.)"
+            name="list_docs",
+            description="List and filter Equinix documentation by topic, product, or keywords. Supports flexible word matching (e.g., 'Fabric providers' will find 'Fabric Provider Guide', 'Provider Management', etc.)",
         )
         async def list_docs(filter_term: Optional[str] = None) -> str:
-            """List documentation with optional filtering by keywords. 
-            
+            """List documentation with optional filtering by keywords.
+
             Supports flexible matching:
             - Multiple words: finds docs containing any of the words
             - Singular/plural variations: 'provider' matches 'providers' and vice versa
@@ -141,7 +146,7 @@ class EquinixMCPServer:
         """Run the MCP server."""
         await self.initialize()
         assert self.mcp is not None, "MCP server must be initialized first"
-        
+
         # Use stdio_server for MCP transport to avoid asyncio loop conflicts
         await self.mcp.run_stdio_async(show_banner=True)
 
@@ -150,7 +155,11 @@ class EquinixMCPServer:
 @click.option(
     "--config", "-c", default="config/apis.yaml", help="Configuration file path"
 )
-@click.option("--test-update-specs", is_flag=True, help="Test API spec fetching and validation without starting server")
+@click.option(
+    "--test-update-specs",
+    is_flag=True,
+    help="Test API spec fetching and validation without starting server",
+)
 def main(config: str, test_update_specs: bool) -> None:
     """Start the Equinix MCP Server."""
 
@@ -159,7 +168,9 @@ def main(config: str, test_update_specs: bool) -> None:
 
         if test_update_specs:
             await server.spec_manager.update_specs()
-            click.echo("✅ API spec fetching and validation test completed successfully")
+            click.echo(
+                "✅ API spec fetching and validation test completed successfully"
+            )
             return
 
         await server.run()
