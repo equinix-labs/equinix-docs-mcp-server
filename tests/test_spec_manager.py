@@ -26,7 +26,8 @@ def test_spec_manager_init(spec_manager):
     assert spec_manager is not None
     assert spec_manager.config is not None
     assert isinstance(spec_manager.specs_cache, dict)
-    assert isinstance(spec_manager.overlays_cache, dict)
+    assert spec_manager.overlay_manager is not None
+    assert isinstance(spec_manager.overlay_manager.overlays_cache, dict)
 
 
 @pytest.mark.asyncio
@@ -66,7 +67,9 @@ async def test_create_overlay_template(spec_manager, tmp_path):
     """Test overlay template creation."""
     overlay_path = tmp_path / "test_overlay.yaml"
 
-    await spec_manager._create_overlay_template("metal", overlay_path)
+    await spec_manager.overlay_manager.create_overlay_template(
+        str(overlay_path), "metal", "metal"
+    )
 
     assert overlay_path.exists()
 
@@ -92,7 +95,7 @@ async def test_apply_simple_overlay(spec_manager):
         ]
     }
 
-    result = await spec_manager._apply_overlay(spec, overlay)
+    result = await spec_manager.overlay_manager.apply_overlay(spec, overlay)
 
     assert result["info"]["title"] == "New Title"
     assert result["servers"] == [{"url": "https://new.example.com"}]

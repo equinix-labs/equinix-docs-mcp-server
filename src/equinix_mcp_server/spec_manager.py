@@ -10,6 +10,7 @@ import yaml
 from openapi_spec_validator import validate_spec
 
 from .config import Config
+from .openapi_overlays import OverlayManager
 
 
 class SpecManager:
@@ -19,7 +20,7 @@ class SpecManager:
         """Initialize with configuration."""
         self.config = config
         self.specs_cache: Dict[str, Dict[str, Any]] = {}
-        self.overlays_cache: Dict[str, Dict[str, Any]] = {}
+        self.overlay_manager = OverlayManager()
 
     async def update_specs(self) -> None:
         """Update all API specs from their sources."""
@@ -64,63 +65,19 @@ class SpecManager:
         if not api_config:
             return None
 
-        overlay_path = Path(api_config.overlay)
-        if not overlay_path.exists():
-            # Create a basic overlay template
-            await self._create_overlay_template(api_name, overlay_path)
+        overlay_path = api_config.overlay
+
+        # Try to load existing overlay
+        overlay = await self.overlay_manager.load_overlay(overlay_path)
+
+        if overlay is None:
+            # Create a basic overlay template if it doesn't exist
+            await self.overlay_manager.create_overlay_template(
+                overlay_path, api_config.service_name, api_name
+            )
             return None
 
-        async with aiofiles.open(overlay_path, "r") as f:
-            content = await f.read()
-            overlay = yaml.safe_load(content)
-
-        self.overlays_cache[api_name] = overlay
         return overlay
-
-    async def _create_overlay_template(self, api_name: str, overlay_path: Path) -> None:
-        """Create a basic overlay template for an API."""
-        api_config = self.config.get_api_config(api_name)
-        if not api_config:
-            return
-
-        overlay = {
-            "overlay": "1.0.0",
-            "info": {
-                "title": f"Overlay for {api_config.service_name}",
-                "version": "1.0.0",
-                "description": f"Overlay spec to normalize {api_config.service_name} API",
-            },
-            "actions": [
-                {
-                    "target": "$.info.title",
-                    "update": f"Equinix {api_config.service_name.title()} API",
-                },
-                {
-                    "target": "$.servers",
-                    "update": [
-                        {
-                            "url": "https://api.equinix.com",
-                            "description": "Equinix API Server",
-                        }
-                    ],
-                },
-            ],
-        }
-
-        # Handle Metal API special case
-        if api_name == "metal":
-            # Ensure actions is a list and extend it
-            actions_list = overlay["actions"]
-            if isinstance(actions_list, list):
-                actions_list.extend(
-                    [{"target": "$.paths.*", "update": {"path_prefix": "/metal/v1"}}]
-                )
-
-        # Ensure directory exists
-        overlay_path.parent.mkdir(parents=True, exist_ok=True)
-
-        async with aiofiles.open(overlay_path, "w") as f:
-            await f.write(yaml.dump(overlay, default_flow_style=False))
 
     async def get_merged_spec(self) -> Dict[str, Any]:
         """Get the merged OpenAPI specification."""
@@ -190,8 +147,9 @@ class SpecManager:
             return
 
         # Apply overlay if available
-        if api_name in self.overlays_cache:
-            spec = await self._apply_overlay(spec, self.overlays_cache[api_name])
+        overlay = self.overlay_manager.get_cached_overlay(api_config.overlay)
+        if overlay:
+            spec = await self.overlay_manager.apply_overlay(spec, overlay)
 
         # Merge paths with prefixing
         spec_paths = spec.get("paths", {})
@@ -237,25 +195,3 @@ class SpecManager:
             return f"{expected_prefix}{path}"
 
         return path
-
-    async def _apply_overlay(
-        self, spec: Dict[str, Any], overlay: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Apply overlay transformations to a spec."""
-        # This is a simplified overlay implementation
-        # In a full implementation, you'd use a proper overlay engine
-
-        actions = overlay.get("actions", [])
-        modified_spec = spec.copy()
-
-        for action in actions:
-            target = action.get("target")
-            update = action.get("update")
-
-            # Simple path-based updates
-            if target == "$.info.title" and "info" in modified_spec:
-                modified_spec["info"]["title"] = update
-            elif target == "$.servers":
-                modified_spec["servers"] = update
-
-        return modified_spec
