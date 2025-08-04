@@ -3,6 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+claude_desktop_config.json
+mcp-config.json
+
 # C extensions
 *.so
 

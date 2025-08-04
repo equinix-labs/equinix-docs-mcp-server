@@ -130,16 +130,16 @@ class EquinixMCPServer:
 @click.option(
     "--config", "-c", default="config/apis.yaml", help="Configuration file path"
 )
-@click.option("--update-specs", is_flag=True, help="Update API specs before starting")
-def main(config: str, update_specs: bool) -> None:
+@click.option("--test-update-specs", is_flag=True, help="Test API spec fetching and validation without starting server")
+def main(config: str, test_update_specs: bool) -> None:
     """Start the Equinix MCP Server."""
 
     async def _main() -> None:
         server = EquinixMCPServer(config)
 
-        if update_specs:
+        if test_update_specs:
             await server.spec_manager.update_specs()
-            click.echo("API specs updated successfully")
+            click.echo("✅ API spec fetching and validation test completed successfully")
             return
 
         await server.run()

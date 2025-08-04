@@ -47,10 +47,30 @@ export EQUINIX_METAL_TOKEN="your_metal_token"
 equinix-mcp-server
 ```
 
-#### Update API Specs
+#### Test with MCP Clients (Claude Desktop, Continue.dev, etc.)
+
+1. **Copy the MCP configuration** to your client's config file:
+   ```bash
+   # For Claude Desktop
+   cp claude_desktop_config.json ~/Library/Application\ Support/Claude/claude_desktop_config.json
+   ```
+
+2. **Start your MCP client** (Claude Desktop, Continue.dev, etc.)
+
+3. **Test Network Edge device listing**:
+   Ask your AI: *"Can you list the available Network Edge devices using the Equinix API?"*
+
+4. **Expected behavior**:
+   - ✅ MCP server connects and tools are available
+   - ✅ API call is attempted to Network Edge API
+   - ❌ Authentication failure (without credentials) - this proves it's working!
+
+See `TESTING_WITH_OLLAMA.md` for detailed testing instructions.
+
+#### Test API Spec Fetching
 
 ```bash
-equinix-mcp-server --update-specs
+equinix-mcp-server --test-update-specs
 ```
 
 #### Use Custom Configuration
