@@ -108,10 +108,17 @@ class EquinixMCPServer:
         assert self.mcp is not None, "MCP server must be initialized first"
 
         @self.mcp.tool(
-            name="list_docs", description="List and filter Equinix documentation"
+            name="list_docs", description="List and filter Equinix documentation by topic, product, or keywords. Supports flexible word matching (e.g., 'Fabric providers' will find 'Fabric Provider Guide', 'Provider Management', etc.)"
         )
         async def list_docs(filter_term: Optional[str] = None) -> str:
-            """List documentation with optional filtering."""
+            """List documentation with optional filtering by keywords. 
+            
+            Supports flexible matching:
+            - Multiple words: finds docs containing any of the words
+            - Singular/plural variations: 'provider' matches 'providers' and vice versa
+            - Partial phrases: 'Fabric providers' finds 'Fabric Provider Guide'
+            - No filter: returns all available documentation
+            """
             return await self.docs_manager.list_docs(filter_term)
 
         @self.mcp.tool(name="search_docs", description="Search Equinix documentation")

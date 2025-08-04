@@ -115,15 +115,36 @@ class DocsManager:
 
         if filter_term:
             filter_term = filter_term.lower()
-            filtered_docs = [
-                doc
-                for doc in self.sitemap_cache
-                if (
-                    filter_term in doc["title"].lower()
-                    or filter_term in doc["category"].lower()
-                    or filter_term in doc["url"].lower()
-                )
-            ]
+            # Split filter term into individual words for more flexible matching
+            filter_words = [word.strip() for word in filter_term.split() if word.strip()]
+            
+            if filter_words:
+                # Score documents based on how many filter words they contain
+                scored_docs = []
+                for doc in self.sitemap_cache:
+                    doc_text = f"{doc['title']} {doc['category']} {doc['url']}".lower()
+                    score = 0
+                    
+                    # Count how many filter words appear in the document
+                    for word in filter_words:
+                        word_lower = word.lower()
+                        if word_lower in doc_text:
+                            score += 1
+                        # Also check for common word variations (handle singular/plural)
+                        elif word_lower.endswith('s') and word_lower[:-1] in doc_text:
+                            score += 0.8  # Slightly lower score for stem matches
+                        elif not word_lower.endswith('s') and f"{word_lower}s" in doc_text:
+                            score += 0.8  # Handle plural forms
+                    
+                    # Bonus points for exact phrase matches
+                    if filter_term in doc_text:
+                        score += 0.5
+                    
+                    if score > 0:
+                        scored_docs.append((score, doc))
+                
+                # Sort by score (highest first) and extract documents
+                filtered_docs = [doc for score, doc in sorted(scored_docs, key=lambda x: x[0], reverse=True)]
 
         # Group by category
         categories: Dict[str, List[Dict[str, str]]] = {}

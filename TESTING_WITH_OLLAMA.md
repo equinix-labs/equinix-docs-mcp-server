@@ -39,7 +39,6 @@ Make sure you have a model with tool support:
 # Install a compatible model (choose one)
 ollama pull qwen2.5:7b
 ollama pull llama3.1:8b
-ollama pull gemma3n:e4b
 ```
 
 ## Step 3: Create MCP Server Configuration
@@ -120,6 +119,13 @@ Once the bridge starts, you'll see an interactive terminal. Try asking about Net
    ```
    What Network Edge API operations are available?
    ```
+
+4. **Search documentation**:
+   ```
+   What docs are available for Fabric providers?
+   ```
+   
+   Note: The docs search supports flexible matching - "Fabric providers" will find "Fabric Provider Guide", "Provider Management", etc.
 
 ## Expected Behavior
 
