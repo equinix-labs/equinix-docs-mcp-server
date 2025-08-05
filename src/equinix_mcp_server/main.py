@@ -1,6 +1,7 @@
 """Main entry point for the Equinix MCP Server."""
 
 import asyncio
+import logging
 import os
 from typing import Any, Dict, Optional, Union
 
@@ -12,6 +13,10 @@ from .auth import AuthManager
 from .config import Config
 from .docs import DocsManager
 from .spec_manager import SpecManager
+
+# Set up logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 
 class AuthenticatedClient:
@@ -44,18 +49,59 @@ class AuthenticatedClient:
 
         # Determine service from URL/operation
         service_name = self._get_service_from_url(str(request_url))
+        logger.debug(f"Making {method} request to {request_url}")
+        logger.debug(f"Detected service: {service_name}")
 
         # Get auth header
         try:
             auth_header = await self.auth_manager.get_auth_header(service_name)
+            logger.debug(f"Auth header keys: {list(auth_header.keys())}")
+            
+            # Log auth header without exposing sensitive values
+            for key, value in auth_header.items():
+                if key.lower() == "authorization" and value.startswith("Bearer "):
+                    logger.debug(f"Auth header {key}: Bearer {value[7:17]}...")
+                elif key.lower() == "x-auth-token":
+                    logger.debug(f"Auth header {key}: {value[:10]}...") 
+                else:
+                    logger.debug(f"Auth header {key}: {value}")
+            
             # Merge auth header with existing headers
             headers = kwargs.get("headers", {})
             headers.update(auth_header)
             kwargs["headers"] = headers
+            
+            logger.debug(f"Final request headers: {list(headers.keys())}")
+            
         except Exception as e:
+            logger.error(f"Auth error for {service_name}: {e}")
             print(f"Auth error for {service_name}: {e}")
 
-        return await self._client.request(method, request_url, **kwargs)
+        try:
+            response = await self._client.request(method, request_url, **kwargs)
+            logger.debug(f"Response status: {response.status_code}")
+            
+            if response.status_code >= 400:
+                logger.error(f"Request failed with status {response.status_code}")
+                logger.error(f"Response body: {response.text}")
+                
+                # Add specific logging for authentication-related errors
+                if response.status_code == 401:
+                    logger.error("🔑 Authentication failed! Possible causes:")
+                    logger.error("   - Token expired (check token_timeout)")
+                    logger.error("   - Invalid credentials")
+                    logger.error("   - Incorrect auth type for service")
+                    logger.error("   - Service requires different authentication")
+                elif response.status_code == 403:
+                    logger.error("🚫 Authorization failed! Possible causes:")
+                    logger.error("   - Account lacks permissions for this resource")
+                    logger.error("   - Service/endpoint requires additional permissions")
+                    logger.error("   - API key scope limitations")
+            
+            return response
+        except Exception as e:
+            logger.error(f"Request failed: {e}")
+            raise
 
     def _get_service_from_url(self, url: str) -> str:
         """Determine service name from URL."""
