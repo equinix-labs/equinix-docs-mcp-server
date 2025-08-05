@@ -9,12 +9,12 @@ apis:
     version: "v1"
     
   # Network Edge API
-  network-edge:
-    url: "https://docs.equinix.com/api-catalog/network-edgev1/openapi.yaml"
-    overlay: "overlays/network-edge.yaml"
-    auth_type: "client_credentials"
-    service_name: "network-edge"
-    version: "v1"
+#  network-edge:
+#    url: "https://docs.equinix.com/api-catalog/network-edgev1/openapi.yaml"
+#    overlay: "overlays/network-edge.yaml"
+#    auth_type: "client_credentials"
+#    service_name: "network-edge"
+#    version: "v1"
     
   # Fabric API
   fabric:
