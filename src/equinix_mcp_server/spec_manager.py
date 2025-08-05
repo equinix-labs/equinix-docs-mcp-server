@@ -210,6 +210,38 @@ class SpecManager:
         if overlay:
             spec = await self.overlay_manager.apply_overlay(spec, overlay)
 
+        # Create a deep copy of the spec to avoid modifying the original
+        import copy
+        spec = copy.deepcopy(spec)
+
+        # Create a mapping of original schema names to prefixed names for this API
+        schema_name_mapping = {}
+        components = spec.get("components", {})
+        schemas = components.get("schemas", {})
+        
+        for schema_name in schemas.keys():
+            prefixed_name = f"{api_name.title()}{schema_name}"
+            schema_name_mapping[schema_name] = prefixed_name
+
+        # Function to update schema references recursively
+        def update_schema_refs(obj, mapping):
+            if isinstance(obj, dict):
+                if "$ref" in obj and isinstance(obj["$ref"], str):
+                    ref = obj["$ref"]
+                    if ref.startswith("#/components/schemas/"):
+                        schema_name = ref.split("/")[-1]
+                        if schema_name in mapping:
+                            obj["$ref"] = f"#/components/schemas/{mapping[schema_name]}"
+                else:
+                    for key, value in obj.items():
+                        update_schema_refs(value, mapping)
+            elif isinstance(obj, list):
+                for item in obj:
+                    update_schema_refs(item, mapping)
+
+        # Update schema references in the entire spec before merging
+        update_schema_refs(spec, schema_name_mapping)
+
         # Merge paths with prefixing
         spec_paths = spec.get("paths", {})
         for path, methods in spec_paths.items():
@@ -229,9 +261,6 @@ class SpecManager:
             merged_spec["paths"][normalized_path] = methods
 
         # Merge components/schemas with prefixing
-        components = spec.get("components", {})
-        schemas = components.get("schemas", {})
-
         for schema_name, schema_def in schemas.items():
             prefixed_name = f"{api_name.title()}{schema_name}"
             merged_spec["components"]["schemas"][prefixed_name] = schema_def
