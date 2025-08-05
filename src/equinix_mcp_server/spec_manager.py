@@ -212,13 +212,14 @@ class SpecManager:
 
         # Create a deep copy of the spec to avoid modifying the original
         import copy
+
         spec = copy.deepcopy(spec)
 
         # Create a mapping of original schema names to prefixed names for this API
         schema_name_mapping = {}
         components = spec.get("components", {})
         schemas = components.get("schemas", {})
-        
+
         for schema_name in schemas.keys():
             prefixed_name = f"{api_name.title()}{schema_name}"
             schema_name_mapping[schema_name] = prefixed_name
