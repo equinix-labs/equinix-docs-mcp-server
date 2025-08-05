@@ -1,0 +1,52 @@
+# Configuration for Equinix API specs
+apis:
+  # Metal API - uses different auth (X-Auth-Token) and base path
+  metal:
+    url: "https://docs.equinix.com/api-catalog/metalv1/openapi.yaml"
+    overlay: "overlays/metal.yaml"
+    auth_type: "metal_token"
+    service_name: "metal"
+    version: "v1"
+    
+  # Network Edge API
+#  network-edge:
+#    url: "https://docs.equinix.com/api-catalog/network-edgev1/openapi.yaml"
+#    overlay: "overlays/network-edge.yaml"
+#    auth_type: "client_credentials"
+#    service_name: "network-edge"
+#    version: "v1"
+    
+  # Fabric API
+  fabric:
+    url: "https://docs.equinix.com/api-catalog/fabricv4/openapi.yaml"
+    overlay: "overlays/fabric.yaml"
+    auth_type: "client_credentials"
+    service_name: "fabric"
+    version: "v4"
+    
+  # Billing API
+  billing:
+    url: "https://docs.equinix.com/api-catalog/billingv2/openapi.yaml"
+    overlay: "overlays/billing.yaml"
+    auth_type: "client_credentials"
+    service_name: "billing"
+    version: "v2"
+
+# Authentication configuration
+auth:
+  # Client Credentials flow for most APIs
+  client_credentials:
+    token_url: "https://api.equinix.com/oauth2/v1/token"
+    
+  # Metal API uses different auth
+  metal_token:
+    header_name: "X-Auth-Token"
+
+# Output configuration
+output:
+  merged_spec_path: "merged-openapi.yaml"
+  
+# Documentation configuration
+docs:
+  sitemap_url: "https://docs.equinix.com/sitemap.xml"
+  cache_path: "docs/sitemap_cache.xml"

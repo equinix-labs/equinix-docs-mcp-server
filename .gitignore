@@ -3,6 +3,10 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+claude_desktop_config.json
+mcp-config.json
+equinix-mcp-config.json
+
 # C extensions
 *.so
 
@@ -205,3 +209,12 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Equinix MCP Server specific files
+# Cache directories for specs and docs
+cache/
+merged-openapi.yaml
+
+# Temporary files
+*.tmp
+*.bak

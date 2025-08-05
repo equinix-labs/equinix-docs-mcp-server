@@ -1,0 +1,43 @@
+# Basic overlay for Billing API normalization
+overlay: "1.0.0"
+info:
+  title: "Overlay for Billing API"
+  version: "1.0.0"
+  description: "Overlay spec to normalize Billing API for merging"
+
+actions:
+  # Normalize the title
+  - target: "$.info.title"
+    update: "Equinix Billing API"
+    
+  # Standardize servers to use common base URL
+  - target: "$.servers"
+    update:
+      - url: "https://api.equinix.com"
+        description: "Equinix API Server"
+        
+  # Ensure all paths start with /billing/v2
+  - target: "$.paths"
+    transform: "prefix_paths"
+    options:
+      prefix: "/billing/v2"
+      
+  # Add consistent tags
+  - target: "$.paths.*.*.tags"
+    update: ["billing"]
+    merge: true
+    
+  # Normalize authentication to OAuth2
+  - target: "$.components.securitySchemes"
+    update:
+      ClientCredentials:
+        type: "oauth2"
+        flows:
+          clientCredentials:
+            tokenUrl: "https://api.equinix.com/oauth2/v1/token"
+            scopes: {}
+        
+  # Set default security
+  - target: "$.security"
+    update:
+      - ClientCredentials: []
