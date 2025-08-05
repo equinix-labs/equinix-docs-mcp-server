@@ -189,6 +189,28 @@ class SpecManager:
         for api_name, spec in self.specs_cache.items():
             await self._merge_api_spec(merged_spec, api_name, spec)
 
+        # After all APIs are merged, ensure all references in $defs section use #/$defs/ format
+        def fix_all_defs_references(obj):
+            """Convert all #/components/schemas/ references to #/$defs/ in the $defs section"""
+            if isinstance(obj, dict):
+                if "$ref" in obj and isinstance(obj["$ref"], str):
+                    ref = obj["$ref"]
+                    if ref.startswith("#/components/schemas/"):
+                        schema_name = ref.split("/")[-1]
+                        # Check if this schema exists in our $defs section
+                        if schema_name in merged_spec.get("$defs", {}):
+                            obj["$ref"] = f"#/$defs/{schema_name}"
+                else:
+                    for key, value in obj.items():
+                        fix_all_defs_references(value)
+            elif isinstance(obj, list):
+                for item in obj:
+                    fix_all_defs_references(item)
+
+        # Apply the fix to the entire $defs section
+        if "$defs" in merged_spec:
+            fix_all_defs_references(merged_spec["$defs"])
+
         # Save merged spec
         output_path = Path(self.config.output.merged_spec_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -267,26 +289,6 @@ class SpecManager:
         # Update schema references in the entire spec before merging
         update_schema_refs(spec, schema_name_mapping)
 
-        # After merging schemas, update references in the merged spec's $defs section
-        # to use $defs format for internal consistency
-        def update_defs_refs_to_defs_format(obj, mapping):
-            """Update references in $defs section to use #/$defs/ format"""
-            if isinstance(obj, dict):
-                if "$ref" in obj and isinstance(obj["$ref"], str):
-                    ref = obj["$ref"]
-                    if ref.startswith("#/components/schemas/"):
-                        schema_name = ref.split("/")[-1]
-                        # Convert to $defs format if this schema exists in our mapping
-                        # (meaning it's one of the schemas we're processing from this API)
-                        if any(prefixed_name == schema_name for prefixed_name in mapping.values()):
-                            obj["$ref"] = f"#/$defs/{schema_name}"
-                else:
-                    for key, value in obj.items():
-                        update_defs_refs_to_defs_format(value, mapping)
-            elif isinstance(obj, list):
-                for item in obj:
-                    update_defs_refs_to_defs_format(item, mapping)
-
         # Merge paths with prefixing
         spec_paths = spec.get("paths", {})
         for path, methods in spec_paths.items():
@@ -312,9 +314,6 @@ class SpecManager:
             # Create completely independent copies 
             merged_spec["components"]["schemas"][prefixed_name] = copy.deepcopy(schema_def)
             merged_spec["$defs"][prefixed_name] = copy.deepcopy(schema_def)
-
-        # Update references in the $defs section to use $defs format for internal consistency
-        update_defs_refs_to_defs_format(merged_spec["$defs"], schema_name_mapping)
 
     async def _normalize_path(self, api_name: str, path: str) -> str:
         """Normalize API paths to handle different base path conventions."""
