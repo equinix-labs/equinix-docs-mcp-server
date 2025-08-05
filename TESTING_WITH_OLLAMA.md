@@ -10,7 +10,7 @@ This guide shows you how to connect the Equinix MCP Server to Ollama using the `
 2. **Equinix MCP Server** installed and working (this repository)
 3. **mcp-client-for-ollama** - Bridge that connects Ollama to MCP servers
 4. **Compatible Ollama model** with tool support (qwen2.5, llama3.1, llama3.2, etc.)
-5. **Python 3.10+** for running the bridge
+5. **Python 3.13+** for running the bridge
 6. **Equinix API credentials** (optional for initial testing - auth failures are expected)
 
 ## Step 1: Install and Setup mcp-client-for-ollama
