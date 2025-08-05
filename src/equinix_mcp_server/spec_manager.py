@@ -164,6 +164,11 @@ class SpecManager:
             "paths": {},
             "components": {
                 "schemas": {},
+                "requestBodies": {},
+                "responses": {},
+                "parameters": {},
+                "examples": {},
+                "headers": {},
                 "securitySchemes": {
                     "ClientCredentials": {
                         "type": "oauth2",
@@ -217,7 +222,14 @@ class SpecManager:
 
         async with aiofiles.open(output_path, "w") as f:
             # Write YAML directly - the anchors shouldn't affect FastMCP functionality
-            yaml_output = yaml.dump(merged_spec, default_flow_style=False, sort_keys=False)
+            # Use default_flow_style=False and allow_unicode=True to preserve formatting
+            yaml_output = yaml.dump(
+                merged_spec, 
+                default_flow_style=False, 
+                sort_keys=False,
+                allow_unicode=True,
+                width=float('inf')  # Prevent line wrapping
+            )
             await f.write(yaml_output)
 
         return merged_spec
@@ -240,10 +252,21 @@ class SpecManager:
 
         spec = copy.deepcopy(spec)
 
-        # Create a mapping of original schema names to prefixed names for this API
-        schema_name_mapping = {}
+        # Create mappings for all component types to prefixed names for this API
         components = spec.get("components", {})
         schemas = components.get("schemas", {})
+        
+        # Component types that need prefixing to avoid naming conflicts
+        component_types = ["schemas", "requestBodies", "responses", "parameters", "examples", "headers", "securitySchemes"]
+        component_mappings = {}
+        
+        # Initialize mappings for each component type
+        for comp_type in component_types:
+            component_mappings[comp_type] = {}
+            comp_dict = components.get(comp_type, {})
+            for comp_name in comp_dict.keys():
+                prefixed_name = f"{api_name.title()}{comp_name}"
+                component_mappings[comp_type][comp_name] = prefixed_name
 
         # Also check for $defs schemas (JSON Schema / OpenAPI 3.1 style) and move them to components/schemas
         defs_schemas = spec.get("$defs", {})
@@ -252,42 +275,49 @@ class SpecManager:
         for schema_name, schema_def in defs_schemas.items():
             if schema_name not in schemas:
                 schemas[schema_name] = schema_def
+                # Also add to schema mapping
+                prefixed_name = f"{api_name.title()}{schema_name}"
+                component_mappings["schemas"][schema_name] = prefixed_name
 
-        for schema_name in schemas.keys():
-            prefixed_name = f"{api_name.title()}{schema_name}"
-            schema_name_mapping[schema_name] = prefixed_name
+        # Legacy: keep schema_name_mapping for backward compatibility
+        schema_name_mapping = component_mappings["schemas"]
 
-        # Function to update schema references recursively
-        def update_schema_refs(obj, mapping):
+        # Function to update all component references recursively
+        def update_all_refs(obj, mappings):
             if isinstance(obj, dict):
                 if "$ref" in obj and isinstance(obj["$ref"], str):
                     ref = obj["$ref"]
-                    # Handle multiple reference patterns
-                    if ref.startswith("#/components/schemas/"):
-                        schema_name = ref.split("/")[-1]
-                        if schema_name in mapping:
-                            obj["$ref"] = f"#/components/schemas/{mapping[schema_name]}"
-                    elif ref.startswith("#/$defs/"):
-                        schema_name = ref.split("/")[-1]
-                        if schema_name in mapping:
-                            # Keep as $defs reference since we populate both locations
-                            obj["$ref"] = f"#/$defs/{mapping[schema_name]}"
-                    elif ref.startswith("#/definitions/"):
-                        schema_name = ref.split("/")[-1]
-                        if schema_name in mapping:
-                            obj["$ref"] = f"#/components/schemas/{mapping[schema_name]}"
-                    # Handle relative references (just the schema name)
-                    elif "/" not in ref and ref in mapping:
-                        obj["$ref"] = f"#/components/schemas/{mapping[ref]}"
+                    # Handle different component types
+                    for comp_type in component_types:
+                        ref_pattern = f"#/components/{comp_type}/"
+                        if ref.startswith(ref_pattern):
+                            comp_name = ref.split("/")[-1]
+                            if comp_name in mappings[comp_type]:
+                                obj["$ref"] = f"#/components/{comp_type}/{mappings[comp_type][comp_name]}"
+                            break
+                    else:
+                        # Handle legacy patterns for schemas
+                        if ref.startswith("#/$defs/"):
+                            schema_name = ref.split("/")[-1]
+                            if schema_name in mappings["schemas"]:
+                                # Keep as $defs reference since we populate both locations
+                                obj["$ref"] = f"#/$defs/{mappings['schemas'][schema_name]}"
+                        elif ref.startswith("#/definitions/"):
+                            schema_name = ref.split("/")[-1]
+                            if schema_name in mappings["schemas"]:
+                                obj["$ref"] = f"#/components/schemas/{mappings['schemas'][schema_name]}"
+                        # Handle relative references (just the schema name)
+                        elif "/" not in ref and ref in mappings["schemas"]:
+                            obj["$ref"] = f"#/components/schemas/{mappings['schemas'][ref]}"
                 else:
                     for key, value in obj.items():
-                        update_schema_refs(value, mapping)
+                        update_all_refs(value, mappings)
             elif isinstance(obj, list):
                 for item in obj:
-                    update_schema_refs(item, mapping)
+                    update_all_refs(item, mappings)
 
-        # Update schema references in the entire spec before merging
-        update_schema_refs(spec, schema_name_mapping)
+        # Update all component references in the entire spec before merging
+        update_all_refs(spec, component_mappings)
 
         # Merge paths with prefixing
         spec_paths = spec.get("paths", {})
@@ -307,13 +337,20 @@ class SpecManager:
 
             merged_spec["paths"][normalized_path] = methods
 
-        # Merge components/schemas with prefixing
+        # Merge all component types with prefixing
         import copy
-        for schema_name, schema_def in schemas.items():
-            prefixed_name = f"{api_name.title()}{schema_name}"
-            # Create completely independent copies 
-            merged_spec["components"]["schemas"][prefixed_name] = copy.deepcopy(schema_def)
-            merged_spec["$defs"][prefixed_name] = copy.deepcopy(schema_def)
+        for comp_type in component_types:
+            comp_dict = components.get(comp_type, {})
+            if comp_type not in merged_spec["components"]:
+                merged_spec["components"][comp_type] = {}
+                
+            for comp_name, comp_def in comp_dict.items():
+                prefixed_name = component_mappings[comp_type].get(comp_name, comp_name)
+                merged_spec["components"][comp_type][prefixed_name] = copy.deepcopy(comp_def)
+                
+                # For schemas, also populate $defs section for OpenAPI 3.1 compatibility
+                if comp_type == "schemas":
+                    merged_spec["$defs"][prefixed_name] = copy.deepcopy(comp_def)
 
     async def _normalize_path(self, api_name: str, path: str) -> str:
         """Normalize API paths to handle different base path conventions."""
