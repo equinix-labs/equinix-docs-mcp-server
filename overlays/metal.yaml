@@ -40,3 +40,21 @@ actions:
   - target: "$.security"
     update:
       - MetalToken: []
+
+  # Make Metal pagination link properties nullable (common in responses)
+  # These paths target OpenAPI 3.0 components; conversion will carry forward.
+  - target: "$.components.schemas.Meta.properties.first"
+    update:
+      nullable: true
+  - target: "$.components.schemas.Meta.properties.last"
+    update:
+      nullable: true
+  - target: "$.components.schemas.Meta.properties.next"
+    update:
+      nullable: true
+  - target: "$.components.schemas.Meta.properties.previous"
+    update:
+      nullable: true
+  - target: "$.components.schemas.Meta.properties.self"
+    update:
+      nullable: true

@@ -10,6 +10,7 @@ import prance
 import yaml
 from openapi_spec_validator import validate_spec
 from prance.convert import convert_spec
+import re
 
 from .config import Config
 from .openapi_overlays import OverlayManager
@@ -27,6 +28,9 @@ class SpecManager:
     async def update_specs(self) -> None:
         """Update all API specs from their sources."""
         for api_name in self.config.get_api_names():
+            api_cfg = self.config.get_api_config(api_name)
+            if api_cfg and api_cfg.enabled is False:
+                continue
             await self._fetch_spec(api_name)
             await self._load_overlay(api_name)
 
@@ -194,8 +198,7 @@ class SpecManager:
         for api_name, spec in self.specs_cache.items():
             await self._merge_api_spec(merged_spec, api_name, spec)
 
-        # Post-process known schema quirks to better match real API payloads
-        self._postprocess_merged_spec(merged_spec)
+    # Note: avoid one-off post-processing; prefer overlays for schema fixes
 
         # Save merged spec
         output_path = Path(self.config.output.merged_spec_path)
@@ -213,27 +216,7 @@ class SpecManager:
 
         return merged_spec
 
-    def _postprocess_merged_spec(self, merged_spec: Dict[str, Any]) -> None:
-        """Apply targeted fixes to the merged spec to match real responses.
-
-        - MetalMeta: pagination link fields (first/last/next/previous/self)
-          can be null in practice; allow null alongside the object schema.
-        """
-        defs = merged_spec.get("$defs")
-        if not isinstance(defs, dict):
-            return
-
-        meta_schema = defs.get("MetalMeta")
-        if isinstance(meta_schema, dict):
-            props = meta_schema.get("properties")
-            if isinstance(props, dict):
-                for key in ("first", "last", "next", "previous", "self"):
-                    val = props.get(key)
-                    # If property is a $ref to MetalHref, make it nullable via oneOf
-                    if isinstance(val, dict) and "$ref" in val:
-                        ref = val.get("$ref")
-                        if isinstance(ref, str) and ref.startswith("#/$defs/"):
-                            props[key] = {"oneOf": [{"$ref": ref}, {"type": "null"}]}
+    
 
     async def _merge_api_spec(
         self, merged_spec: Dict[str, Any], api_name: str, spec: Dict[str, Any]
@@ -273,7 +256,7 @@ class SpecManager:
             "headers",
             "securitySchemes",
         ]
-        component_mappings = {}
+        component_mappings: Dict[str, Dict[str, str]] = {}
 
         # Initialize mappings for component types
         for comp_type in component_types:
@@ -284,14 +267,30 @@ class SpecManager:
                 component_mappings[comp_type][comp_name] = prefixed_name
 
         # Create schema mapping for $defs
-        schema_mappings = {}
+        schema_mappings: Dict[str, str] = {}
         for schema_name in all_schemas.keys():
             prefixed_name = f"{api_name.title()}{schema_name}"
             schema_mappings[schema_name] = prefixed_name
 
         # Function to update all references recursively for OpenAPI 3.1
-        def update_all_refs(obj, schema_mappings, component_mappings):
+        def update_all_refs(obj: Any, schema_mappings: Dict[str, str], component_mappings: Dict[str, Dict[str, str]]):
             if isinstance(obj, dict):
+                # Convert OpenAPI 3.0 nullable -> OpenAPI 3.1 shape
+                if obj.get("nullable") is True:
+                    ref = obj.get("$ref")
+                    typ = obj.get("type")
+                    if isinstance(ref, str):
+                        obj.pop("nullable", None)
+                        obj.pop("$ref", None)
+                        obj["oneOf"] = [{"$ref": ref}, {"type": "null"}]
+                    elif isinstance(typ, str):
+                        obj["type"] = [typ, "null"]
+                        obj.pop("nullable", None)
+                    elif isinstance(typ, list):
+                        if "null" not in typ:
+                            typ.append("null")
+                        obj.pop("nullable", None)
+
                 if "$ref" in obj and isinstance(obj["$ref"], str):
                     ref = obj["$ref"]
 
@@ -322,8 +321,15 @@ class SpecManager:
                                     )
                                 break
                 else:
-                    for key, value in obj.items():
-                        update_all_refs(value, schema_mappings, component_mappings)
+                    for key, value in list(obj.items()):
+                        # Some specs (3.0) may embed references as plain strings in mapping fields
+                        if isinstance(value, str) and value.startswith("#/components/schemas/"):
+                            schema_name = value.split("/")[-1]
+                            mapped = schema_mappings.get(schema_name)
+                            if mapped:
+                                obj[key] = f"#/$defs/{mapped}"
+                        else:
+                            update_all_refs(value, schema_mappings, component_mappings)
             elif isinstance(obj, list):
                 for item in obj:
                     update_all_refs(item, schema_mappings, component_mappings)
@@ -331,8 +337,25 @@ class SpecManager:
         # Update all references in the spec
         update_all_refs(spec, schema_mappings, component_mappings)
 
-        # Merge paths with prefixing
+        # Merge paths with prefixing and filter by include/exclude
         spec_paths = spec.get("paths", {})
+        # Precompile include/exclude regexes (operationIds are prefixed as f"{api_name}_...")
+        include_patterns = []
+        exclude_patterns = []
+        if api_config.include:
+            include_patterns = [re.compile(p) for p in api_config.include]
+        if api_config.exclude:
+            exclude_patterns = [re.compile(p) for p in api_config.exclude]
+
+        def allowed(op_id: str) -> bool:
+            ok = True
+            if include_patterns:
+                ok = any(p.search(op_id) for p in include_patterns)
+            if ok and exclude_patterns:
+                if any(p.search(op_id) for p in exclude_patterns):
+                    ok = False
+            return ok
+
         for path, methods in spec_paths.items():
             # Normalize path based on API type
             normalized_path = await self._normalize_path(api_name, path)
@@ -347,7 +370,19 @@ class SpecManager:
                         operation["tags"] = []
                     operation["tags"].append(api_config.service_name)
 
-            merged_spec["paths"][normalized_path] = methods
+            # Filter methods by include/exclude
+            filtered_methods: Dict[str, Any] = {}
+            for method, operation in methods.items():
+                if not isinstance(operation, dict):
+                    continue
+                op_id = operation.get("operationId")
+                if not isinstance(op_id, str):
+                    continue
+                if allowed(op_id):
+                    filtered_methods[method] = operation
+
+            if filtered_methods:
+                merged_spec["paths"][normalized_path] = filtered_methods
 
         # Merge schemas into $defs
         for schema_name, schema_def in all_schemas.items():

@@ -103,17 +103,47 @@ class OverlayManager:
         # In a full implementation, you'd use a proper overlay engine
 
         actions = overlay.get("actions", [])
-        modified_spec = spec.copy()
+        # Deep copy to avoid mutating original
+        import copy as _copy
+        modified_spec = _copy.deepcopy(spec)
+
+        def _apply_update(obj: Any, path: str, value: Any) -> None:
+            # very small subset of JSONPath: $.a.b.c keys only
+            if not path.startswith("$."):
+                return
+            keys = path[2:].split(".")
+            cur = obj
+            for k in keys[:-1]:
+                if isinstance(cur, dict):
+                    if k not in cur or not isinstance(cur[k], dict):
+                        cur[k] = {}
+                    cur = cur[k]
+                else:
+                    return
+            last = keys[-1]
+            if isinstance(cur, dict):
+                if isinstance(value, dict) and isinstance(cur.get(last), dict):
+                    cur[last].update(value)
+                else:
+                    cur[last] = value
 
         for action in actions:
             target = action.get("target")
             update = action.get("update")
+            transform = action.get("transform")
 
-            # Simple path-based updates
-            if target == "$.info.title" and "info" in modified_spec:
-                modified_spec["info"]["title"] = update
-            elif target == "$.servers":
-                modified_spec["servers"] = update
+            # Ignore unsupported transforms and wildcard targets in this minimal engine
+            if transform:
+                continue
+            if not isinstance(target, str):
+                continue
+            if "*" in target:
+                continue
+            # Only apply explicit updates; avoid setting nodes to None
+            if update is None:
+                continue
+
+            _apply_update(modified_spec, target, update)
 
         return modified_spec
 
