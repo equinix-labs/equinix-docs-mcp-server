@@ -15,6 +15,15 @@ class APIConfig(BaseModel):
     auth_type: str = Field(..., description="Authentication type")
     service_name: str = Field(..., description="Service name")
     version: str = Field(..., description="API version")
+    enabled: bool = Field(default=True, description="Enable/disable this API")
+    include: List[str] = Field(
+        default_factory=list,
+        description="Regex patterns of operationIds to include (after prefix)",
+    )
+    exclude: List[str] = Field(
+        default_factory=list,
+        description="Regex patterns of operationIds to exclude (after prefix)",
+    )
 
 
 class AuthConfig(BaseModel):

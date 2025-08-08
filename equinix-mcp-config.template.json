@@ -8,7 +8,7 @@
         "PYTHONPATH": "/path/to/your/equinix-mcp-server/src",
         "EQUINIX_CLIENT_ID": "YOUR_EQUINIX_CLIENT_ID",
         "EQUINIX_CLIENT_SECRET": "YOUR_EQUINIX_CLIENT_SECRET",
-        "FASTMCP_EXPERIMENTAL_ENABLE_NEW_OPENAPI_PARSER": "true"
+        "FASTMCP_EXPERIMENTAL_ENABLE_NEW_OPENAPI_PARSER": "false"
       },
       "disabled": false
     }
