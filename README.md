@@ -23,8 +23,67 @@ A Model Context Protocol (MCP) server that provides unified access to Equinix AP
 ### Installation
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -e .
 ```
+
+Or replace `.venv/bin/python` with `uvx` (if preferred) and change the commands examples and configuration blocks accordingly.
+
+## Adding the MCP Server to VS Code
+
+After cloning this repository, you can add the Equinix MCP server to VS Code with a single command:
+
+### Using Python Virtual Environment (.venv)
+
+```bash
+code --add-mcp '{
+ "servers": {
+  "equinix": {
+   "type": "stdio",
+   "command": ".venv/bin/python",
+   "args": [
+    "-m",
+    "equinix_mcp_server.main"
+   ],
+   "cwd": "'$PWD'",
+   "env": {
+    "PYTHONPATH": "'$PWD'$'/src",
+    "EQUINIX_CLIENT_ID": "$\{input:EQUINIX_CLIENT_ID\}",
+    "EQUINIX_CLIENT_SECRET": "$\{input:EQUINIX_CLIENT_SECRET\}",
+    "EQUINIX_METAL_TOKEN": "$\{input:EQUINIX_METAL_TOKEN\}"
+   },
+   "disabled": false
+  }
+ },
+ "inputs": [
+  {
+   "type": "promptString",
+   "id": "EQUINIX_CLIENT_ID",
+   "description": "Equinix Client ID",
+   "password": true
+  },
+  {
+   "type": "promptString",
+   "id": "EQUINIX_CLIENT_SECRET",
+   "description": "Equinix Client Secret",
+   "password": true
+  },
+  {
+   "type": "promptString",
+   "id": "EQUINIX_METAL_TOKEN",
+   "description": "Equinix Metal API Token",
+   "password": true
+  }
+ ]
+}}'
+```
+
+> **Note:** The configuration is stored in `.vscode/mcp.json` per project. You do not need to set `cwd` unless you have a special setup.
+
+For more details, see [VS Code MCP Server documentation](https://code.visualstudio.com/docs/copilot/chat/mcp-servers).
+
+## Usage
 
 ### Configuration
 
@@ -39,13 +98,10 @@ export EQUINIX_CLIENT_SECRET="your_client_secret"
 export EQUINIX_METAL_TOKEN="your_metal_token"
 ```
 
-### Usage
-
 #### Start the MCP Server
 
 ```bash
-equinix-mcp-server
-```
+python -m equinix_mcp_server.main```
 
 #### Test with MCP Clients
 

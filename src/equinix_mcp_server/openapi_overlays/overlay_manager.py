@@ -105,6 +105,7 @@ class OverlayManager:
         actions = overlay.get("actions", [])
         # Deep copy to avoid mutating original
         import copy as _copy
+
         modified_spec = _copy.deepcopy(spec)
 
         def _apply_update(obj: Any, path: str, value: Any) -> None:

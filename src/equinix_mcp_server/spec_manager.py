@@ -1,6 +1,7 @@
 """OpenAPI spec management and merging functionality."""
 
 import json
+import re
 from pathlib import Path
 from typing import Any, Dict, Hashable, List, Mapping, Optional
 
@@ -10,7 +11,6 @@ import prance
 import yaml
 from openapi_spec_validator import validate_spec
 from prance.convert import convert_spec
-import re
 
 from .config import Config
 from .openapi_overlays import OverlayManager
@@ -198,7 +198,7 @@ class SpecManager:
         for api_name, spec in self.specs_cache.items():
             await self._merge_api_spec(merged_spec, api_name, spec)
 
-    # Note: avoid one-off post-processing; prefer overlays for schema fixes
+        # Note: avoid one-off post-processing; prefer overlays for schema fixes
 
         # Save merged spec
         output_path = Path(self.config.output.merged_spec_path)
@@ -215,8 +215,6 @@ class SpecManager:
             await f.write(yaml_output)
 
         return merged_spec
-
-    
 
     async def _merge_api_spec(
         self, merged_spec: Dict[str, Any], api_name: str, spec: Dict[str, Any]
@@ -273,7 +271,11 @@ class SpecManager:
             schema_mappings[schema_name] = prefixed_name
 
         # Function to update all references recursively for OpenAPI 3.1
-        def update_all_refs(obj: Any, schema_mappings: Dict[str, str], component_mappings: Dict[str, Dict[str, str]]):
+        def update_all_refs(
+            obj: Any,
+            schema_mappings: Dict[str, str],
+            component_mappings: Dict[str, Dict[str, str]],
+        ):
             if isinstance(obj, dict):
                 # Convert OpenAPI 3.0 nullable -> OpenAPI 3.1 shape
                 if obj.get("nullable") is True:
@@ -323,7 +325,9 @@ class SpecManager:
                 else:
                     for key, value in list(obj.items()):
                         # Some specs (3.0) may embed references as plain strings in mapping fields
-                        if isinstance(value, str) and value.startswith("#/components/schemas/"):
+                        if isinstance(value, str) and value.startswith(
+                            "#/components/schemas/"
+                        ):
                             schema_name = value.split("/")[-1]
                             mapped = schema_mappings.get(schema_name)
                             if mapped:
