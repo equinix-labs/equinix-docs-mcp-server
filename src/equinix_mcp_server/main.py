@@ -38,6 +38,35 @@ class AuthenticatedClient:
             },
         )
 
+    async def send(self, request: httpx.Request, **kwargs: Any) -> httpx.Response:
+        """Send a request with authentication (FastMCP compatibility method)."""
+        # This is the method FastMCP's experimental parser likely uses
+        logger.debug(f"FastMCP calling send() with {request.method} {request.url}")
+
+        # Add authentication headers to the request
+        service_name = self._get_service_from_url(str(request.url))
+        try:
+            auth_header = await self.auth_manager.get_auth_header(service_name)
+            logger.debug(
+                f"Adding auth headers for service {service_name}: {list(auth_header.keys())}"
+            )
+
+            # Add auth headers to the request
+            for key, value in auth_header.items():
+                request.headers[key] = value
+                if key.lower() == "x-auth-token":
+                    logger.debug(f"Added {key}: {value[:10]}...")
+                else:
+                    logger.debug(f"Added {key}: {value}")
+
+        except Exception as e:
+            logger.error(f"Auth error in send() for {service_name}: {e}")
+
+        # Send the request using the underlying client
+        response = await self._client.send(request, **kwargs)
+        logger.debug(f"send() response status: {response.status_code}")
+        return response
+
     async def request(self, method: str, url: str, **kwargs: Any) -> httpx.Response:
         """Make an authenticated request."""
         # If URL is just a path, let the base_url handle it
@@ -107,6 +136,26 @@ class AuthenticatedClient:
             logger.error(f"Request failed: {e}")
             raise
 
+    async def get(self, url: str, **kwargs: Any) -> httpx.Response:
+        """GET request with authentication."""
+        return await self.request("GET", url, **kwargs)
+
+    async def post(self, url: str, **kwargs: Any) -> httpx.Response:
+        """POST request with authentication."""
+        return await self.request("POST", url, **kwargs)
+
+    async def put(self, url: str, **kwargs: Any) -> httpx.Response:
+        """PUT request with authentication."""
+        return await self.request("PUT", url, **kwargs)
+
+    async def patch(self, url: str, **kwargs: Any) -> httpx.Response:
+        """PATCH request with authentication."""
+        return await self.request("PATCH", url, **kwargs)
+
+    async def delete(self, url: str, **kwargs: Any) -> httpx.Response:
+        """DELETE request with authentication."""
+        return await self.request("DELETE", url, **kwargs)
+
     def _get_service_from_url(self, url: str) -> str:
         """Determine service name from URL."""
         if "/metal/" in url:
@@ -144,6 +193,11 @@ class EquinixMCPServer:
 
     async def initialize(self) -> None:
         """Initialize the server components using FastMCP's OpenAPI integration."""
+        # Enable experimental OpenAPI parser
+        import os
+
+        os.environ["FASTMCP_EXPERIMENTAL_ENABLE_NEW_OPENAPI_PARSER"] = "true"
+
         # Load and merge API specs
         await self.spec_manager.update_specs()
         merged_spec = await self.spec_manager.get_merged_spec()
