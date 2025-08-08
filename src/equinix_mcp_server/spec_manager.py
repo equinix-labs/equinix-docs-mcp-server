@@ -106,12 +106,13 @@ class SpecManager:
                 # Use prance to convert Swagger v2 to OpenAPI v3
                 # convert_spec returns a parser, we need the specification from it
                 converted_parser = convert_spec(spec, prance.BaseParser)
-                converted_spec = converted_parser.specification
+                # Ensure we return a plain dict for typing and downstream use
+                converted_spec = dict(converted_parser.specification or {})  # type: ignore[arg-type]
 
                 print(
                     f"✓ Successfully converted {api_name} from Swagger v2 to OpenAPI v3"
                 )
-                return converted_spec
+                return converted_spec  # type: ignore[return-value]
 
             except Exception as e:
                 print(f"Error: Failed to convert {api_name} from Swagger v2: {e}")
@@ -193,6 +194,9 @@ class SpecManager:
         for api_name, spec in self.specs_cache.items():
             await self._merge_api_spec(merged_spec, api_name, spec)
 
+        # Post-process known schema quirks to better match real API payloads
+        self._postprocess_merged_spec(merged_spec)
+
         # Save merged spec
         output_path = Path(self.config.output.merged_spec_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -208,6 +212,28 @@ class SpecManager:
             await f.write(yaml_output)
 
         return merged_spec
+
+    def _postprocess_merged_spec(self, merged_spec: Dict[str, Any]) -> None:
+        """Apply targeted fixes to the merged spec to match real responses.
+
+        - MetalMeta: pagination link fields (first/last/next/previous/self)
+          can be null in practice; allow null alongside the object schema.
+        """
+        defs = merged_spec.get("$defs")
+        if not isinstance(defs, dict):
+            return
+
+        meta_schema = defs.get("MetalMeta")
+        if isinstance(meta_schema, dict):
+            props = meta_schema.get("properties")
+            if isinstance(props, dict):
+                for key in ("first", "last", "next", "previous", "self"):
+                    val = props.get(key)
+                    # If property is a $ref to MetalHref, make it nullable via oneOf
+                    if isinstance(val, dict) and "$ref" in val:
+                        ref = val.get("$ref")
+                        if isinstance(ref, str) and ref.startswith("#/$defs/"):
+                            props[key] = {"oneOf": [{"$ref": ref}, {"type": "null"}]}
 
     async def _merge_api_spec(
         self, merged_spec: Dict[str, Any], api_name: str, spec: Dict[str, Any]

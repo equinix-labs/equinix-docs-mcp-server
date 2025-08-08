@@ -218,6 +218,8 @@ class EquinixMCPServer:
                 "including Metal, Fabric, Network Edge, and Billing services."
             ),
         )
+        # Local workaround: ensure tool output schemas include required $defs
+        await self._attach_defs_to_tool_schemas(merged_spec)
 
         # Register additional documentation tools that aren't part of the API
         await self._register_docs_tools()
@@ -253,6 +255,80 @@ class EquinixMCPServer:
 
         # Use stdio_server for MCP transport to avoid asyncio loop conflicts
         await self.mcp.run_stdio_async(show_banner=True)
+
+    def _collect_defs_references(self, obj: Any) -> set[str]:
+        """Collect names referenced via '#/$defs/<Name>' within a schema-like object."""
+        refs: set[str] = set()
+        if isinstance(obj, dict):
+            ref = obj.get("$ref")
+            if isinstance(ref, str) and ref.startswith("#/$defs/"):
+                refs.add(ref.split("/")[-1])
+            for v in obj.values():
+                refs |= self._collect_defs_references(v)
+        elif isinstance(obj, list):
+            for item in obj:
+                refs |= self._collect_defs_references(item)
+        return refs
+
+    def _closure_defs(self, start: set[str], defs: Dict[str, Any]) -> Dict[str, Any]:
+        """Compute transitive closure of referenced $defs starting from provided names."""
+        used = set(start)
+        changed = True
+        while changed:
+            changed = False
+            for name in list(used):
+                schema = defs.get(name)
+                if isinstance(schema, dict):
+                    nested = self._collect_defs_references(schema)
+                    for n in nested:
+                        if n not in used:
+                            used.add(n)
+                            changed = True
+        return {n: defs[n] for n in used if n in defs}
+
+    async def _attach_defs_to_tool_schemas(self, merged_spec: Dict[str, Any]) -> None:
+        """Attach necessary $defs to each tool's output_schema to avoid unresolved refs.
+
+        Some consumers validate only against the tool-level schema and won't have
+        the full OpenAPI doc context. Adding the minimal $defs subset prevents
+        PointerToNowhere errors like '#/$defs/MetalMeta'.
+        """
+        if not self.mcp:
+            return
+        try:
+            tools = await self.mcp.get_tools()
+        except Exception:
+            return
+
+        all_defs = merged_spec.get("$defs", {})
+        if not isinstance(all_defs, dict) or not all_defs:
+            return
+
+        for tool in tools.values():
+            output_schema = getattr(tool, "output_schema", None)
+            if not isinstance(output_schema, dict):
+                continue
+
+            referenced = self._collect_defs_references(output_schema)
+            # If wrapped result, also inspect the inner schema
+            if output_schema.get("x-fastmcp-wrap-result") and isinstance(
+                output_schema.get("properties"), dict
+            ):
+                inner = output_schema["properties"].get("result")
+                if isinstance(inner, dict):
+                    referenced |= self._collect_defs_references(inner)
+
+            if not referenced:
+                continue
+
+            subset = self._closure_defs(referenced, all_defs)
+            existing = output_schema.get("$defs")
+            if isinstance(existing, dict) and existing:
+                merged = existing.copy()
+                merged.update(subset)
+                output_schema["$defs"] = merged
+            else:
+                output_schema["$defs"] = subset
 
 
 @click.command()
