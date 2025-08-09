@@ -142,63 +142,10 @@ See `TESTING_WITH_OLLAMA.md` for detailed Ollama integration instructions.
 #### Test API Spec Fetching
 
 ```bash
-equinix-mcp-server --test-update-specs
+equinix-mcp-server --test-update-specs # --config path/to/custom/config.yaml
 ```
 
-#### Use Custom Configuration
-
-```bash
-equinix-mcp-server --config path/to/custom/config.yaml
-```
-
-## Testing Integration
-
-### Run Integration Test
-
-Run the integration test to verify everything is working:
-
-```bash
-python test_ollama_integration.py
-```
-
-This will check:
-- ✅ Ollama is running and has compatible models
-- ✅ mcp-client-for-ollama bridge is installed  
-- ✅ Equinix MCP Server can initialize and expose tools
-- ✅ Configuration files are valid
-- ✅ All 441 API tools are properly exposed
-
-If all tests pass, you're ready to use the bridge!
-
-### Testing with Ollama
-
-For detailed testing instructions with the mcp-client-for-ollama bridge, see [TESTING_WITH_OLLAMA.md](TESTING_WITH_OLLAMA.md).
-
-#### Quick Bridge Test
-
-1. **Install the bridge**:
-   ```bash
-   pip install --upgrade ollmcp
-   ```
-
-2. **Copy the configuration**:
-   ```bash
-   cp equinix-mcp-config.template.json equinix-mcp-config.json
-   ```
-
-3. **Start the bridge**:
-   ```bash
-   ollmcp --servers-json equinix-mcp-config.json --model llama3.2:latest
-   ```
-
-4. **Test with a query**:
-   ```
-   Can you list the Network Edge devices using the Equinix API?
-   ```
-
-The server exposes 441 tools across all Equinix APIs, including 63 Network Edge tools for device management.
-
-## Configuration
+## Server Configuration
 
 The server is configured via `config/apis.yaml`. This file defines:
 
@@ -207,7 +154,7 @@ The server is configured via `config/apis.yaml`. This file defines:
 - Overlay file locations
 - Output settings
 
-### Example Configuration
+### Example API Configuration
 
 ```yaml
 apis:
@@ -217,7 +164,10 @@ apis:
     auth_type: "metal_token"
     service_name: "metal"
     version: "v1"
-    
+    # include: []
+    # exclude: [".*"]
+    # enabled: true
+
   fabric:
     url: "https://docs.equinix.com/api-catalog/fabricv4/openapi.yaml"
     overlay: "overlays/fabric.yaml"
