@@ -8,14 +8,9 @@ __description__ = "MCP Server for agentive tasks against Equinix APIs"
 from .auth import AuthManager
 from .config import Config
 from .docs import DocsManager
-from .main import EquinixMCPServer, main
-from .spec_manager import SpecManager
 
 __all__ = [
-    "EquinixMCPServer",
-    "main",
     "Config",
     "AuthManager",
-    "SpecManager",
     "DocsManager",
 ]

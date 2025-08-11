@@ -1,17 +1,23 @@
 """OpenAPI overlay management functionality."""
 
+import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import aiofiles
 import yaml
 
+from equinix_mcp_server.config import Config
+
+logger = logging.getLogger(__name__)
+
 
 class OverlayManager:
     """Manages OpenAPI overlay loading, creation, and application."""
 
-    def __init__(self) -> None:
+    def __init__(self, config: Config) -> None:
         """Initialize the overlay manager."""
+        self.config = config
         self.overlays_cache: Dict[str, Dict[str, Any]] = {}
 
     async def load_overlay(self, overlay_path: str) -> Optional[Dict[str, Any]]:
@@ -87,18 +93,22 @@ class OverlayManager:
         async with aiofiles.open(path, "w") as f:
             await f.write(yaml.dump(overlay, default_flow_style=False))
 
-    async def apply_overlay(
-        self, spec: Dict[str, Any], overlay: Dict[str, Any]
+    def apply(
+        self, spec: Dict[str, Any], api_name: str, overlay: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Apply overlay transformations to a spec.
 
         Args:
             spec: The OpenAPI specification to modify
-            overlay: The overlay definition containing transformation actions
+            api_name: The name of the API, to find the corresponding overlay.
+            overlay: The overlay to apply.
 
         Returns:
             Modified specification
         """
+        if not overlay:
+            return spec
+
         # This is a simplified overlay implementation
         # In a full implementation, you'd use a proper overlay engine
 
@@ -115,12 +125,10 @@ class OverlayManager:
             keys = path[2:].split(".")
             cur = obj
             for k in keys[:-1]:
-                if isinstance(cur, dict):
-                    if k not in cur or not isinstance(cur[k], dict):
-                        cur[k] = {}
+                if isinstance(cur, dict) and k in cur:
                     cur = cur[k]
                 else:
-                    return
+                    return  # path does not exist
             last = keys[-1]
             if isinstance(cur, dict):
                 if isinstance(value, dict) and isinstance(cur.get(last), dict):

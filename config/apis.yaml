@@ -2,50 +2,60 @@
 apis:
   # Metal API - uses different auth (X-Auth-Token) and base path
   metal:
-    url: "https://docs.equinix.com/api-catalog/metalv1/openapi.yaml"
-    overlay: "overlays/metal.yaml"
     auth_type: "metal_token"
     service_name: "metal"
-    version: "v1"
     include:
       - metal_findPlans
       - metal_findMetros
-    
+    specs:
+      - url: "https://docs.equinix.com/api-catalog/metalv1/openapi.yaml"
+        overlay: "overlays/metal.yaml"
+
   # Network Edge API
   network-edge:
-    url: "https://docs.equinix.com/api-catalog/network-edgev1/openapi.yaml"
-    overlay: "overlays/network-edge.yaml"
     auth_type: "client_credentials"
     service_name: "network-edge"
-    version: "v1"
     enabled: false
-    
+    specs:
+      - url: "https://docs.equinix.com/api-catalog/network-edgev1/openapi.yaml"
+        overlay: "overlays/network-edge.yaml"
+
   # Fabric API
   fabric:
-    url: "https://docs.equinix.com/api-catalog/fabricv4/openapi.yaml"
-    overlay: "overlays/fabric.yaml"
     auth_type: "client_credentials"
     service_name: "fabric"
-    version: "v4"
     include:
       - fabric_searchConnections
       - fabric_searchProviders
       - fabric_getMetros
-    
+    specs:
+      - url: "https://docs.equinix.com/api-catalog/fabricv4/openapi.yaml"
+        overlay: "overlays/fabric.yaml"
+
   # Billing API
   billing:
-    url: "https://docs.equinix.com/api-catalog/billingv2/openapi.yaml"
-    overlay: "overlays/billing.yaml"
     auth_type: "client_credentials"
     service_name: "billing"
-    version: "v2"
+    specs:
+      - url: "https://docs.equinix.com/api-catalog/billingv2/openapi.yaml"
+        overlay: "overlays/billing.yaml"
+  # SmartView APIs
+  smartview:
+    specs:
+      - url: "https://docs.equinix.com/api-catalog/environmentalv1/openapi.yaml"
+      - url: "https://docs.equinix.com/api-catalog/environmentalv2/openapi.yaml"
+      - url: "https://docs.equinix.com/api-catalog/feed-subscriptionv2/openapi.yaml"
+      - url: "https://docs.equinix.com/api-catalog/hierarchyv1/openapi.yaml"
+      - url: "https://docs.equinix.com/api-catalog/ibx-assetsv1/openapi.yaml"
+      - url: "https://docs.equinix.com/api-catalog/powerv1/openapi.yaml"
+      - url: "https://docs.equinix.com/api-catalog/system-alertsv2/openapi.yaml"
 
 # Authentication configuration
 auth:
   # Client Credentials flow for most APIs
   client_credentials:
     token_url: "https://api.equinix.com/oauth2/v1/token"
-    
+
   # Metal API uses different auth
   metal_token:
     header_name: "X-Auth-Token"
@@ -53,7 +63,7 @@ auth:
 # Output configuration
 output:
   merged_spec_path: "merged-openapi.yaml"
-  
+
 # Documentation configuration
 docs:
   sitemap_url: "https://docs.equinix.com/sitemap.xml"

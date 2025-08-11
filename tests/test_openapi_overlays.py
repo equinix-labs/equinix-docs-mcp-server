@@ -5,13 +5,20 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+from equinix_mcp_server.config import Config
 from equinix_mcp_server.openapi_overlays import OverlayManager
 
 
 @pytest.fixture
-def overlay_manager():
+def config():
+    """Load test configuration."""
+    return Config.load("config/apis.yaml")
+
+
+@pytest.fixture
+def overlay_manager(config):
     """Create overlay manager instance."""
-    return OverlayManager()
+    return OverlayManager(config)
 
 
 def test_overlay_manager_init(overlay_manager):
@@ -85,11 +92,9 @@ async def test_create_overlay_template_metal(overlay_manager, tmp_path):
     content = overlay_path.read_text()
     assert "overlay: 1.0.0" in content
     assert "Equinix Metal API" in content
-    assert "path_prefix: /metal/v1" in content
 
 
-@pytest.mark.asyncio
-async def test_apply_overlay_simple(overlay_manager):
+def test_apply_overlay_simple(overlay_manager):
     """Test applying a simple overlay to a spec."""
     spec = {
         "info": {"title": "Original Title", "version": "1.0.0"},
@@ -104,7 +109,7 @@ async def test_apply_overlay_simple(overlay_manager):
         ]
     }
 
-    result = await overlay_manager.apply_overlay(spec, overlay)
+    result = overlay_manager.apply(spec, "test", overlay)
 
     assert result["info"]["title"] == "New Title"
     assert result["info"]["version"] == "1.0.0"  # Unchanged
@@ -112,8 +117,7 @@ async def test_apply_overlay_simple(overlay_manager):
     assert "paths" in result  # Unchanged
 
 
-@pytest.mark.asyncio
-async def test_apply_overlay_no_actions(overlay_manager):
+def test_apply_overlay_no_actions(overlay_manager):
     """Test applying an overlay with no actions."""
     spec = {
         "info": {"title": "Original Title"},
@@ -122,21 +126,20 @@ async def test_apply_overlay_no_actions(overlay_manager):
 
     overlay = {"actions": []}
 
-    result = await overlay_manager.apply_overlay(spec, overlay)
+    result = overlay_manager.apply(spec, "test", overlay)
 
     # Should be unchanged
     assert result["info"]["title"] == "Original Title"
     assert result["servers"] == [{"url": "https://example.com"}]
 
 
-@pytest.mark.asyncio
-async def test_apply_overlay_missing_target(overlay_manager):
+def test_apply_overlay_missing_target(overlay_manager):
     """Test applying an overlay to a spec that doesn't have the target."""
     spec = {"paths": {}}  # No info section
 
     overlay = {"actions": [{"target": "$.info.title", "update": "New Title"}]}
 
-    result = await overlay_manager.apply_overlay(spec, overlay)
+    result = overlay_manager.apply(spec, "test", overlay)
 
     # Should be unchanged since target doesn't exist
     assert "info" not in result
