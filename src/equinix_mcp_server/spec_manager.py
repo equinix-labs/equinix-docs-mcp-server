@@ -1,179 +1,211 @@
-"""OpenAPI spec management and merging functionality."""
+"""Manages the lifecycle of OpenAPI specifications.
 
-import json
-import re
+This module is responsible for fetching, caching, merging, and applying
+overlays to OpenAPI specifications as defined in the configuration. It
+handles multiple spec sources per API namespace and combines them into a
+single, coherent specification.
+"""
+
+import asyncio
+import collections.abc
+import logging
 from pathlib import Path
-from typing import Any, Dict, Hashable, List, Mapping, Optional
+from typing import Any, Dict, List, Optional
 
-import aiofiles
 import httpx
 import prance
 import yaml
-from openapi_spec_validator import validate_spec
+from openapi_spec_validator import validate
 from prance.convert import convert_spec
 
-from .config import Config
-from .openapi_overlays import OverlayManager
+from .config import APIConfig, Config
+from .openapi_overlays.overlay_manager import OverlayManager
+
+logger = logging.getLogger(__name__)
+
+
+def deep_merge(d: Dict[str, Any], u: collections.abc.Mapping) -> Dict[str, Any]:
+    """
+    Merge two dictionaries recursively.
+
+    :param d: The dictionary to merge into.
+    :param u: The dictionary to merge from.
+    :return: The merged dictionary.
+    """
+    for k, v in u.items():
+        if isinstance(v, collections.abc.Mapping):
+            d[k] = deep_merge(d.get(k, {}), v)
+        else:
+            d[k] = v
+    return d
+
+
+def _update_references(obj: Any) -> Any:
+    """Recursively update '$ref' values in the spec."""
+    # This function is currently not used, but is kept for future reference.
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            if (
+                key == "$ref"
+                and isinstance(value, str)
+                and value.startswith("#/components/schemas/")
+            ):
+                new_ref = f"#/$defs/{value.split('/')[-1]}"
+                obj[key] = new_ref
+            else:
+                _update_references(value)
+    elif isinstance(obj, list):
+        for item in obj:
+            _update_references(item)
+    return obj
 
 
 class SpecManager:
-    """Manages OpenAPI spec fetching, overlaying, and merging."""
+    """Manages fetching, caching, and merging of OpenAPI specifications."""
 
-    def __init__(self, config: Config):
-        """Initialize with configuration."""
+    def __init__(self, config: Config, cache_dir: str = "cache/specs"):
         self.config = config
-        self.specs_cache: Dict[str, Dict[str, Any]] = {}
-        self.overlay_manager = OverlayManager()
+        self.cache_dir = Path(cache_dir)
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.overlay_manager = OverlayManager(config)
+        self.http_client = httpx.AsyncClient()
 
     async def update_specs(self) -> None:
-        """Update all API specs from their sources."""
-        for api_name in self.config.get_api_names():
-            api_cfg = self.config.get_api_config(api_name)
-            if api_cfg and api_cfg.enabled is False:
-                continue
-            await self._fetch_spec(api_name)
-            await self._load_overlay(api_name)
+        """Update all API specifications based on the configuration."""
+        tasks = []
+        for api_name, api_config in self.config.apis.items():
+            if api_config.enabled:
+                tasks.append(self._process_api_group(api_name, api_config))
+        await asyncio.gather(*tasks)
 
-    async def _fetch_spec(self, api_name: str) -> Dict[str, Any]:
-        """Fetch an OpenAPI spec from its URL."""
-        api_config = self.config.get_api_config(api_name)
-        if not api_config:
-            raise ValueError(f"Unknown API: {api_name}")
+    async def _process_api_group(self, api_name: str, api_config: APIConfig) -> None:
+        """Process a single group of API specifications."""
+        logger.info(f"Processing API group: {api_name}")
+        base_spec: Optional[Dict[str, Any]] = None
+        for i, spec_source in enumerate(api_config.specs):
+            spec = await self._fetch_and_cache_spec(f"{api_name}_{i}", spec_source.url)
+            if spec:
+                # Extract base path from server URL
+                base_path = ""
+                if "servers" in spec and spec["servers"]:
+                    server_url = spec["servers"][0].get("url", "")
+                    if server_url:
+                        from urllib.parse import urlparse
 
-        async with httpx.AsyncClient() as client:
-            response = await client.get(api_config.url)
+                        parsed_url = urlparse(server_url)
+                        base_path = parsed_url.path
+                        # remove trailing slash if present
+                        if base_path.endswith("/"):
+                            base_path = base_path[:-1]
+
+                # Prepend base_path to all paths
+                if base_path and "paths" in spec:
+                    new_paths = {}
+                    for path, path_item in spec["paths"].items():
+                        new_paths[f"{base_path}{path}"] = path_item
+                    spec["paths"] = new_paths
+
+                if base_spec is None:
+                    base_spec = spec
+                else:
+                    # Merge subsequent specs into the base spec
+                    base_spec["paths"].update(spec.get("paths", {}))
+                    if "components" in spec:
+                        logger.debug(
+                            f"Merging components for {api_name}: {spec.get('components')}"
+                        )
+                        deep_merge(
+                            base_spec.setdefault("components", {}), spec["components"]
+                        )
+                    if "$defs" in spec:
+                        logger.debug(
+                            f"Merging $defs for {api_name}: {spec.get('$defs')}"
+                        )
+                        deep_merge(base_spec.setdefault("$defs", {}), spec["$defs"])
+
+        if base_spec:
+            merged_spec = self._merge_api_spec(base_spec, api_config)
+            self.save_merged_spec(api_name, merged_spec)
+
+    async def _fetch_and_cache_spec(
+        self, spec_key: str, url: str
+    ) -> Optional[Dict[str, Any]]:
+        """Fetch a spec from a URL, validate, and cache it."""
+        try:
+            response = await self.http_client.get(url)
             response.raise_for_status()
+            spec_content = response.text
 
-            # Parse YAML content with error handling
-            try:
-                spec = yaml.safe_load(response.text)
-            except yaml.YAMLError as e:
-                print(f"Warning: YAML parsing failed for {api_name}: {e}")
-                print(f"Attempting to fix common YAML issues...")
+            # The fabric spec has a weird tag that pyyaml doesn't like.
+            # It's a bug in their spec. We'll just remove it.
+            spec_content = spec_content.replace("!!value", "")
+            spec_content = spec_content.replace("example: =", "example: ''")
+            spec_content = spec_content.replace("operator: =", "operator: ''")
+            spec_content = spec_content.replace("- =", "- ''")
 
-                # Try to fix common YAML issues
-                fixed_content = response.text
+            # Use FullLoader to handle more complex YAML tags.
+            spec = yaml.load(spec_content, Loader=yaml.FullLoader)
 
-                # Fix various malformed YAML patterns
-                yaml_fixes = [
-                    ("example: =", "example: ''"),
-                    ("operator: =", "operator: ''"),
-                    ("default: =", "default: ''"),
-                    ("value: =", "value: ''"),
-                    ("- =", "- ''"),  # Array elements with just =
-                    (": =\n", ": ''\n"),  # General pattern
-                ]
+            if spec.get("swagger") == "2.0":
+                logger.info(f"Converting Swagger 2.0 spec to OpenAPI 3.x for {url}")
+                parser = convert_spec(spec, prance.BaseParser)
+                spec = parser.specification
 
-                for old_pattern, new_pattern in yaml_fixes:
-                    fixed_content = fixed_content.replace(old_pattern, new_pattern)
+            # Basic validation, more can be added if needed
+            if not isinstance(spec, dict) or "openapi" not in spec:
+                raise ValueError("Invalid OpenAPI spec structure")
 
-                try:
-                    spec = yaml.safe_load(fixed_content)
-                    print(f"✓ YAML parsing succeeded after fixing for {api_name}")
-                except yaml.YAMLError as e2:
-                    print(f"Error: Could not fix YAML for {api_name}: {e2}")
-                    # Try to skip the problematic spec for now
-                    print(f"Skipping {api_name} due to unfixable YAML errors")
-                    return {}
-
-            # Convert Swagger v2 to OpenAPI v3 if needed
-            spec = await self._convert_swagger_to_openapi(spec, api_name)
-
-            # Validate the spec
-            try:
-                validate_spec(spec)  # type: ignore[arg-type]
-                print(f"✓ Spec validation passed for {api_name}")
-            except Exception as e:
-                print(f"Warning: Spec validation failed for {api_name}: {e}")
-                # Continue processing despite validation warnings
-
-            # Cache the spec
-            self.specs_cache[api_name] = spec
-
-            # Save to local file for debugging
-            cache_dir = Path("cache/specs")
-            cache_dir.mkdir(parents=True, exist_ok=True)
-
-            async with aiofiles.open(cache_dir / f"{api_name}.yaml", "w") as f:
-                await f.write(yaml.dump(spec, default_flow_style=False))
-
+            validate(spec)
+            self.save_cached_spec(spec_key, spec)
+            logger.info(f"Successfully fetched and validated spec from {url}")
             return spec
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP error fetching spec from {url}: {e}")
+        except yaml.YAMLError as e:
+            logger.error(f"YAML parsing error for spec from {url}: {e}")
+            return None  # Return None to prevent malformed data from proceeding
+        except Exception as e:
+            logger.error(f"Failed to fetch or validate spec from {url}: {e}")
+            return None
 
-    async def _convert_swagger_to_openapi(
-        self, spec: Dict[str, Any], api_name: str
+        # If all fails, try to load from cache as a last resort.
+        return self.load_cached_spec(spec_key)
+
+    def _merge_api_spec(
+        self, spec: Dict[str, Any], api_config: APIConfig
     ) -> Dict[str, Any]:
-        """Convert Swagger v2 to OpenAPI v3 if needed."""
-        # Check if this is a Swagger v2 spec
-        if spec.get("swagger") == "2.0":
-            print(f"Converting Swagger v2 to OpenAPI v3 for {api_name}...")
-            try:
-                # Use prance to convert Swagger v2 to OpenAPI v3
-                # convert_spec returns a parser, we need the specification from it
-                converted_parser = convert_spec(spec, prance.BaseParser)
-                # Ensure we return a plain dict for typing and downstream use
-                converted_spec = dict(converted_parser.specification or {})  # type: ignore[arg-type]
-
-                print(
-                    f"✓ Successfully converted {api_name} from Swagger v2 to OpenAPI v3"
-                )
-                return converted_spec  # type: ignore[return-value]
-
-            except Exception as e:
-                print(f"Error: Failed to convert {api_name} from Swagger v2: {e}")
-                # Return original spec if conversion fails
-                return spec
-        else:
-            # Already OpenAPI v3 or other format
+        """Apply overlays and transformations to a specification."""
+        if not api_config.name:
             return spec
 
-    async def _load_overlay(self, api_name: str) -> Optional[Dict[str, Any]]:
-        """Load overlay file for an API."""
-        api_config = self.config.get_api_config(api_name)
-        if not api_config:
-            return None
+        for spec_source in api_config.specs:
+            if spec_source.overlay and self.config.config_path:
+                overlay_path = (
+                    Path(self.config.config_path).parent / spec_source.overlay
+                )
+                if overlay_path.exists():
+                    with open(overlay_path, "r") as f:
+                        overlay = yaml.safe_load(f)
+                        spec = self.overlay_manager.apply(
+                            spec, api_config.name, overlay
+                        )
+        return spec
 
-        overlay_path = api_config.overlay
+    def get_merged_spec(self) -> Dict[str, Any]:
+        """Merge all individual API specs into a single spec."""
+        all_specs = self.get_all_merged_specs()
 
-        # Try to load existing overlay
-        overlay = await self.overlay_manager.load_overlay(overlay_path)
-
-        if overlay is None:
-            # Create a basic overlay template if it doesn't exist
-            await self.overlay_manager.create_overlay_template(
-                overlay_path, api_config.service_name, api_name
-            )
-            return None
-
-        return overlay
-
-    async def get_merged_spec(self) -> Dict[str, Any]:
-        """Get the merged OpenAPI specification in 3.1 format."""
-        if not self.specs_cache:
-            await self.update_specs()
-
-        # Start with base spec structure (OpenAPI 3.1)
-        merged_spec = {
-            "openapi": "3.1.0",  # Changed to 3.1.0
+        # Start with a base structure for the merged spec
+        merged_spec: Dict[str, Any] = {
+            "openapi": "3.1.0",
             "info": {
-                "title": "Equinix Unified API",
+                "title": "Equinix MCP Combined API",
                 "version": "1.0.0",
-                "description": "Merged Equinix APIs for MCP Server",
-                "contact": {
-                    "name": "Equinix API Support",
-                    "url": "https://docs.equinix.com",
-                },
+                "description": "A merged API of all enabled Equinix services.",
             },
-            "servers": [
-                {"url": "https://api.equinix.com", "description": "Equinix API Server"}
-            ],
+            "servers": [{"url": "https://api.equinix.com"}],
             "paths": {},
-            "$defs": {},  # Use $defs instead of components/schemas
             "components": {
-                "requestBodies": {},
-                "responses": {},
-                "parameters": {},
-                "examples": {},
-                "headers": {},
                 "securitySchemes": {
                     "ClientCredentials": {
                         "type": "oauth2",
@@ -192,285 +224,111 @@ class SpecManager:
                 },
             },
             "security": [{"ClientCredentials": []}, {"MetalToken": []}],
+            "$defs": {},  # for schema components
         }
 
-        # Merge each API spec
-        for api_name, spec in self.specs_cache.items():
-            await self._merge_api_spec(merged_spec, api_name, spec)
+        if not all_specs:
+            # Clean up empty keys before returning
+            if not merged_spec["components"]:
+                del merged_spec["components"]
+            if not merged_spec["$defs"]:
+                del merged_spec["$defs"]
+            return merged_spec
 
-        # Note: avoid one-off post-processing; prefer overlays for schema fixes
+        # Merge all specs
+        for api_name, spec in all_specs.items():
+            if not spec:
+                continue
 
-        # Save merged spec
-        output_path = Path(self.config.output.merged_spec_path)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
+            # Prefix all operationIds with the API name
+            if "paths" in spec:
+                for path, path_item in spec["paths"].items():
+                    for method, operation in path_item.items():
+                        if "operationId" in operation:
+                            operation["operationId"] = (
+                                f"{api_name}_{operation['operationId']}"
+                            )
 
-        async with aiofiles.open(output_path, "w") as f:
-            yaml_output = yaml.dump(
-                merged_spec,
-                default_flow_style=False,
-                sort_keys=False,
-                allow_unicode=True,
-                width=float("inf"),
-            )
-            await f.write(yaml_output)
+            if "paths" in spec:
+                merged_spec.setdefault("paths", {}).update(spec["paths"])
+
+            if "components" in spec:
+                # Schemas go into $defs
+                if "schemas" in spec["components"]:
+                    deep_merge(
+                        merged_spec.setdefault("$defs", {}),
+                        spec["components"]["schemas"],
+                    )
+
+                # Other components go into components
+                for component_type, components in spec["components"].items():
+                    if component_type != "schemas":
+                        deep_merge(
+                            merged_spec.setdefault("components", {}).setdefault(
+                                component_type, {}
+                            ),
+                            components,
+                        )
+
+            if "$defs" in spec:
+                deep_merge(merged_spec.setdefault("$defs", {}), spec["$defs"])
+
+        # Update all schema references to point to $defs
+        merged_spec = _update_references(merged_spec)
+
+        # Clean up empty keys before returning
+        if not merged_spec.get("components"):
+            merged_spec.pop("components", None)
+        if not merged_spec.get("$defs"):
+            merged_spec.pop("$defs", None)
 
         return merged_spec
 
-    async def _merge_api_spec(
-        self, merged_spec: Dict[str, Any], api_name: str, spec: Dict[str, Any]
-    ) -> None:
-        """Merge a single API spec into the merged spec with OpenAPI 3.1 format."""
-        api_config = self.config.get_api_config(api_name)
-        if not api_config:
-            return
+    def get_merged_spec_path(self, api_name: str) -> Path:
+        """Get the path to the merged spec file."""
+        return self.cache_dir / f"{api_name}-merged.yaml"
 
-        # Apply overlay if available
-        overlay = self.overlay_manager.get_cached_overlay(api_config.overlay)
-        if overlay:
-            spec = await self.overlay_manager.apply_overlay(spec, overlay)
+    def save_merged_spec(self, api_name: str, spec: Dict[str, Any]) -> None:
+        """Save a merged specification to the cache."""
+        path = self.get_merged_spec_path(api_name)
+        with open(path, "w") as f:
+            yaml.dump(spec, f, sort_keys=False)
+        logger.info(f"Saved merged spec for {api_name} to {path}")
 
-        # Create a deep copy of the spec to avoid modifying the original
-        import copy
+    def load_merged_spec(self, api_name: str) -> Optional[Dict[str, Any]]:
+        """Load a merged specification from the cache."""
+        path = self.get_merged_spec_path(api_name)
+        if path.exists():
+            with open(path, "r") as f:
+                return yaml.safe_load(f)
+        return None
 
-        spec = copy.deepcopy(spec)
+    def get_cached_spec_path(self, spec_key: str) -> Path:
+        """Get the path to a cached specification file."""
+        return self.cache_dir / f"{spec_key}.yaml"
 
-        # Convert OpenAPI 3.0 to 3.1 format
-        spec = self._convert_to_openapi_31(spec)
+    def save_cached_spec(self, spec_key: str, spec: Dict[str, Any]) -> None:
+        """Save a fetched specification to the cache."""
+        path = self.get_cached_spec_path(spec_key)
+        with open(path, "w") as f:
+            yaml.dump(spec, f, sort_keys=False)
+        logger.info(f"Cached spec {spec_key} to {path}")
 
-        # Get all schemas from both components/schemas and $defs
-        components = spec.get("components", {})
-        schemas = components.get("schemas", {})
-        defs_schemas = spec.get("$defs", {})
+    def load_cached_spec(self, spec_key: str) -> Optional[Dict[str, Any]]:
+        """Load a cached specification."""
+        path = self.get_cached_spec_path(spec_key)
+        if path.exists():
+            logger.warning(f"Using cached spec for {spec_key} from {path}")
+            with open(path, "r") as f:
+                return yaml.safe_load(f)
+        logger.error(f"No cached spec found for {spec_key}")
+        return None
 
-        # Merge both schema sources
-        all_schemas = {**schemas, **defs_schemas}
-
-        # Component types (excluding schemas as we handle them separately)
-        component_types = [
-            "requestBodies",
-            "responses",
-            "parameters",
-            "examples",
-            "headers",
-            "securitySchemes",
-        ]
-        component_mappings: Dict[str, Dict[str, str]] = {}
-
-        # Initialize mappings for component types
-        for comp_type in component_types:
-            component_mappings[comp_type] = {}
-            comp_dict = components.get(comp_type, {})
-            for comp_name in comp_dict.keys():
-                prefixed_name = f"{api_name.title()}{comp_name}"
-                component_mappings[comp_type][comp_name] = prefixed_name
-
-        # Create schema mapping for $defs
-        schema_mappings: Dict[str, str] = {}
-        for schema_name in all_schemas.keys():
-            prefixed_name = f"{api_name.title()}{schema_name}"
-            schema_mappings[schema_name] = prefixed_name
-
-        # Function to update all references recursively for OpenAPI 3.1
-        def update_all_refs(
-            obj: Any,
-            schema_mappings: Dict[str, str],
-            component_mappings: Dict[str, Dict[str, str]],
-        ):
-            if isinstance(obj, dict):
-                # Convert OpenAPI 3.0 nullable -> OpenAPI 3.1 shape
-                if obj.get("nullable") is True:
-                    ref = obj.get("$ref")
-                    typ = obj.get("type")
-                    if isinstance(ref, str):
-                        obj.pop("nullable", None)
-                        obj.pop("$ref", None)
-                        obj["oneOf"] = [{"$ref": ref}, {"type": "null"}]
-                    elif isinstance(typ, str):
-                        obj["type"] = [typ, "null"]
-                        obj.pop("nullable", None)
-                    elif isinstance(typ, list):
-                        if "null" not in typ:
-                            typ.append("null")
-                        obj.pop("nullable", None)
-
-                if "$ref" in obj and isinstance(obj["$ref"], str):
-                    ref = obj["$ref"]
-
-                    # Handle $defs references (OpenAPI 3.1 style)
-                    if ref.startswith("#/$defs/"):
-                        schema_name = ref.split("/")[-1]
-                        if schema_name in schema_mappings:
-                            obj["$ref"] = f"#/$defs/{schema_mappings[schema_name]}"
-                    # Handle components/schemas references (convert to $defs)
-                    elif ref.startswith("#/components/schemas/"):
-                        schema_name = ref.split("/")[-1]
-                        if schema_name in schema_mappings:
-                            obj["$ref"] = f"#/$defs/{schema_mappings[schema_name]}"
-                    # Handle legacy definitions (convert to $defs)
-                    elif ref.startswith("#/definitions/"):
-                        schema_name = ref.split("/")[-1]
-                        if schema_name in schema_mappings:
-                            obj["$ref"] = f"#/$defs/{schema_mappings[schema_name]}"
-                    # Handle other component types
-                    else:
-                        for comp_type in component_types:
-                            ref_pattern = f"#/components/{comp_type}/"
-                            if ref.startswith(ref_pattern):
-                                comp_name = ref.split("/")[-1]
-                                if comp_name in component_mappings[comp_type]:
-                                    obj["$ref"] = (
-                                        f"#/components/{comp_type}/{component_mappings[comp_type][comp_name]}"
-                                    )
-                                break
-                else:
-                    for key, value in list(obj.items()):
-                        # Some specs (3.0) may embed references as plain strings in mapping fields
-                        if isinstance(value, str) and value.startswith(
-                            "#/components/schemas/"
-                        ):
-                            schema_name = value.split("/")[-1]
-                            mapped = schema_mappings.get(schema_name)
-                            if mapped:
-                                obj[key] = f"#/$defs/{mapped}"
-                        else:
-                            update_all_refs(value, schema_mappings, component_mappings)
-            elif isinstance(obj, list):
-                for item in obj:
-                    update_all_refs(item, schema_mappings, component_mappings)
-
-        # Update all references in the spec
-        update_all_refs(spec, schema_mappings, component_mappings)
-
-        # Merge paths with prefixing and filter by include/exclude
-        spec_paths = spec.get("paths", {})
-        # Precompile include/exclude regexes (operationIds are prefixed as f"{api_name}_...")
-        include_patterns = []
-        exclude_patterns = []
-        if api_config.include:
-            include_patterns = [re.compile(p) for p in api_config.include]
-        if api_config.exclude:
-            exclude_patterns = [re.compile(p) for p in api_config.exclude]
-
-        def allowed(op_id: str) -> bool:
-            ok = True
-            if include_patterns:
-                ok = any(p.search(op_id) for p in include_patterns)
-            if ok and exclude_patterns:
-                if any(p.search(op_id) for p in exclude_patterns):
-                    ok = False
-            return ok
-
-        for path, methods in spec_paths.items():
-            # Normalize path based on API type
-            normalized_path = await self._normalize_path(api_name, path)
-
-            # Add operationId prefixes to avoid conflicts
-            for method, operation in methods.items():
-                if isinstance(operation, dict) and "operationId" in operation:
-                    operation["operationId"] = f"{api_name}_{operation['operationId']}"
-
-                    # Add tags for organization
-                    if "tags" not in operation:
-                        operation["tags"] = []
-                    operation["tags"].append(api_config.service_name)
-
-            # Filter methods by include/exclude
-            filtered_methods: Dict[str, Any] = {}
-            for method, operation in methods.items():
-                if not isinstance(operation, dict):
-                    continue
-                op_id = operation.get("operationId")
-                if not isinstance(op_id, str):
-                    continue
-                if allowed(op_id):
-                    filtered_methods[method] = operation
-
-            if filtered_methods:
-                merged_spec["paths"][normalized_path] = filtered_methods
-
-        # Merge schemas into $defs
-        for schema_name, schema_def in all_schemas.items():
-            prefixed_name = schema_mappings.get(schema_name, schema_name)
-            merged_spec["$defs"][prefixed_name] = copy.deepcopy(schema_def)
-
-        # Merge other component types
-        for comp_type in component_types:
-            comp_dict = components.get(comp_type, {})
-            if comp_type not in merged_spec["components"]:
-                merged_spec["components"][comp_type] = {}
-
-            for comp_name, comp_def in comp_dict.items():
-                prefixed_name = component_mappings[comp_type].get(comp_name, comp_name)
-                merged_spec["components"][comp_type][prefixed_name] = copy.deepcopy(
-                    comp_def
-                )
-
-    def _convert_to_openapi_31(self, spec: Dict[str, Any]) -> Dict[str, Any]:
-        """Convert OpenAPI 3.0 spec to 3.1 format."""
-        # Update version if it's 3.0.x
-        if spec.get("openapi", "").startswith("3.0"):
-            spec["openapi"] = "3.1.0"
-
-        # Initialize $defs if it doesn't exist
-        if "$defs" not in spec:
-            spec["$defs"] = {}
-
-        # Move components/schemas to $defs if they exist
-        components = spec.get("components", {})
-        schemas = components.get("schemas", {})
-
-        if schemas:
-            # Move schemas to $defs
-            spec["$defs"].update(schemas)
-
-            # Remove schemas from components
-            if "schemas" in components:
-                del components["schemas"]
-
-        # Also handle legacy Swagger v2 "definitions" if they exist
-        definitions = spec.get("definitions", {})
-        if definitions:
-            spec["$defs"].update(definitions)
-            # Remove definitions from root
-            if "definitions" in spec:
-                del spec["definitions"]
-
-        # Update all $ref paths to use $defs
-        def update_schema_refs(obj):
-            if isinstance(obj, dict):
-                if "$ref" in obj and isinstance(obj["$ref"], str):
-                    ref = obj["$ref"]
-                    if ref.startswith("#/components/schemas/"):
-                        schema_name = ref.split("/")[-1]
-                        obj["$ref"] = f"#/$defs/{schema_name}"
-                    elif ref.startswith("#/definitions/"):
-                        schema_name = ref.split("/")[-1]
-                        obj["$ref"] = f"#/$defs/{schema_name}"
-                else:
-                    for value in obj.values():
-                        update_schema_refs(value)
-            elif isinstance(obj, list):
-                for item in obj:
-                    update_schema_refs(item)
-
-        update_schema_refs(spec)
-        return spec
-
-    async def _normalize_path(self, api_name: str, path: str) -> str:
-        """Normalize API paths to handle different base path conventions."""
-        api_config = self.config.get_api_config(api_name)
-        if not api_config:
-            return path
-
-        # Metal API uses /metal/v1 prefix
-        if api_name == "metal":
-            if not path.startswith("/metal/v1"):
-                return f"/metal/v1{path}"
-            return path
-
-        # Other APIs use /{service}/{version} pattern
-        expected_prefix = f"/{api_config.service_name}/{api_config.version}"
-        if not path.startswith(expected_prefix):
-            return f"{expected_prefix}{path}"
-
-        return path
+    def get_all_merged_specs(self) -> Dict[str, Dict[str, Any]]:
+        """Load all merged specifications from the cache."""
+        specs = {}
+        for api_name in self.config.apis.keys():
+            spec = self.load_merged_spec(api_name)
+            if spec:
+                specs[api_name] = spec
+        return specs

@@ -25,13 +25,11 @@ def test_api_config_structure():
     assert metal_config is not None
     assert metal_config.service_name == "metal"
     assert metal_config.auth_type == "metal_token"
-    assert metal_config.version == "v1"
 
     fabric_config = config.get_api_config("fabric")
     assert fabric_config is not None
     assert fabric_config.service_name == "fabric"
     assert fabric_config.auth_type == "client_credentials"
-    assert fabric_config.version == "v4"
 
 
 def test_config_api_names():

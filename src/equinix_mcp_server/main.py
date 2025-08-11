@@ -200,7 +200,7 @@ class EquinixMCPServer:
 
         # Load and merge API specs
         await self.spec_manager.update_specs()
-        merged_spec = await self.spec_manager.get_merged_spec()
+        merged_spec = self.spec_manager.get_merged_spec()
 
         # Create authenticated HTTP client for API calls
         client = AuthenticatedClient(
