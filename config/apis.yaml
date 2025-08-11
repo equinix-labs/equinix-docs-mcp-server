@@ -15,7 +15,7 @@ apis:
   network-edge:
     auth_type: "client_credentials"
     service_name: "network-edge"
-    enabled: false
+    enabled: true
     specs:
       - url: "https://docs.equinix.com/api-catalog/network-edgev1/openapi.yaml"
         overlay: "overlays/network-edge.yaml"
