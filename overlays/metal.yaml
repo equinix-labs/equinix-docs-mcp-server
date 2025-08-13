@@ -58,3 +58,8 @@ actions:
   - target: "$.components.schemas.Meta.properties.self"
     update:
       nullable: true
+
+  # Make Plan type property nullable
+  - target: "$.components.schemas.Plan.properties.type"
+    update:
+      nullable: true

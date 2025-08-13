@@ -5,8 +5,10 @@ apis:
     auth_type: "metal_token"
     service_name: "metal"
     include:
-      - metal_findPlans
-      - metal_findMetros
+      - findPlans
+      - findMetros
+    format:
+      getVirtualDevicesUsingGET: '.plans | map({id: .plan_id, slug: .slug, name: .name})'
     specs:
       - url: "https://docs.equinix.com/api-catalog/metalv1/openapi.yaml"
         overlay: "overlays/metal.yaml"
@@ -16,6 +18,9 @@ apis:
     auth_type: "client_credentials"
     service_name: "network-edge"
     enabled: true
+    # Example JQ formatting (future feature)
+    # format:
+    #   getVirtualDevicesUsingGET: '.data | map({id: .uuid, name: .name, status: .status})'
     specs:
       - url: "https://docs.equinix.com/api-catalog/network-edgev1/openapi.yaml"
         overlay: "overlays/network-edge.yaml"
@@ -25,9 +30,9 @@ apis:
     auth_type: "client_credentials"
     service_name: "fabric"
     include:
-      - fabric_searchConnections
-      - fabric_searchProviders
-      - fabric_getMetros
+      - searchConnections
+      - searchProviders
+      - getMetros
     specs:
       - url: "https://docs.equinix.com/api-catalog/fabricv4/openapi.yaml"
         overlay: "overlays/fabric.yaml"

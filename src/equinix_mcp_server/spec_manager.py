@@ -389,17 +389,20 @@ class SpecManager:
             if "security" in spec:
                 all_security_schemes.extend(spec["security"])
 
-            # Prefix all operationIds with the API name
+            # Prefix all operationIds with the API name and filter paths
             if "paths" in spec:
-                for path, path_item in spec["paths"].items():
+                # First, apply include/exclude filtering
+                filtered_paths = self._filter_paths_by_operation_id(api_name, spec["paths"])
+                
+                # Then prefix operationIds
+                for path, path_item in filtered_paths.items():
                     for method, operation in path_item.items():
-                        if "operationId" in operation:
+                        if isinstance(operation, dict) and "operationId" in operation:
                             operation["operationId"] = (
                                 f"{api_name}_{operation['operationId']}"
                             )
 
-            if "paths" in spec:
-                merged_spec.setdefault("paths", {}).update(spec["paths"])
+                merged_spec.setdefault("paths", {}).update(filtered_paths)
 
             if "components" in spec:
                 # Schemas go into $defs
@@ -493,3 +496,65 @@ class SpecManager:
             if spec:
                 specs[api_name] = spec
         return specs
+
+    def _filter_paths_by_operation_id(
+        self, api_name: str, paths: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Filter paths based on include/exclude patterns for operation IDs."""
+        api_config = self.config.get_api_config(api_name)
+        if not api_config or (not api_config.include and not api_config.exclude):
+            return paths
+
+        import re
+
+        filtered_paths = {}
+
+        for path, path_item in paths.items():
+            if not isinstance(path_item, dict):
+                continue
+
+            filtered_path_item = {}
+            for method, operation in path_item.items():
+                if not isinstance(operation, dict) or "operationId" not in operation:
+                    filtered_path_item[method] = operation
+                    continue
+
+                operation_id = operation["operationId"]
+
+                # Check include patterns (if any)
+                if api_config.include:
+                    included = False
+                    for pattern in api_config.include:
+                        if re.search(pattern, operation_id, re.IGNORECASE):
+                            included = True
+                            break
+                    if not included:
+                        continue
+
+                # Check exclude patterns (if any)
+                if api_config.exclude:
+                    excluded = False
+                    for pattern in api_config.exclude:
+                        if re.search(pattern, operation_id, re.IGNORECASE):
+                            excluded = True
+                            break
+                    if excluded:
+                        continue
+
+                # Operation passed all filters
+                filtered_path_item[method] = operation
+
+            # Only include path if it has at least one operations
+            if filtered_path_item:
+                filtered_paths[path] = filtered_path_item
+
+        return filtered_paths
+
+    def has_all_cached_specs(self) -> bool:
+        """Check if all enabled APIs have cached merged specifications."""
+        for api_name, api_config in self.config.apis.items():
+            if api_config.enabled:
+                merged_spec_path = self.get_merged_spec_path(api_name)
+                if not merged_spec_path.exists():
+                    return False
+        return True

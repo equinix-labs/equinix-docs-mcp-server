@@ -142,8 +142,10 @@ See `TESTING_WITH_OLLAMA.md` for detailed Ollama integration instructions.
 #### Test API Spec Fetching
 
 ```bash
-equinix-mcp-server --test-update-specs # --config path/to/custom/config.yaml
+equinix-mcp-server --update-specs # --config path/to/custom/config.yaml
 ```
+
+**Note:** The server uses cached API specifications by default for faster startup. Use `--update-specs` to force fetching fresh specs from remote sources.
 
 ## Server Configuration
 

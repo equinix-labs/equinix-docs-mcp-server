@@ -12,13 +12,25 @@ from fastmcp import FastMCP
 from .auth import AuthManager
 from .config import Config
 from .docs import DocsManager
+from .response_formatter import ResponseFormatter
 from .spec_manager import SpecManager
 
 # Set up logging
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+
+
+def _configure_logging(log_level: str):
+    """Configure logging with the specified level and suppress third-party library noise"""
+    logging.basicConfig(
+        level=getattr(logging, log_level.upper()),
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        force=True
+    )
+    
+    # Set specific levels for noisy third-party libraries
+    logging.getLogger('urllib3').setLevel(logging.WARNING)
+    logging.getLogger('requests').setLevel(logging.WARNING)
+    logging.getLogger('httpx').setLevel(logging.WARNING)
 
 
 class AuthenticatedClient:
@@ -191,15 +203,22 @@ class EquinixMCPServer:
         self.docs_manager = DocsManager(self.config)
         self.mcp: Optional[Any] = None  # Will be initialized in initialize()
 
-    async def initialize(self) -> None:
+    async def initialize(self, force_update_specs: bool = False) -> None:
         """Initialize the server components using FastMCP's OpenAPI integration."""
         # Enable experimental OpenAPI parser
         import os
 
         os.environ["FASTMCP_EXPERIMENTAL_ENABLE_NEW_OPENAPI_PARSER"] = "true"
 
-        # Load and merge API specs
-        await self.spec_manager.update_specs()
+        # Load and merge API specs - only update if forced or no cached specs exist
+        needs_update = force_update_specs or not self.spec_manager.has_all_cached_specs()
+        
+        if needs_update:
+            logger.info("Updating API specifications from remote sources...")
+            await self.spec_manager.update_specs()
+        else:
+            logger.info("Using cached API specifications for faster startup")
+            
         merged_spec = self.spec_manager.get_merged_spec()
 
         # Create authenticated HTTP client for API calls
@@ -248,9 +267,9 @@ class EquinixMCPServer:
             """Search documentation by query."""
             return await self.docs_manager.search_docs(query)
 
-    async def run(self) -> None:
+    async def run(self, force_update_specs: bool = False) -> None:
         """Run the MCP server."""
-        await self.initialize()
+        await self.initialize(force_update_specs)
         assert self.mcp is not None, "MCP server must be initialized first"
 
         # Use stdio_server for MCP transport to avoid asyncio loop conflicts
@@ -336,24 +355,33 @@ class EquinixMCPServer:
     "--config", "-c", default="config/apis.yaml", help="Configuration file path"
 )
 @click.option(
-    "--test-update-specs",
+    "--update-specs",
     is_flag=True,
-    help="Test API spec fetching and validation without starting server",
+    help="Force update API specs from remote sources (otherwise uses cached specs)",
 )
-def main(config: str, test_update_specs: bool) -> None:
+@click.option(
+    "--log-level",
+    type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], case_sensitive=False),
+    default='INFO',
+    help="Set the logging level (default: INFO)",
+)
+def main(config: str, update_specs: bool, log_level: str) -> None:
     """Start the Equinix MCP Server."""
+    
+    # Configure logging based on the provided level
+    _configure_logging(log_level.upper())
 
     async def _main() -> None:
         server = EquinixMCPServer(config)
 
-        if test_update_specs:
+        if update_specs:
             await server.spec_manager.update_specs()
             click.echo(
-                "✅ API spec fetching and validation test completed successfully"
+                "✅ API spec fetching and validation completed successfully"
             )
             return
 
-        await server.run()
+        await server.run(force_update_specs=False)  # Normal startup uses cached specs
 
     asyncio.run(_main())
 

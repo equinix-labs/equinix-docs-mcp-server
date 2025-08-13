@@ -47,6 +47,10 @@ class APIConfig(BaseModel):
         default_factory=list,
         description="Regex patterns of operationIds to exclude (after prefix)",
     )
+    format: Dict[str, str] = Field(
+        default_factory=dict,
+        description="JQ format strings per operationId for response transformation",
+    )
 
     # Backward-compat convenience properties (legacy single-spec shape)
     @property
@@ -135,6 +139,7 @@ class Config(BaseModel):
                     "enabled": api_data.get("enabled", True),
                     "include": api_data.get("include", []) or [],
                     "exclude": api_data.get("exclude", []) or [],
+                    "format": api_data.get("format", {}) or {},
                 }
 
                 apis[name] = APIConfig(**model_data)
