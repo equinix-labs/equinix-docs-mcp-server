@@ -112,6 +112,10 @@ class Swagger2OpenAPIConverter:
                         "scopes": scheme.pop("scopes"),
                     }
                 scheme["flows"] = flows
+            elif scheme.get("type") == "apiKey":
+                # apiKey maps directly; ensure required fields are present
+                # Swagger uses 'name' and 'in' which are the same in OAS3
+                pass
         return secdefs
 
     def _convert_operation(self, op, openapi):
@@ -248,6 +252,22 @@ class Swagger2OpenAPIConverter:
             openapi["components"]["securitySchemes"] = self._convert_security_definitions(
                 openapi.pop("securityDefinitions")
             )
+
+        # Promote security to root: if Swagger had top-level security, carry it over.
+        # Otherwise, if there are securitySchemes defined but no top-level security,
+        # set a sensible default so auth applies by default to all endpoints.
+        # Operation-level "security" (including empty lists) will override this.
+        if "security" in swagger:
+            # Copy as-is; structure is compatible between Swagger 2.0 and OAS3
+            openapi["security"] = copy.deepcopy(swagger["security"])
+        else:
+            schemes = openapi.get("components", {}).get("securitySchemes", {})
+            if schemes:
+                # If exactly one scheme, use that. If multiple, declare each as an alternative (OR).
+                default_reqs = []
+                for scheme_name in schemes.keys():
+                    default_reqs.append({scheme_name: []})
+                openapi["security"] = default_reqs
 
         # Process all schemas
         if "schemas" in openapi["components"]:

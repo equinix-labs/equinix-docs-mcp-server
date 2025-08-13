@@ -119,16 +119,24 @@ class OverlayManager:
         modified_spec = _copy.deepcopy(spec)
 
         def _apply_update(obj: Any, path: str, value: Any) -> None:
-            # very small subset of JSONPath: $.a.b.c keys only
+            """Apply a minimal JSONPath-style update, creating intermediate dicts.
+
+            Supports only simple paths of the form $.a.b.c (no wildcards/arrays).
+            If intermediate nodes are missing, they will be created as dicts so
+            overlays can introduce new sections like components.securitySchemes.
+            """
             if not path.startswith("$."):
                 return
             keys = path[2:].split(".")
             cur = obj
+            # Walk and create intermediate nodes when missing
             for k in keys[:-1]:
-                if isinstance(cur, dict) and k in cur:
+                if isinstance(cur, dict):
+                    if k not in cur or not isinstance(cur[k], dict):
+                        cur[k] = {}
                     cur = cur[k]
                 else:
-                    return  # path does not exist
+                    return
             last = keys[-1]
             if isinstance(cur, dict):
                 if isinstance(value, dict) and isinstance(cur.get(last), dict):
