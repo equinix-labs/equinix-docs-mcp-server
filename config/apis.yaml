@@ -8,7 +8,36 @@ apis:
       - findPlans
       - findMetros
     format:
-      getVirtualDevicesUsingGET: '.plans | map({id: .plan_id, slug: .slug, name: .name})'
+      # Human-readable text format for plans - simplified and robust
+      findPlans: |
+        (if type == "array" then . else .plans end) | 
+        if length == 0 then 
+          "No plans available."
+        else
+          map(
+            "**" + (.name // .slug // "Unknown Plan") + "**\n" +
+            "- ID: " + (.id // "N/A") + "\n" +
+            "- Slug: " + (.slug // "N/A") + "\n" +
+            (if .description then "- Description: " + .description + "\n" else "" end) +
+            (if .pricing.hour then "- Hourly Price: $" + (.pricing.hour | tostring) + "\n" else "" end) +
+            (if .available_in then "- Available in " + (.available_in | length | tostring) + " locations\n" else "" end) +
+            (if .specs then 
+              "- Hardware: " + (
+                [
+                  (if .specs.cpus then (.specs.cpus | length | tostring) + " CPU types" else null end),
+                  (if .specs.memory then (.specs.memory.total // "Memory available") else null end),
+                  (if .specs.drives then (.specs.drives | length | tostring) + " storage options" else null end)
+                ] | map(select(. != null)) | join(", ")
+              ) + "\n" 
+            else "" end) +
+            "---\n"
+          ) | join("\n")
+        end
+      
+      # Simple metro listing
+      findMetros: |
+        (.metros | map(.code + " - " + .name + " (" + .country + ")") | sort | join("\n")) + 
+        "\n\nTotal metros: " + (.metros | length | tostring)
     specs:
       - url: "https://docs.equinix.com/api-catalog/metalv1/openapi.yaml"
         overlay: "overlays/metal.yaml"
@@ -33,6 +62,33 @@ apis:
       - searchConnections
       - searchProviders
       - getMetros
+    format:
+      # Human-readable connection summary
+      searchConnections:
+        summary: |
+          "Found " + (.data | length | tostring) + " connections:\n\n" +
+          (.data | map("• " + .name + " (" + .uuid + ") - " + .state + " " + .type) | join("\n"))
+        
+        detailed: |
+          .data | map(
+            "**" + .name + "** (" + .uuid + ")\n" +
+            "- State: " + .state + "\n" +
+            "- Type: " + .type + "\n" +
+            "- Description: " + (.description // "No description") + "\n" +
+            "- Speed: " + (.speed // "Not specified") + " Mbps\n" +
+            (if .bandwidth then "- Bandwidth: " + (.bandwidth | tostring) + " Mbps\n" else "" end) +
+            (if .project then "- Project: " + .project.name + "\n" else "" end) +
+            (if .redundancy then "- Redundancy: " + .redundancy.group + "\n" else "" end) +
+            "---"
+          ) | join("\n\n") | . + "\n\nTotal connections: " + (.data | length | tostring)
+        
+        default: |
+          "**Connection Summary**\n\n" +
+          (.data | map(
+            .name + " → " + .state + " (" + .type + ")" +
+            (if .speed then " @ " + (.speed | tostring) + "Mbps" else "" end)
+          ) | join("\n")) + 
+          "\n\n**Total:** " + (.data | length | tostring) + " connections"
     specs:
       - url: "https://docs.equinix.com/api-catalog/fabricv4/openapi.yaml"
         overlay: "overlays/fabric.yaml"

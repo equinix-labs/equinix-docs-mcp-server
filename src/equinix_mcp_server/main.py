@@ -34,12 +34,13 @@ def _configure_logging(log_level: str):
 
 
 class AuthenticatedClient:
-    """HTTP client wrapper that adds authentication headers."""
+    """HTTP client wrapper that adds authentication headers and response formatting."""
 
     def __init__(
-        self, auth_manager: AuthManager, base_url: str = "https://api.equinix.com"
+        self, auth_manager: AuthManager, response_formatter: ResponseFormatter, base_url: str = "https://api.equinix.com"
     ):
         self.auth_manager = auth_manager
+        self.response_formatter = response_formatter
         self.base_url = base_url
         self._client = httpx.AsyncClient(
             base_url=base_url,
@@ -201,6 +202,7 @@ class EquinixMCPServer:
         self.auth_manager = AuthManager(self.config)
         self.spec_manager = SpecManager(self.config)
         self.docs_manager = DocsManager(self.config)
+        self.response_formatter = ResponseFormatter(self.config)
         self.mcp: Optional[Any] = None  # Will be initialized in initialize()
 
     async def initialize(self, force_update_specs: bool = False) -> None:
@@ -223,25 +225,212 @@ class EquinixMCPServer:
 
         # Create authenticated HTTP client for API calls
         client = AuthenticatedClient(
-            self.auth_manager, base_url="https://api.equinix.com"
+            self.auth_manager, self.response_formatter, base_url="https://api.equinix.com"
         )
 
-        # Use FastMCP's built-in OpenAPI integration instead of manual tool creation
-        # Note: client expects AsyncClient interface, our wrapper provides compatibility
-        self.mcp = FastMCP.from_openapi(
-            openapi_spec=merged_spec,
-            client=client,  # type: ignore[arg-type]
+        # Create FastMCP instance with tool_serializer
+        self.mcp = FastMCP(
             name="Equinix API Server",
+            tool_serializer=self.response_formatter,
             instructions=(
                 "This server provides unified access to Equinix's API ecosystem "
-                "including Metal, Fabric, Network Edge, and Billing services."
+                "including Metal, Fabric, Network Edge, and Billing services. "
+                "Responses are formatted as YAML for better readability."
             ),
         )
+        
+        # Create a temporary FastMCP instance to get the tools, then apply transformations
+        temp_mcp = FastMCP.from_openapi(
+            openapi_spec=merged_spec,
+            client=client,  # type: ignore[arg-type]
+            name="Temp",
+        )
+        
+        # Apply tool transformations for formatting and transfer to main instance
+        await self._apply_tool_transformations(temp_mcp)
         # Local workaround: ensure tool output schemas include required $defs
         await self._attach_defs_to_tool_schemas(merged_spec)
 
+        # Set up context-aware serialization by decorating tools
+        # await self._setup_context_aware_tools()  # Replaced by tool transformations
+
         # Register additional documentation tools that aren't part of the API
         await self._register_docs_tools()
+
+    async def _apply_tool_transformations(self, temp_mcp: Any) -> None:
+        """Apply tool transformations for formatting and transfer tools to main instance."""
+        from fastmcp.tools import Tool
+        from fastmcp.tools.tool_transform import forward
+        
+        if not self.mcp:
+            return
+            
+        temp_tools = await temp_mcp.get_tools()
+        
+        for tool_name, tool in temp_tools.items():
+            # Check if this tool has formatting configuration
+            format_config = self.response_formatter._get_format_config(tool_name)
+            
+            if format_config:
+                logger.info(f"Creating transformed tool with formatting for {tool_name}")
+                
+                # Create a transformation that applies JQ formatting
+                def create_format_wrapper(operation_id: str):
+                    async def format_transform(**kwargs):
+                        logger.debug(f"Format transform called for {operation_id} with kwargs: {list(kwargs.keys())}")
+                        
+                        # Call the original tool
+                        result = await forward(**kwargs)
+                        logger.debug(f"Forward result type: {type(result)}")
+                        logger.debug(f"Forward result attributes: {dir(result)}")
+                        
+                        if hasattr(result, 'content') and result.content:
+                            logger.debug(f"Forward result has content with {len(result.content)} items")
+                            for i, item in enumerate(result.content):
+                                logger.debug(f"Content item {i}: type={type(item)}, attributes={dir(item)}")
+                        
+                        if hasattr(result, 'structured_content'):
+                            logger.debug(f"Forward result structured_content type: {type(result.structured_content)}")
+                        
+                        # Extract the actual data from ToolResult
+                        actual_data = None
+                        
+                        if hasattr(result, 'structured_content') and result.structured_content is not None:
+                            # Prefer structured content - this is the parsed JSON data
+                            actual_data = result.structured_content
+                            logger.debug(f"Using structured content: {type(actual_data)}")
+                        
+                        elif hasattr(result, 'content') and result.content:
+                            # Fallback: try to extract from content if no structured content
+                            for i, content_item in enumerate(result.content):
+                                try:
+                                    # Try to access text attribute safely - only TextContent has this
+                                    text_content = getattr(content_item, 'text', None)
+                                    if text_content:
+                                        logger.debug(f"Found text content in item {i}: {len(text_content) if text_content else 0} chars")
+                                        import json
+                                        actual_data = json.loads(text_content)
+                                        logger.debug(f"Parsed JSON from TextContent for {operation_id}")
+                                        break
+                                except Exception as e:
+                                    logger.debug(f"Failed to parse JSON from content item {i}: {e}")
+                                    continue
+                        
+                        if actual_data is None:
+                            logger.error(f"❌ Could not extract data from {operation_id} result, returning as-is")
+                            logger.error(f"Result type: {type(result)}, attributes: {[attr for attr in dir(result) if not attr.startswith('_')]}")
+                            return result
+                        
+                        # Apply JQ formatting transformation
+                        try:
+                            formatted_result = self.response_formatter.format_response(operation_id, actual_data)
+                            logger.debug(f"JQ formatting returned: {type(formatted_result)} - {repr(formatted_result)[:200] if formatted_result else 'None'}")
+                            
+                            # Import the required types
+                            from mcp.types import TextContent
+                            from fastmcp.tools.tool import ToolResult
+                            
+                            # Ensure we have a valid string for the TextContent
+                            formatted_text = None
+                            
+                            if isinstance(formatted_result, str) and formatted_result.strip():
+                                formatted_text = formatted_result
+                                logger.debug(f"Using JQ formatted result: {len(formatted_text)} characters")
+                            elif formatted_result is None:
+                                # JQ filter returned null - use YAML fallback
+                                logger.warning(f"JQ filter returned null for {operation_id}, using YAML fallback")
+                                import yaml
+                                formatted_text = yaml.dump(actual_data, sort_keys=False, default_flow_style=False, allow_unicode=True)
+                                logger.debug(f"YAML fallback generated: {len(formatted_text)} characters")
+                            else:
+                                # Fallback: serialize as YAML if it's not a valid string
+                                logger.debug(f"JQ returned non-string type {type(formatted_result)}, using YAML fallback")
+                                import yaml
+                                formatted_text = yaml.dump(formatted_result if formatted_result is not None else actual_data, 
+                                                          sort_keys=False, default_flow_style=False, allow_unicode=True)
+                                logger.debug(f"YAML fallback for non-string: {len(formatted_text)} characters")
+                            
+                            # Validate we have a non-None string before creating ToolResult
+                            if formatted_text is None or not isinstance(formatted_text, str):
+                                logger.error(f"CRITICAL: formatted_text is {type(formatted_text)} with value {repr(formatted_text)}")
+                                # Emergency fallback - create a simple YAML dump
+                                import yaml
+                                formatted_text = yaml.dump(actual_data, sort_keys=False, default_flow_style=False, allow_unicode=True)
+                                logger.error(f"Emergency YAML fallback: {len(formatted_text)} characters")
+                            
+                            logger.debug(f"Final formatted_text type: {type(formatted_text)}, length: {len(formatted_text) if formatted_text else 0}")
+                            
+                            # Return a proper ToolResult with both text and structured content
+                            # The structured content preserves the original data for validation
+                            # while the text content provides the formatted output
+                            tool_result = ToolResult(
+                                content=[TextContent(type="text", text=formatted_text)],
+                                structured_content=actual_data  # Keep original structured data for schema validation
+                            )
+                            
+                            logger.debug(f"Created ToolResult with content: {len(tool_result.content)} items, structured_content type: {type(tool_result.structured_content)}")
+                            return tool_result
+                        except Exception as e:
+                            logger.error(f"JQ formatting failed for {operation_id}: {e}")
+                            # Return the original result if formatting fails
+                            return result
+                    return format_transform
+                
+                # Create transformed tool with formatting
+                transform_fn = create_format_wrapper(tool_name)
+                transformed_tool = Tool.from_tool(
+                    tool,
+                    name=tool_name,  # Keep the same name
+                    transform_fn=transform_fn,
+                    # No serializer - we return formatted text directly
+                )
+                
+                self.mcp.add_tool(transformed_tool)
+                logger.debug(f"Added transformed tool: {tool_name}")
+            else:
+                # No formatting config, add tool as-is but with YAML serialization
+                plain_tool = Tool.from_tool(
+                    tool,
+                    name=tool_name,
+                    serializer=self.response_formatter,  # YAML serialization only
+                )
+                self.mcp.add_tool(plain_tool)
+                logger.debug(f"Added plain tool with YAML serialization: {tool_name}")
+
+    async def _setup_context_aware_tools(self) -> None:
+        """Set up context awareness for tools so ResponseFormatter knows which operation is being called."""
+        if not self.mcp:
+            return
+            
+        try:
+            tools = await self.mcp.get_tools()
+            
+            # Wrap each tool's handler to set operation context
+            for tool_name, tool in tools.items():
+                if hasattr(tool, 'handler') and callable(tool.handler):
+                    # Store the original handler
+                    original_handler = tool.handler
+                    
+                    # Create a wrapper that sets context before calling the original
+                    async def context_wrapper(operation_id=tool_name, original=original_handler):
+                        async def wrapper(*args, **kwargs):
+                            # Set the operation context in the formatter
+                            self.response_formatter.set_operation_context(operation_id)
+                            try:
+                                # Call the original tool handler
+                                result = await original(*args, **kwargs)
+                                return result
+                            finally:
+                                # Clear the context
+                                self.response_formatter.set_operation_context(None)
+                        return wrapper
+                    
+                    # Replace the handler with our context-aware wrapper
+                    tool.handler = await context_wrapper()
+                    
+        except Exception as e:
+            logger.warning(f"Could not set up context-aware tools: {e}")
+            # Continue without context awareness - formatter will still work as YAML serializer
 
     async def _register_docs_tools(self) -> None:
         """Register documentation tools on the FastMCP server."""

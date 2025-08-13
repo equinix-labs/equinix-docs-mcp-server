@@ -7,7 +7,7 @@ namespace.
 """
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import yaml
 from pydantic import BaseModel, Field
@@ -47,9 +47,11 @@ class APIConfig(BaseModel):
         default_factory=list,
         description="Regex patterns of operationIds to exclude (after prefix)",
     )
-    format: Dict[str, str] = Field(
+    format: Dict[str, Union[str, List[str], Dict[str, str]]] = Field(
         default_factory=dict,
-        description="JQ format strings per operationId for response transformation",
+        description="JQ format strings per operationId for response transformation. "
+                   "Can be a single string, list of strings (applied in sequence), "
+                   "or dict with named formats (e.g., {'summary': 'jq_filter', 'detailed': 'jq_filter2'})",
     )
 
     # Backward-compat convenience properties (legacy single-spec shape)
