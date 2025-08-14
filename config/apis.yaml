@@ -46,10 +46,31 @@ apis:
   network-edge:
     auth_type: "client_credentials"
     service_name: "network-edge"
+    include:
+      - getMetrosUsingGET
     enabled: true
-    # Example JQ formatting (future feature)
-    # format:
-    #   getVirtualDevicesUsingGET: '.data | map({id: .uuid, name: .name, status: .status})'
+    format:
+      # Human-readable metros listing with pagination
+      getMetrosUsingGET:
+        summary: |
+          "**Network Edge Metros**\n\n" +
+          (.data | map(
+            "• **" + (.metroCode // "??") + "** - " + (.metroDescription // "Unknown") + " (" + (.region // "No region") + ")" +
+            (if .defaultIbx then " [IBX: " + .defaultIbx + "]" else "" end) +
+            (if .clusterSupported then " [Cluster supported]" else "" end)
+          ) | join("\n")) + 
+          "\n\n" +
+          (if .pagination then 
+            (if .pagination.total <= .pagination.limit then 
+              "**Total:** " + (.pagination.total | tostring) + " metros"
+            else
+              "**Page:** " + (((.pagination.offset // 0) / (.pagination.limit // 20) + 1) | floor | tostring) + 
+              "/" + (((.pagination.total // 0) / (.pagination.limit // 20)) | ceil | tostring) + 
+              " (showing " + (.data | length | tostring) + " of " + (.pagination.total | tostring) + " total metros)"
+            end)
+          else
+            "**Total:** " + (.data | length | tostring) + " metros"
+          end)
     specs:
       - url: "https://docs.equinix.com/api-catalog/network-edgev1/openapi.yaml"
         overlay: "overlays/network-edge.yaml"
@@ -89,6 +110,49 @@ apis:
             (if .speed then " @ " + (.speed | tostring) + "Mbps" else "" end)
           ) | join("\n")) + 
           "\n\n**Total:** " + (.data | length | tostring) + " connections"
+      
+      # Human-readable metros listing
+      getMetros:
+        summary: |
+          "**Fabric Metro Summary**\n\n" +
+          "Found " + (.data | length | tostring) + " metros (of " + (.pagination.total | tostring) + " total):\n\n" +
+          (.data | map("• **" + (.code // "??") + "** - " + (.name // "Unknown") + " (" + (.region // "No region") + ")") | join("\n"))
+        
+        detailed: |
+          "**Fabric Metro Details**\n\n" +
+          "Showing " + (.data | length | tostring) + " of " + (.pagination.total | tostring) + " metros:\n\n" +
+          (.data | map(
+            "**" + (.name // "Unknown Metro") + "** (" + (.code // "??") + ")\n" +
+            "- Region: " + (.region // "Not specified") + "\n" +
+            "- Equinix ASN: " + (.equinixAsn // "N/A" | tostring) + "\n" +
+            "- Max Local VC Bandwidth: " + ((.localVCBandwidthMax // 0 | tostring) + " Mbps") + "\n" +
+            (if .geoCoordinates then 
+              "- Location: " + (.geoCoordinates.latitude | tostring) + "°N, " + (.geoCoordinates.longitude | tostring) + "°E\n"
+            else "" end) +
+            (if .geoScopes and (.geoScopes | length > 0) then
+              "- Geo Scopes: " + (.geoScopes | join(", ")) + "\n"
+            else "" end) +
+            (if .services and (.services | length > 0) then
+              "- Services: " + (.services | map(.type) | join(", ")) + "\n"
+            else "" end) +
+            "- Connected to " + ((.connectedMetros // [] | length) | tostring) + " other metros\n" +
+            (if .connectedMetros and (.connectedMetros | length > 0) then
+              "  Top connections by latency:\n" +
+              (.connectedMetros | sort_by(.avgLatency // 999) | .[0:5] | map(
+                "    • " + (.code // "??") + " (" + ((.avgLatency // "N/A") | tostring) + "ms, " + ((.remoteVCBandwidthMax // 0) | tostring) + " Mbps max)"
+              ) | join("\n")) + 
+              (if (.connectedMetros | length) > 5 then "\n    ... and " + (((.connectedMetros | length) - 5) | tostring) + " more" else "" end) + "\n"
+            else "" end) +
+            "---"
+          ) | join("\n\n"))
+        
+        default: |
+          "**Fabric Metros**\n\n" +
+          (.data | map(
+            (.code // "??") + " → " + (.name // "Unknown") + " (" + (.region // "No region") + ")" +
+            (if .connectedMetros then " [" + ((.connectedMetros | length) | tostring) + " connections]" else "" end)
+          ) | join("\n")) + 
+          "\n\n**Total:** " + (.data | length | tostring) + " metros shown (of " + (.pagination.total | tostring) + " total)"
     specs:
       - url: "https://docs.equinix.com/api-catalog/fabricv4/openapi.yaml"
         overlay: "overlays/fabric.yaml"
@@ -102,6 +166,9 @@ apis:
         overlay: "overlays/billing.yaml"
   # SmartView APIs
   smartview:
+    service_name: "smartview"
+    include:
+      - getLocationHierarchy
     specs:
       - url: "https://docs.equinix.com/api-catalog/environmentalv1/openapi.yaml"
       - url: "https://docs.equinix.com/api-catalog/environmentalv2/openapi.yaml"
