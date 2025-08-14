@@ -175,6 +175,8 @@ class AuthenticatedClient:
             return "metal"
         elif "/fabric/" in url:
             return "fabric"
+        elif "/ne/" in url:
+            return "network-edge"
         elif "/network-edge/" in url:
             return "network-edge"
         elif "/billing/" in url:
