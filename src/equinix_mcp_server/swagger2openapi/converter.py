@@ -2,6 +2,7 @@ import copy
 import json
 import re
 
+
 def _walk_schema(schema, action):
     """
     Recursively walks a schema and applies an action.
@@ -125,8 +126,12 @@ class Swagger2OpenAPIConverter:
 
         # Parameters
         if "parameters" in op:
-            form_data_params = [p for p in op["parameters"] if p.get("in") == "formData"]
-            body_param = next((p for p in op["parameters"] if p.get("in") == "body"), None)
+            form_data_params = [
+                p for p in op["parameters"] if p.get("in") == "formData"
+            ]
+            body_param = next(
+                (p for p in op["parameters"] if p.get("in") == "body"), None
+            )
 
             if body_param:
                 op["requestBody"] = {"content": {}}
@@ -142,7 +147,7 @@ class Swagger2OpenAPIConverter:
             if form_data_params:
                 if "requestBody" not in op:
                     op["requestBody"] = {"content": {}}
-                
+
                 content_type = "application/x-www-form-urlencoded"
                 if "multipart/form-data" in consumes:
                     content_type = "multipart/form-data"
@@ -151,26 +156,30 @@ class Swagger2OpenAPIConverter:
                     op["requestBody"]["content"][content_type] = {
                         "schema": {"type": "object", "properties": {}}
                     }
-                
+
                 schema = op["requestBody"]["content"][content_type]["schema"]
                 required_fields = schema.get("required", [])
 
                 for param in form_data_params:
                     prop_name = param["name"]
-                    prop_schema = {k: v for k, v in param.items() if k not in ["name", "in", "required"]}
+                    prop_schema = {
+                        k: v
+                        for k, v in param.items()
+                        if k not in ["name", "in", "required"]
+                    }
                     if param.get("type") == "file":
                         prop_schema["type"] = "string"
                         prop_schema["format"] = "binary"
                     schema["properties"][prop_name] = prop_schema
                     if param.get("required"):
                         required_fields.append(prop_name)
-                
+
                 if required_fields:
                     schema["required"] = required_fields
 
             op["parameters"] = [
-                self._convert_parameter(p) 
-                for p in op["parameters"] 
+                self._convert_parameter(p)
+                for p in op["parameters"]
                 if p.get("in") not in ["body", "formData"]
             ]
 
@@ -196,10 +205,23 @@ class Swagger2OpenAPIConverter:
             schema = {}
             # List of properties to move into the schema object
             schema_properties = [
-                "type", "format", "items", "default", "maximum", 
-                "exclusiveMaximum", "minimum", "exclusiveMinimum", 
-                "maxLength", "minLength", "pattern", "maxItems", "minItems", 
-                "uniqueItems", "enum", "multipleOf", "collectionFormat"
+                "type",
+                "format",
+                "items",
+                "default",
+                "maximum",
+                "exclusiveMaximum",
+                "minimum",
+                "exclusiveMinimum",
+                "maxLength",
+                "minLength",
+                "pattern",
+                "maxItems",
+                "minItems",
+                "uniqueItems",
+                "enum",
+                "multipleOf",
+                "collectionFormat",
             ]
             for key in schema_properties:
                 if key in param:
@@ -219,16 +241,16 @@ class Swagger2OpenAPIConverter:
         scheme = "https"
         if "schemes" in swagger and swagger["schemes"]:
             scheme = swagger["schemes"][0]
-        
+
         if "host" in swagger:
             url = f"{scheme}://{swagger['host']}"
             if "basePath" in swagger:
                 url += swagger["basePath"]
             servers.append({"url": url})
-        
+
         if servers:
             openapi["servers"] = servers
-        
+
         openapi.pop("host", None)
         openapi.pop("basePath", None)
         openapi.pop("schemes", None)
@@ -247,10 +269,10 @@ class Swagger2OpenAPIConverter:
 
         if "definitions" in openapi:
             openapi["components"]["schemas"] = openapi.pop("definitions")
-        
+
         if "securityDefinitions" in openapi:
-            openapi["components"]["securitySchemes"] = self._convert_security_definitions(
-                openapi.pop("securityDefinitions")
+            openapi["components"]["securitySchemes"] = (
+                self._convert_security_definitions(openapi.pop("securityDefinitions"))
             )
 
         # Promote security to root: if Swagger had top-level security, carry it over.
@@ -277,7 +299,16 @@ class Swagger2OpenAPIConverter:
         # Process paths
         for path, path_item in openapi.get("paths", {}).items():
             for method, op in path_item.items():
-                if method.lower() in ["get", "put", "post", "delete", "options", "head", "patch", "trace"]:
+                if method.lower() in [
+                    "get",
+                    "put",
+                    "post",
+                    "delete",
+                    "options",
+                    "head",
+                    "patch",
+                    "trace",
+                ]:
                     self._convert_operation(op, openapi)
 
         # Final pass to fix all $refs
@@ -301,7 +332,7 @@ if __name__ == "__main__":
 
         with open("openapi.json", "w", encoding="utf-8") as f:
             json.dump(openapi_spec, f, indent=2, ensure_ascii=False)
-        
+
         print("Conversion successful: openapi.json created.")
 
     except FileNotFoundError:

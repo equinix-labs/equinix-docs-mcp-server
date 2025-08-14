@@ -50,8 +50,8 @@ class APIConfig(BaseModel):
     format: Dict[str, Union[str, List[str], Dict[str, str]]] = Field(
         default_factory=dict,
         description="JQ format strings per operationId for response transformation. "
-                   "Can be a single string, list of strings (applied in sequence), "
-                   "or dict with named formats (e.g., {'summary': 'jq_filter', 'detailed': 'jq_filter2'})",
+        "Can be a single string, list of strings (applied in sequence), "
+        "or dict with named formats (e.g., {'summary': 'jq_filter', 'detailed': 'jq_filter2'})",
     )
 
     # Backward-compat convenience properties (legacy single-spec shape)

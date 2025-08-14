@@ -120,9 +120,7 @@ class SpecManager:
                         base_spec.setdefault("components", {}), spec["components"]
                     )
                 if "$defs" in spec:
-                    logger.debug(
-                        f"Merging $defs for {api_name}: {spec.get('$defs')}"
-                    )
+                    logger.debug(f"Merging $defs for {api_name}: {spec.get('$defs')}")
                     deep_merge(base_spec.setdefault("$defs", {}), spec["$defs"])
 
         if base_spec is None:
@@ -266,19 +264,27 @@ class SpecManager:
             loc = param.get("in")
             name = str(param.get("name", ""))
             x_prefix = param.get("x-prefix") or param.get("x_prefix")
-            if loc == "header" and name.lower() == "authorization" and (
-                x_prefix is None or str(x_prefix).strip().lower().startswith("bearer")
+            if (
+                loc == "header"
+                and name.lower() == "authorization"
+                and (
+                    x_prefix is None
+                    or str(x_prefix).strip().lower().startswith("bearer")
+                )
             ):
                 auth_param_keys.add(key)
 
         # Ensure at least one bearer scheme exists to validate references if needed.
         sec_schemes: Dict[str, Any] = components.get("securitySchemes", {}) or {}
         if not any(
-            isinstance(v, dict) and v.get("type") == "http" and v.get("scheme") == "bearer"
+            isinstance(v, dict)
+            and v.get("type") == "http"
+            and v.get("scheme") == "bearer"
             for v in sec_schemes.values()
         ):
             sec_schemes.setdefault(
-                "BearerAuth", {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"}
+                "BearerAuth",
+                {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"},
             )
             components.setdefault("securitySchemes", sec_schemes)
             spec.setdefault("components", components)
@@ -313,7 +319,11 @@ class SpecManager:
                 new_params = []
                 found_auth = False
                 for p in params:
-                    if isinstance(p, dict) and "$ref" in p and isinstance(p["$ref"], str):
+                    if (
+                        isinstance(p, dict)
+                        and "$ref" in p
+                        and isinstance(p["$ref"], str)
+                    ):
                         ref = p["$ref"]
                         # Normalize possible refs to components.parameters
                         if ref.startswith("#/components/parameters/"):
@@ -383,8 +393,10 @@ class SpecManager:
             # Prefix all operationIds with the API name and filter paths
             if "paths" in spec:
                 # First, apply include/exclude filtering
-                filtered_paths = self._filter_paths_by_operation_id(api_name, spec["paths"])
-                
+                filtered_paths = self._filter_paths_by_operation_id(
+                    api_name, spec["paths"]
+                )
+
                 # Then prefix operationIds
                 for path, path_item in filtered_paths.items():
                     for method, operation in path_item.items():

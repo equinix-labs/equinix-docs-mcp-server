@@ -30,7 +30,7 @@ class ResponseFormatter:
 
         try:
             import jq
-            
+
             program = jq.compile(jq_filter)
             self.jq_cache[jq_filter] = program
             return program
@@ -44,8 +44,10 @@ class ResponseFormatter:
     def _apply_jq_filters(self, data: Any, filters: List[str]) -> Any:
         """Apply a list of JQ filters in sequence."""
         result = data
-        logger.debug(f"Starting JQ transformation with {len(filters)} filters, input type: {type(data)}")
-        
+        logger.debug(
+            f"Starting JQ transformation with {len(filters)} filters, input type: {type(data)}"
+        )
+
         for i, jq_filter in enumerate(filters):
             try:
                 logger.debug(f"Applying JQ filter {i+1}/{len(filters)}: {jq_filter}")
@@ -56,8 +58,10 @@ class ResponseFormatter:
 
                 # Apply the JQ transformation using the correct API
                 jq_result = program.input(result).all()
-                logger.debug(f"JQ raw result type: {type(jq_result)}, value: {repr(jq_result)[:200] if jq_result else 'None'}")
-                
+                logger.debug(
+                    f"JQ raw result type: {type(jq_result)}, value: {repr(jq_result)[:200] if jq_result else 'None'}"
+                )
+
                 # JQ returns a list of results, get the first one if single result
                 if isinstance(jq_result, list) and len(jq_result) == 1:
                     result = jq_result[0]
@@ -65,19 +69,25 @@ class ResponseFormatter:
                 else:
                     result = jq_result
                     logger.debug(f"Using raw result: {type(result)}")
-                
-                logger.debug(f"After filter {i+1}, result type: {type(result)}, value: {repr(result)[:200] if result else 'None'}")
+
+                logger.debug(
+                    f"After filter {i+1}, result type: {type(result)}, value: {repr(result)[:200] if result else 'None'}"
+                )
 
             except Exception as e:
                 logger.error(f"JQ transformation failed with filter '{jq_filter}': {e}")
                 logger.error(f"Input data type: {type(result)}")
                 # Continue with the current result if transformation fails
                 continue
-                
-        logger.debug(f"Final JQ result type: {type(result)}, value: {repr(result)[:200] if result else 'None'}")
+
+        logger.debug(
+            f"Final JQ result type: {type(result)}, value: {repr(result)[:200] if result else 'None'}"
+        )
         return result
 
-    def _get_format_config(self, operation_id: str) -> Optional[Union[str, List[str], Dict[str, str]]]:
+    def _get_format_config(
+        self, operation_id: str
+    ) -> Optional[Union[str, List[str], Dict[str, str]]]:
         """Get format configuration for an operation ID."""
         if "_" not in operation_id:
             return None
@@ -93,7 +103,7 @@ class ResponseFormatter:
     def format_response(self, operation_id: str, response_data: Any) -> Any:
         """Format response data using configured JQ transformation."""
         format_config = self._get_format_config(operation_id)
-        
+
         if not format_config:
             return response_data
 
@@ -103,22 +113,26 @@ class ResponseFormatter:
             if isinstance(format_config, str):
                 # Single JQ filter
                 return self._apply_jq_filters(response_data, [format_config])
-            
+
             elif isinstance(format_config, list):
                 # List of JQ filters to apply in sequence
                 return self._apply_jq_filters(response_data, format_config)
-            
+
             elif isinstance(format_config, dict):
                 # Named formats - use 'default' if available, otherwise first key
-                filter_name = "default" if "default" in format_config else next(iter(format_config))
+                filter_name = (
+                    "default"
+                    if "default" in format_config
+                    else next(iter(format_config))
+                )
                 jq_filter = format_config[filter_name]
                 logger.info(f"Using format '{filter_name}' for {operation_id}")
-                
+
                 if isinstance(jq_filter, str):
                     return self._apply_jq_filters(response_data, [jq_filter])
                 elif isinstance(jq_filter, list):
                     return self._apply_jq_filters(response_data, jq_filter)
-            
+
             return response_data
 
         except Exception as e:
@@ -131,10 +145,12 @@ class ResponseFormatter:
         # Apply JQ formatting if we have operation context
         if self._current_operation_id:
             data = self.format_response(self._current_operation_id, data)
-        
+
         # Serialize as YAML for better LLM readability
         try:
-            return yaml.dump(data, sort_keys=False, default_flow_style=False, allow_unicode=True)
+            return yaml.dump(
+                data, sort_keys=False, default_flow_style=False, allow_unicode=True
+            )
         except Exception as e:
             logger.error(f"YAML serialization failed, falling back to JSON: {e}")
             try:
