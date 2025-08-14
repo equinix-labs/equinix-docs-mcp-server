@@ -2,17 +2,8 @@
 
 This module is responsible for fetching, caching, merging, and applying
 overlays to OpenAPI specifications as defined in the configuration. It
-handles multiple spec sources per         for spec_source in api_config.specs:
-            if spec_source.overlay:
-                overlay_path = Path(spec_source.overlay)
-                if overlay_path.exists():
-                    with open(overlay_path, "r") as f:
-                        overlay = yaml.safe_load(f)
-                        spec = self.overlay_manager.apply(
-                            spec, api_config.name, overlay
-                        )
-        return spece and combines them into a
-single, coherent specification.
+handles multiple spec sources and combines them into a single, coherent
+specification.
 """
 
 import asyncio
