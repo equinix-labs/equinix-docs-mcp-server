@@ -141,8 +141,9 @@ def test_apply_overlay_missing_target(overlay_manager):
 
     result = overlay_manager.apply(spec, "test", overlay)
 
-    # Should be unchanged since target doesn't exist
-    assert "info" not in result
+    # Should create the missing intermediate node and set the value
+    assert "info" in result
+    assert result["info"]["title"] == "New Title"
     assert "paths" in result
 
 

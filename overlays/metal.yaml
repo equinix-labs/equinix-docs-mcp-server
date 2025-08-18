@@ -58,3 +58,11 @@ actions:
   - target: "$.components.schemas.Meta.properties.self"
     update:
       nullable: true
+
+  # Make Plan type property nullable and add null to enum
+  - target: "$.components.schemas.Plan.properties.type"
+    update:
+      type: "string"
+      enum: ["standard", "workload_optimized", "custom", null]
+      nullable: true
+      description: "The plan type"

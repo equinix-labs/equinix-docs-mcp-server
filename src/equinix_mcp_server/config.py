@@ -7,7 +7,7 @@ namespace.
 """
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import yaml
 from pydantic import BaseModel, Field
@@ -46,6 +46,12 @@ class APIConfig(BaseModel):
     exclude: List[str] = Field(
         default_factory=list,
         description="Regex patterns of operationIds to exclude (after prefix)",
+    )
+    format: Dict[str, Union[str, List[str], Dict[str, str]]] = Field(
+        default_factory=dict,
+        description="JQ format strings per operationId for response transformation. "
+        "Can be a single string, list of strings (applied in sequence), "
+        "or dict with named formats (e.g., {'summary': 'jq_filter', 'detailed': 'jq_filter2'})",
     )
 
     # Backward-compat convenience properties (legacy single-spec shape)
@@ -135,6 +141,7 @@ class Config(BaseModel):
                     "enabled": api_data.get("enabled", True),
                     "include": api_data.get("include", []) or [],
                     "exclude": api_data.get("exclude", []) or [],
+                    "format": api_data.get("format", {}) or {},
                 }
 
                 apis[name] = APIConfig(**model_data)

@@ -89,7 +89,7 @@ Before connecting to Ollama, verify the MCP server works:
 
 ```bash
 cd /path/to/equinix-mcp-server
-python -m equinix_mcp_server.main --test-update-specs
+python -m equinix_mcp_server.main --update-specs
 ```
 
 You should see all APIs load successfully.

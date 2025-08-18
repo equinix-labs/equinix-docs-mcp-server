@@ -16,7 +16,8 @@ class TestAuthenticatedClient:
     def test_get_service_from_url(self):
         """Test service detection from URL."""
         auth_manager = MagicMock()
-        client = AuthenticatedClient(auth_manager)
+        response_formatter = MagicMock()
+        client = AuthenticatedClient(auth_manager, response_formatter)
 
         assert (
             client._get_service_from_url("https://api.equinix.com/metal/v1/projects")
@@ -80,7 +81,8 @@ class TestEquinixMCPServer:
 
             mock_spec_instance = MagicMock()
             mock_spec_instance.update_specs = AsyncMock()
-            mock_spec_instance.get_merged_spec = AsyncMock(
+            mock_spec_instance.has_all_cached_specs = MagicMock(return_value=False)
+            mock_spec_instance.get_merged_spec = MagicMock(
                 return_value={
                     "openapi": "3.0.3",
                     "info": {"title": "Test", "version": "1.0.0"},
@@ -97,7 +99,16 @@ class TestEquinixMCPServer:
 
             mock_mcp = MagicMock()
             mock_mcp.tool = MagicMock()
-            mock_fastmcp_class.from_openapi.return_value = mock_mcp
+            mock_mcp.get_tools = AsyncMock(return_value={})
+
+            # Create a different mock for the main FastMCP instance
+            mock_main_mcp = MagicMock()
+
+            # Configure the FastMCP class mock to return different instances
+            mock_fastmcp_class.return_value = mock_main_mcp  # For FastMCP()
+            mock_fastmcp_class.from_openapi.return_value = (
+                mock_mcp  # For FastMCP.from_openapi()
+            )
 
             # Test initialization - create server inside the patch context
             server = EquinixMCPServer("test_config.yaml")
@@ -111,7 +122,7 @@ class TestEquinixMCPServer:
             assert "openapi_spec" in call_args[1]
             assert "client" in call_args[1]
             assert "name" in call_args[1]
-            assert call_args[1]["name"] == "Equinix API Server"
+            assert call_args[1]["name"] == "Temp"
 
             # Check that the client is an AuthenticatedClient
             client_arg = call_args[1]["client"]
@@ -121,4 +132,4 @@ class TestEquinixMCPServer:
             mock_spec_instance.update_specs.assert_called_once()
             mock_spec_instance.get_merged_spec.assert_called_once()
 
-            assert server.mcp == mock_mcp
+            assert server.mcp == mock_main_mcp
