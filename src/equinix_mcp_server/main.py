@@ -277,12 +277,28 @@ class EquinixMCPServer:
         temp_tools = await temp_mcp.get_tools()
 
         for tool_name, tool in temp_tools.items():
-            # Check if this tool has formatting configuration
-            format_config = self.response_formatter._get_format_config(tool_name)
+            logger.info(f"Discovered tool from FastMCP: '{tool_name}'")
+            # Normalize tool name to use double-underscore separator for API__operation
+            normalized_tool_name = tool_name
+            if "__" not in tool_name and "_" in tool_name:
+                # Replace the last single underscore with double underscore to preserve API prefix
+                parts = tool_name.rsplit("_", 1)
+                normalized_tool_name = f"{parts[0]}__{parts[1]}"
+            logger.info(
+                f"Normalized tool name: '{normalized_tool_name}' (from '{tool_name}')"
+            )
+
+            # Check if this tool has formatting configuration (use normalized name)
+            format_config = self.response_formatter._get_format_config(
+                normalized_tool_name
+            )
 
             if format_config:
                 logger.info(
                     f"Creating transformed tool with formatting for {tool_name}"
+                )
+                logger.info(
+                    f"Format config found for normalized name '{normalized_tool_name}': {bool(format_config)}"
                 )
 
                 # Create a transformation that applies JQ formatting
@@ -358,6 +374,7 @@ class EquinixMCPServer:
 
                         # Apply JQ formatting transformation
                         try:
+                            # Use normalized operation id for formatting lookup
                             formatted_result = self.response_formatter.format_response(
                                 operation_id, actual_data
                             )
@@ -462,8 +479,8 @@ class EquinixMCPServer:
 
                     return format_transform
 
-                # Create transformed tool with formatting
-                transform_fn = create_format_wrapper(tool_name)
+                # Create transformed tool with formatting; pass the normalized name
+                transform_fn = create_format_wrapper(normalized_tool_name)
                 transformed_tool = Tool.from_tool(
                     tool,
                     name=tool_name,  # Keep the same name

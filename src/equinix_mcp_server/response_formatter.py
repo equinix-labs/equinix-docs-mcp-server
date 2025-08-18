@@ -89,16 +89,72 @@ class ResponseFormatter:
         self, operation_id: str
     ) -> Optional[Union[str, List[str], Dict[str, str]]]:
         """Get format configuration for an operation ID."""
-        if "_" not in operation_id:
+        # Operation IDs generated from OpenAPI tools are typically prefixed
+        # with the API name, e.g. "metal_findMetros" or "fabric_searchConnections".
+        # However, some prefixes may contain hyphens ("network-edge") or be
+        # normalized differently by the tool generator (e.g. "network_edge",
+        # "ne", etc.). Instead of relying on a single split, try to find the
+        # best-matching API config by scanning configured API names and
+        # attempting several common normalizations.
+
+        # Prefer double-underscore separator ("{api}__{operation}") but
+        # fall back to single underscore for backward compatibility.
+        if not operation_id or ("__" not in operation_id and "_" not in operation_id):
             return None
 
-        api_name, original_operation_id = operation_id.split("_", 1)
-        api_config = self.config.get_api_config(api_name)
+        sep = "__" if "__" in operation_id else "_"
+        logger.debug(f"Using separator '{sep}' to parse operation_id={operation_id}")
+
+        # Candidate suffix after the separator is the original operation id
+        _, original_operation_id = operation_id.split(sep, 1)
+
+        # Try to find a matching API config key. Prefer exact prefix match,
+        # then try normalized variants (replace '-' <-> '_', remove dashes,
+        # or match by last token).
+        api_config = None
+
+        # Normalize operation prefix for reliable matching: take the part before sep
+        prefix = operation_id.split(sep, 1)[0]
+
+        def normalize_name(name: str) -> str:
+            # Lowercase, replace hyphens with underscores, collapse non-alnum to underscore
+            import re
+
+            s = name.lower().replace("-", "_")
+            s = re.sub(r"[^a-z0-9_]+", "_", s)
+            return s
+
+        norm_prefix = normalize_name(prefix)
+
+        for candidate in self.config.get_api_names():
+            norm_candidate = normalize_name(candidate)
+
+            # Direct match
+            if norm_prefix == norm_candidate:
+                api_config = self.config.get_api_config(candidate)
+                break
+
+            # Try compact alphanumeric candidate match
+            compact = "".join([c for c in candidate if c.isalnum()]).lower()
+            if norm_prefix == compact:
+                api_config = self.config.get_api_config(candidate)
+                break
+
+            # Try last token of candidate (e.g., network-edge -> edge)
+            parts = candidate.replace("_", "-").split("-")
+            if parts and normalize_name(parts[-1]) == norm_prefix:
+                api_config = self.config.get_api_config(candidate)
+                break
 
         if not api_config or not api_config.format:
+            logger.debug(f"No format config found for operation_id={operation_id}")
             return None
 
-        return api_config.format.get(original_operation_id)
+        fmt = api_config.format.get(original_operation_id)
+        logger.debug(
+            f"Matched format for operation_id={operation_id} -> api={api_config.name} op={original_operation_id} fmt_exists={fmt is not None}"
+        )
+        return fmt
 
     def format_response(self, operation_id: str, response_data: Any) -> Any:
         """Format response data using configured JQ transformation."""

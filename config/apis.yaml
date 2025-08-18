@@ -52,7 +52,7 @@ apis:
     format:
       # Human-readable metros listing with pagination
       getMetrosUsingGET:
-        summary: |
+        - |
           "**Network Edge Metros**\n\n" +
           (.data | map(
             "• **" + (.metroCode // "??") + "** - " + (.metroDescription // "Unknown") + " (" + (.region // "No region") + ")" +
