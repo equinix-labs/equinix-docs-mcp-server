@@ -1,0 +1,31 @@
+overlay: "1.0.0"
+info:
+  title: "Overlay for WorkVisits API"
+  version: "1.0.0"
+
+actions:
+  - target: "$.info.title"
+    update: "Equinix Work Visit API"
+
+  - target: "$.servers"
+    update:
+      - url: "https://api.equinix.com"
+        description: "Equinix API Server"
+
+  # Security schemes: keep ClientCredentials for token, use BearerAuth as default
+  - target: "$.components.securitySchemes"
+    update:
+      BearerAuth:
+        type: http
+        scheme: bearer
+        bearerFormat: JWT
+      ClientCredentials:
+        type: oauth2
+        flows:
+          clientCredentials:
+            tokenUrl: "https://api.equinix.com/oauth2/v1/token"
+            scopes: {}
+
+  - target: "$.security"
+    update:
+      - BearerAuth: []

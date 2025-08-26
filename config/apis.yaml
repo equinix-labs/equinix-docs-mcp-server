@@ -7,6 +7,8 @@ apis:
     include:
       - findPlans
       - findMetros
+      - createDevice
+      - findProjects
     format:
       # Human-readable text format for plans - simplified and robust
       findPlans: |
@@ -177,6 +179,14 @@ apis:
       - url: "https://docs.equinix.com/api-catalog/ibx-assetsv1/openapi.yaml"
       - url: "https://docs.equinix.com/api-catalog/powerv1/openapi.yaml"
       - url: "https://docs.equinix.com/api-catalog/system-alertsv2/openapi.yaml"
+  workvisit:
+    auth_type: "client_credentials"
+    service_name: "workvisit"
+    specs:
+      - url: "https://docs.equinix.com/api-catalog/workvisitv1/openapi.yaml"
+        overlay: "overlays/workvisitv1.yaml"
+      - url: "https://docs.equinix.com/api-catalog/workvisitsv2/openapi.yaml"
+        overlay: "overlays/workvisitsv2.yaml"
 
 # Authentication configuration
 auth:

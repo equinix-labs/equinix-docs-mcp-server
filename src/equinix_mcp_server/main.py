@@ -3,6 +3,8 @@
 import asyncio
 import logging
 import os
+import re
+from urllib.parse import urlparse
 from typing import Any, Dict, Optional, Union
 
 import click
@@ -61,6 +63,8 @@ class AuthenticatedClient:
 
         # Add authentication headers to the request
         service_name = self._get_service_from_url(str(request.url))
+        if service_name == "unknown":
+            service_name = "fabric" # hack: Default to fabric for common Equinix Auth if unknown
         try:
             auth_header = await self.auth_manager.get_auth_header(service_name)
             logger.debug(
@@ -96,6 +100,8 @@ class AuthenticatedClient:
 
         # Determine service from URL/operation
         service_name = self._get_service_from_url(str(request_url))
+        if service_name == "unknown":
+            service_name = "fabric" # hack: Default to fabric for common Equinix Auth if unknown
         logger.debug(f"Making {method} request to {request_url}")
         logger.debug(f"Detected service: {service_name}")
 
@@ -174,16 +180,22 @@ class AuthenticatedClient:
 
     def _get_service_from_url(self, url: str) -> str:
         """Determine service name from URL."""
-        if "/metal/" in url:
-            return "metal"
-        elif "/fabric/" in url:
-            return "fabric"
-        elif "/ne/" in url:
+        # Early special-case: treat both '/ne/' and '/network-edge/' as the
+        # 'network-edge' service regardless of URL shape.
+        if re.search(r"/(?:ne|network-edge)(?:/|$)", url):
             return "network-edge"
-        elif "/network-edge/" in url:
-            return "network-edge"
-        elif "/billing/" in url:
-            return "billing"
+
+        # Parse the path component (works for absolute URLs and plain paths)
+        try:
+            path = urlparse(url).path
+        except Exception:
+            path = url
+
+        # Extract the first path segment using a regex (the existing pattern)
+        m = re.match(r"^/([^/]+)/", path)
+        if m:
+            return m.group(1)
+
         return "unknown"
 
     async def __aenter__(self) -> "AuthenticatedClient":
@@ -229,6 +241,13 @@ class EquinixMCPServer:
             logger.info("Using cached API specifications for faster startup")
 
         merged_spec = self.spec_manager.get_merged_spec()
+        # Apply any overlay-driven auto-generation of operationIds before tools are created.
+        # Overlays can mark methods with 'x-autogen-operationId: true' to request generation
+        # of an operationId using the pattern {verb}{Basename} (e.g. postLocations).
+        try:
+            self._apply_autogen_operation_ids(merged_spec)
+        except Exception as e:
+            logger.debug(f"Could not apply autogen operationIds: {e}")
 
         # Create authenticated HTTP client for API calls
         client = AuthenticatedClient(
@@ -499,6 +518,85 @@ class EquinixMCPServer:
                 )
                 self.mcp.add_tool(plain_tool)
                 logger.debug(f"Added plain tool with YAML serialization: {tool_name}")
+
+    def _apply_autogen_operation_ids(self, spec: Dict[str, Any]) -> None:
+        """Generate operationId values when overlays request it.
+
+        Overlay authors can add an empty method mapping or the marker
+        `x-autogen-operationId: true` under a method to request generation.
+
+        Rules:
+        - If a method object has 'x-autogen-operationId: true' or it exists but
+          lacks 'operationId', generate one using {verb}{CamelCase(basename)}.
+        - Basename is the last non-parameter path segment (e.g. /a/b/{id} -> b).
+        - Ensure uniqueness by appending numeric suffixes when needed.
+        """
+        paths = spec.get("paths")
+        if not isinstance(paths, dict):
+            return
+
+        def camel(s: str) -> str:
+            parts = re.split(r"[^A-Za-z0-9]+", s)
+            return "".join(p.capitalize() for p in parts if p)
+
+        def basename_and_param_flag(p: str) -> tuple[str, bool]:
+            # Return (basename, ends_with_param)
+            segs = [seg for seg in p.split("/") if seg]
+            if not segs:
+                return ("Root", False)
+            last = segs[-1]
+            is_param = bool(re.match(r"^{.+}$", last))
+            if is_param:
+                # choose the previous segment as basename if available
+                if len(segs) >= 2:
+                    base = segs[-2]
+                else:
+                    base = "Root"
+            else:
+                base = last
+            return (base, is_param)
+
+        existing = set()
+        for p, methods in paths.items():
+            if not isinstance(methods, dict):
+                continue
+            for method, op in methods.items():
+                if not isinstance(op, dict):
+                    continue
+                opid = op.get("operationId")
+                if opid:
+                    existing.add(opid)
+
+        # Generate operationIds for any method missing one
+        for p, methods in paths.items():
+            if not isinstance(methods, dict):
+                continue
+            for method, op in methods.items():
+                if method.lower() not in ("get", "put", "post", "delete", "patch", "options", "head"):
+                    continue
+                if not isinstance(op, dict):
+                    continue
+
+                if op.get("operationId"):
+                    continue  # already present
+
+                base, ends_with_param = basename_and_param_flag(p)
+                if method.lower() == "get":
+                    if ends_with_param:
+                        candidate = f"get{camel(base)}"
+                    else:
+                        candidate = f"list{camel(base)}"
+                else:
+                    candidate = f"{method.lower()}{camel(base)}"
+
+                if candidate in existing:
+                    i = 2
+                    while f"{candidate}{i}" in existing:
+                        i += 1
+                    candidate = f"{candidate}{i}"
+
+                op["operationId"] = candidate
+                existing.add(candidate)
 
     async def _setup_context_aware_tools(self) -> None:
         """Set up context awareness for tools so ResponseFormatter knows which operation is being called."""
