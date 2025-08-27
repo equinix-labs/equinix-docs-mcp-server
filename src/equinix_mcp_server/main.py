@@ -9,6 +9,7 @@ import click
 import httpx
 from fastmcp import FastMCP
 
+from .arazzo_manager import ArazzoManager
 from .auth import AuthManager
 from .config import Config
 from .docs import DocsManager
@@ -208,6 +209,7 @@ class EquinixMCPServer:
         self.spec_manager = SpecManager(self.config)
         self.docs_manager = DocsManager(self.config)
         self.response_formatter = ResponseFormatter(self.config)
+        self.arazzo_manager = ArazzoManager(self.config, auth_manager=self.auth_manager)
         self.mcp: Optional[Any] = None  # Will be initialized in initialize()
 
     async def initialize(self, force_update_specs: bool = False) -> None:
@@ -265,6 +267,9 @@ class EquinixMCPServer:
 
         # Register additional documentation tools that aren't part of the API
         await self._register_docs_tools()
+        # Load and register Arazzo workflows (after API tools exist)
+        await self.arazzo_manager.load()
+        await self.arazzo_manager.register_with_fastmcp(self.mcp)
 
     async def _apply_tool_transformations(self, temp_mcp: Any) -> None:
         """Apply tool transformations for formatting and transfer tools to main instance."""

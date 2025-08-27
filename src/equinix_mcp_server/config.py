@@ -98,6 +98,10 @@ class Config(BaseModel):
     auth: AuthConfig = Field(default_factory=AuthConfig)
     output: OutputConfig = Field(default_factory=OutputConfig)
     docs: DocsConfig = Field(default_factory=DocsConfig)
+    arazzo: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Configuration for Arazzo workflow specs (e.g., {'specs': ['path/to/workflows.yaml']})",
+    )
 
     @classmethod
     def load(cls, config_path: str) -> "Config":

@@ -12,19 +12,19 @@ info:
 
 sourceDescriptions:
   - name: EquinixAssetsAPI
-    url: https://docs.equinix.com/api-catalog/assetsv1/
+    url: "https://docs.equinix.com/api-catalog/ibx-assetsv1/openapi.yaml"
     type: openapi
   - name: EquinixHierarchyAPI
-    url: https://docs.equinix.com/api-catalog/hierarchyv1/
+    url: "https://docs.equinix.com/api-catalog/hierarchyv1/openapi.yaml"
     type: openapi
   - name: EquinixEnvironmentalAPI
-    url: https://docs.equinix.com/api-catalog/environmentalv1/
+    url: "https://docs.equinix.com/api-catalog/environmentalv1/openapi.yaml"
     type: openapi
   - name: EquinixPowerAPI
-    url: https://docs.equinix.com/api-catalog/powerv1/
+    url: "https://docs.equinix.com/api-catalog/powerv1/openapi.yaml"
     type: openapi
   - name: EquinixSystemAlertsAPI
-    url: https://docs.equinix.com/api-catalog/system-alertsv2/
+    url: "https://docs.equinix.com/api-catalog/system-alertsv2/openapi.yaml"
     type: openapi
 
 workflows:
