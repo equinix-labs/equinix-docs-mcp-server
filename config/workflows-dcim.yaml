@@ -1,0 +1,350 @@
+arazzo: 1.0.1
+info:
+  title: Equinix Cage Asset Collector with Zone, Environmental, Power, and Alerts Enrichment
+  version: 2.0.0
+  description: |
+    End-to-end workflow to:
+      1. Fetch all ACTIVE CAGE assets from Equinix Assets API.
+      2. Enrich each asset with its Zone ID from the Hierarchy API.
+      3. Enrich each asset with environmental data (temperature, humidity).
+      4. Enrich each asset with power consumption data (kva, amps, kw, contractualKva).
+      5. Enrich each asset with system alerts from System Alerts API.
+
+sourceDescriptions:
+  - name: EquinixAssetsAPI
+    url: "https://docs.equinix.com/api-catalog/ibx-assetsv1/openapi.yaml"
+    type: openapi
+  - name: EquinixHierarchyAPI
+    url: "https://docs.equinix.com/api-catalog/hierarchyv1/openapi.yaml"
+    type: openapi
+  - name: EquinixEnvironmentalAPI
+    url: "https://docs.equinix.com/api-catalog/environmentalv1/openapi.yaml"
+    type: openapi
+  - name: EquinixPowerAPI
+    url: "https://docs.equinix.com/api-catalog/powerv1/openapi.yaml"
+    type: openapi
+  - name: EquinixSystemAlertsAPI
+    url: "https://docs.equinix.com/api-catalog/system-alertsv2/openapi.yaml"
+    type: openapi
+
+workflows:
+  - workflowId: collectAndEnrichCageAssets
+    summary: Collect ACTIVE Cage assets and enrich them with zone, environment, power, and alerts
+    description: >
+      Collect all ACTIVE Cage assets, enrich with zone IDs via Hierarchy API,
+      enrich with Environmental API data, add power consumption from Power API,
+      and finally attach system alerts from System Alerts API.
+    inputs:
+      type: object
+      properties:
+        bearerToken:
+          type: string
+          description: OAuth Bearer token for Equinix API authentication
+        limit:
+          type: integer
+          default: 100
+          description: Number of items per page (max 100)
+
+    steps:
+      - stepId: init
+        description: Initialize paging and output collection
+        outputs:
+          offset: 0
+          cageAssets: []
+
+      - stepId: searchPage
+        description: Call Equinix Assets search endpoint for one page
+        operationId: EquinixAssetsAPI.searchAsset
+        parameters:
+          - name: Authorization
+            in: header
+            value: 'Bearer $inputs.bearerToken'
+          - name: Content-Type
+            in: header
+            value: application/json
+          - name: offset
+            in: query
+            value: $steps.init.outputs.offset
+          - name: limit
+            in: query
+            value: $inputs.limit
+        requestBody:
+          contentType: application/json
+          payload:
+            filter:
+              productTypes: ["CAGE"]
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          assetsPage: $response.body.data
+          links: $response.body._links
+
+      - stepId: accumulate
+        description: Extract and append ACTIVE asset details only
+        outputs:
+          cageAssets: >
+            $steps.init.outputs.cageAssets
+            + $steps.searchPage.outputs.assetsPage
+                .filter(asset => asset.status == "ACTIVE")
+                .map(asset =>
+                  { accountNumber: asset.accountNumber,
+                    ibx: asset.ibx,
+                    cage: asset.cage }
+                )
+
+      - stepId: checkNext
+        description: Continue pagination if more pages exist
+        onSuccess:
+          - condition: $steps.searchPage.outputs.links.next != null
+            next: updateOffset
+          - condition: $steps.searchPage.outputs.links.next == null
+            next: enrichAssets
+
+      - stepId: updateOffset
+        description: Increment offset and loop
+        outputs:
+          offset: $steps.init.outputs.offset + $inputs.limit
+          cageAssets: $steps.accumulate.outputs.cageAssets
+        onSuccess:
+          - next: searchPage
+
+      - stepId: enrichAssets
+        description: Enrich assets with zone info
+        workflowId: enrichZones
+        parameters:
+          - name: cageAssets
+            in: body
+            value: $steps.accumulate.outputs.cageAssets
+        onSuccess:
+          - next: enrichEnvironment
+
+      - stepId: enrichEnvironment
+        description: Enrich assets with temperature and humidity info
+        workflowId: enrichEnvironmental
+        parameters:
+          - name: enrichedAssets
+            in: body
+            value: $steps.enrichAssets.outputs.enrichedAssets
+        onSuccess:
+          - next: enrichPower
+
+      - stepId: enrichPower
+        description: Enrich assets with power consumption info
+        workflowId: enrichPowerConsumption
+        parameters:
+          - name: finalAssets
+            in: body
+            value: $steps.enrichEnvironment.outputs.finalAssets
+        onSuccess:
+          - next: enrichAlerts
+
+      - stepId: enrichAlerts
+        description: Enrich assets with system alerts
+        workflowId: enrichSystemAlerts
+        parameters:
+          - name: powerAssets
+            in: body
+            value: $steps.enrichPower.outputs.powerAssets
+
+    outputs:
+      cageAssets: $steps.enrichAlerts.outputs.alertAssets
+
+  # Sub-workflow for zone enrichment
+  - workflowId: enrichZones
+    summary: Enrich cageAssets with zone information
+    steps:
+      - stepId: enrichEachAsset
+        description: Loop over assets and fetch zone details
+        forEach: $inputs.cageAssets
+        steps:
+          - stepId: callHierarchy
+            description: Call Hierarchy Location API
+            operationPath: EquinixHierarchyAPI.getLocationHierarchy
+            parameters:
+              - name: Authorization
+                in: header
+                value: 'Bearer $inputs.bearerToken'
+              - name: Content-Type
+                in: header
+                value: application/json
+              - name: accountNumber
+                in: query
+                value: $item.accountNumber
+              - name: ibx
+                in: query
+                value: $item.ibx
+            successCriteria:
+              - condition: $statusCode == 200
+            outputs:
+              zone: >
+                $response.body.children
+                  .filter(parent =>
+                    parent.children.some(child =>
+                      child.levelType == "CAGE"
+                      && child.levelValue == $item.cage
+                    )
+                  )
+                  .map(parent => parent.levelValue)[0]
+
+          - stepId: appendZone
+            description: Attach zone info
+            outputs:
+              enrichedAsset: >
+                { accountNumber: $item.accountNumber,
+                  ibx: $item.ibx,
+                  cage: $item.cage,
+                  zone: $steps.callHierarchy.outputs.zone }
+
+    outputs:
+      enrichedAssets: $steps.enrichEachAsset.outputs.enrichedAsset
+
+  # Sub-workflow for environmental enrichment
+  - workflowId: enrichEnvironmental
+    summary: Enrich assets with environmental data (temperature, humidity)
+    steps:
+      - stepId: enrichEnvEachAsset
+        description: Loop over enriched assets and call Environmental API
+        forEach: $inputs.enrichedAssets
+        steps:
+          - stepId: callEnvironmental
+            description: Call Environmental API for this zone
+            operationPath: '{$sourceDescriptions.EquinixEnvironmentalAPI.url}#/paths/~1environment~1v1~1current/get'
+            parameters:
+              - name: Authorization
+                in: header
+                value: 'Bearer $inputs.bearerToken'
+              - name: Content-Type
+                in: headerq
+                value: application/json
+              - name: accountNumber
+                in: query
+                value: $item.accountNumber
+              - name: ibx
+                in: query
+                value: $item.ibx
+              - name: levelType
+                in: query
+                value: "ZONE"
+              - name: levelValue
+                in: query
+                value: $item.zone
+            successCriteria:
+              - condition: $statusCode == 200
+            outputs:
+              environment: >
+                { temperature: $response.body.payload.temperature,
+                  humidity: $response.body.payload.humidity }
+
+          - stepId: appendEnvironment
+            description: Attach environmental data
+            outputs:
+              envAsset: >
+                { accountNumber: $item.accountNumber,
+                  ibx: $item.ibx,
+                  cage: $item.cage,
+                  zone: $item.zone,
+                  environment: $steps.callEnvironmental.outputs.environment }
+
+    outputs:
+      finalAssets: $steps.enrichEnvEachAsset.outputs.envAsset
+
+  # Sub-workflow for power enrichment
+  - workflowId: enrichPowerConsumption
+    summary: Enrich assets with power consumption data
+    steps:
+      - stepId: enrichPowerEachAsset
+        description: Loop over assets and call Power API
+        forEach: $inputs.finalAssets
+        steps:
+          - stepId: callPower
+            description: Call Power API for this cage
+            operationPath: '{$sourceDescriptions.EquinixPowerAPI.url}#/paths/~1power~1v1~1current/get'
+            parameters:
+              - name: Authorization
+                in: header
+                value: 'Bearer $inputs.bearerToken'
+              - name: Content-Type
+                in: header
+                value: application/json
+              - name: accountNumber
+                in: query
+                value: $item.accountNumber
+              - name: ibx
+                in: query
+                value: $item.ibx
+              - name: levelType
+                in: query
+                value: "CAGE"
+              - name: levelValue
+                in: query
+                value: $item.cage
+            successCriteria:
+              - condition: $statusCode == 200
+            outputs:
+              power: >
+                { kva: $response.body.payload.kva,
+                  amps: $response.body.payload.amps,
+                  kw: $response.body.payload.kw,
+                  contractualKva: $response.body.payload.contractualKva }
+
+          - stepId: appendPower
+            description: Attach power data
+            outputs:
+              powerAsset: >
+                { accountNumber: $item.accountNumber,
+                  ibx: $item.ibx,
+                  cage: $item.cage,
+                  zone: $item.zone,
+                  environment: $item.environment,
+                  power: $steps.callPower.outputs.power }
+
+    outputs:
+      powerAssets: $steps.enrichPowerEachAsset.outputs.powerAsset
+
+  # Sub-workflow for system alerts enrichment
+  - workflowId: enrichSystemAlerts
+    summary: Enrich assets with system alerts from System Alerts API
+    steps:
+      - stepId: enrichAlertsEachAsset
+        description: Loop over assets and call System Alerts API
+        forEach: $inputs.powerAssets
+        steps:
+          - stepId: callSystemAlerts
+            description: Call System Alerts search endpoint for this IBX
+            operationPath: '{$sourceDescriptions.EquinixSystemAlertsAPI.url}#/paths/~1system-alerts~1v2~1search/post'
+            parameters:
+              - name: Authorization
+                in: header
+                value: 'Bearer $inputs.bearerToken'
+              - name: Content-Type
+                in: header
+                value: application/json
+            requestBody:
+              contentType: application/json
+              payload:
+                filter:
+                  property: "/asset/ibx"
+                  operator: "IN"
+                  values: [ $item.ibx ]
+                pagination:
+                  offset: 0
+                  limit: 100
+            successCriteria:
+              - condition: $statusCode == 200
+            outputs:
+              alerts: $response.body.data
+
+          - stepId: appendAlerts
+            description: Attach alerts array
+            outputs:
+              alertAsset: >
+                { accountNumber: $item.accountNumber,
+                  ibx: $item.ibx,
+                  cage: $item.cage,
+                  zone: $item.zone,
+                  environment: $item.environment,
+                  power: $item.power,
+                  alerts: $steps.callSystemAlerts.outputs.alerts }
+
+    outputs:
+      alertAssets: $steps.enrichAlertsEachAsset.outputs.alertAsset

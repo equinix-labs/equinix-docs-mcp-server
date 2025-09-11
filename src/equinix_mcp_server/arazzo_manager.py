@@ -71,6 +71,31 @@ class ArazzoManager:
             arazzo_cfg.get("specs", []) if isinstance(arazzo_cfg, dict) else []
         )
         self._spec_paths = specs
+        # Bridge credentials: if AuthManager already has a Metal token expose it
+        # using the environment variable name that arazzo-runner's default
+        # credential resolver expects (SOURCE_SCHEMENAME upper‑cased). The Metal
+        # OpenAPI spec defines the security scheme name 'x_auth_token' under the
+        # sourceDescription named 'metal', so arazzo-runner looks for
+        # METAL_X_AUTH_TOKEN. We reuse the existing EQUINIX_METAL_TOKEN value to
+        # avoid asking the user to export a second var.
+        try:  # pragma: no cover - defensive only
+            import os
+
+            if (
+                self.auth_manager
+                and getattr(self.auth_manager, "metal_token", None)
+                and "METAL_X_AUTH_TOKEN" not in os.environ
+            ):
+                os.environ["METAL_X_AUTH_TOKEN"] = getattr(
+                    self.auth_manager, "metal_token"
+                )
+                logger.debug(
+                    "Bridged EQUINIX_METAL_TOKEN -> METAL_X_AUTH_TOKEN for Arazzo"
+                )
+        except Exception as cred_bridge_err:  # pragma: no cover
+            logger.warning(
+                "Failed to bridge Metal token env var for Arazzo: %s", cred_bridge_err
+            )
         if not specs:
             logger.info("No Arazzo specs configured")
             return
@@ -79,6 +104,57 @@ class ArazzoManager:
                 content = await self._read_spec(spec_path)
                 doc = yaml.safe_load(content)
                 if isinstance(doc, dict):
+                    # Normalize legacy mapping-form workflows -> list of workflow objects
+                    wfs = doc.get("workflows")
+                    if isinstance(wfs, dict):
+                        doc["workflows"] = [
+                            {"workflowId": k, **(v if isinstance(v, dict) else {})}
+                            for k, v in wfs.items()
+                        ]
+                        logger.debug(
+                            "Normalized mapping-form workflows in %s to list form (%d workflows)",
+                            spec_path,
+                            len(doc["workflows"]),
+                        )
+                        # Update content so metadata parser sees normalized version
+                        content = yaml.safe_dump(doc)
+                    # Normalize simplified step syntax (id->stepId, operation->operationId, params->parameters)
+                    mutated = False
+                    for wf in doc.get("workflows", []) or []:
+                        if not isinstance(wf, dict):
+                            continue
+                        steps = wf.get("steps")
+                        if isinstance(steps, list):
+                            for st in steps:
+                                if not isinstance(st, dict):
+                                    continue
+                                if "stepId" not in st and "id" in st:
+                                    st["stepId"] = st.pop("id")
+                                    mutated = True
+                                if (
+                                    not any(k in st for k in ("operationId", "operationPath"))
+                                    and "operation" in st
+                                ):
+                                    st["operationId"] = st.pop("operation")
+                                    mutated = True
+                                if "parameters" not in st and isinstance(st.get("params"), dict):
+                                    params_dict = st.pop("params")
+                                    param_list = []
+                                    for pname, pval in params_dict.items():
+                                        param_list.append(
+                                            {
+                                                "name": pname,
+                                                "in": "query",
+                                                "value": pval,
+                                            }
+                                        )
+                                    st["parameters"] = param_list
+                                    mutated = True
+                    if mutated:
+                        content = yaml.safe_dump(doc)
+                        logger.debug(
+                            "Normalized simplified step syntax in %s", spec_path
+                        )
                     self._spec_docs[spec_path] = doc
                 self._parse_spec_metadata(content, spec_path)
             except Exception as e:  # pragma: no cover
@@ -192,9 +268,29 @@ class ArazzoManager:
                             logger.debug(f"Injected bearerToken for workflow {_wf_id}")
                     except Exception as e:  # pragma: no cover
                         logger.warning(f"Bearer token auto-inject failed: {e}")
-                return await self._execute_workflow_with_fallback(
+                result = await self._execute_workflow_with_fallback(
                     _wf_id, _meta.spec_path, merged_inputs
                 )
+                # Simplify for MCP: return outputs or last step outputs instead of raw WorkflowExecutionResult
+                try:
+                    outputs = getattr(result, "outputs", None)
+                    step_outputs = getattr(result, "step_outputs", None)
+                    if isinstance(outputs, dict) and outputs:
+                        return outputs
+                    if isinstance(step_outputs, dict) and step_outputs:
+                        last_step_id = list(step_outputs.keys())[-1]
+                        last_vals = step_outputs.get(last_step_id)
+                        if isinstance(last_vals, dict) and last_vals:
+                            return last_vals
+                    # Fallback: return outputs even if empty (so caller sees structure)
+                    if isinstance(outputs, dict):
+                        return outputs
+                    return result
+                except Exception as simplify_err:  # pragma: no cover
+                    logger.debug(
+                        "Failed to simplify workflow result for %s: %s", _wf_id, simplify_err
+                    )
+                    return result
 
             async def __execute_workflow(merged):  # type: ignore
                 return await _exec_wrapper(merged)
@@ -212,10 +308,107 @@ class ArazzoManager:
         if not ArazzoRunner:
             return None
         try:
-            http_client = (
-                requests.Session() if requests else None
-            )  # Provide HTTP client so remote specs load
+            http_client = None
+            if requests:
+                # Provide HTTP client so remote specs load and inject auth headers.
+                session = requests.Session()
+                # If we have a Metal token, pre‑set the header so even if the
+                # arazzo-runner credential lookup misses (e.g. user didn't set
+                # METAL_X_AUTH_TOKEN) requests still authenticate.
+                try:  # pragma: no cover - header injection is simple
+                    if getattr(self.auth_manager, "metal_token", None):
+                        session.headers.setdefault(
+                            "X-Auth-Token", getattr(self.auth_manager, "metal_token")
+                        )
+                        logger.debug(
+                            "Injected X-Auth-Token header into Arazzo HTTP session"
+                        )
+                    # Pre-inject bearer token (client credentials) for non-Metal APIs
+                    if self.auth_manager:
+                        import asyncio as _asyncio
+
+                        async def _maybe_bearer():
+                            try:
+                                hdr = await self.auth_manager._get_client_credentials_auth_header()  # type: ignore
+                                bearer_val = hdr.get("Authorization")
+                                if bearer_val:
+                                    session.headers.setdefault(
+                                        "Authorization", bearer_val
+                                    )
+                                    logger.debug(
+                                        "Injected Authorization header into Arazzo HTTP session"
+                                    )
+                            except Exception as be:  # pragma: no cover
+                                logger.debug(
+                                    "Skipping bearer injection at runner init: %s", be
+                                )
+
+                        try:
+                            loop = _asyncio.get_running_loop()
+                            loop.create_task(_maybe_bearer())
+                        except RuntimeError:
+                            _asyncio.run(_maybe_bearer())
+                except Exception as hdr_err:  # pragma: no cover
+                    logger.warning(
+                        "Failed to inject Metal token into Arazzo session: %s", hdr_err
+                    )
+                http_client = session
             runner = ArazzoRunner.from_arazzo_path(spec_path, http_client=http_client)
+            # Normalize runner.arazzo_doc workflows if still mapping-form
+            try:  # pragma: no cover - defensive
+                adoc = getattr(runner, "arazzo_doc", None)
+                if isinstance(adoc, dict):
+                    wfs = adoc.get("workflows")
+                    if isinstance(wfs, dict):
+                        adoc["workflows"] = [
+                            {"workflowId": k, **(v if isinstance(v, dict) else {})}
+                            for k, v in wfs.items()
+                        ]
+                        logger.debug(
+                            "Runner spec %s had mapping-form workflows; normalized to list (%d workflows)",
+                            spec_path,
+                            len(adoc["workflows"]),
+                        )
+                    # Step-level normalization (id->stepId, operation->operationId, params->parameters)
+                    mutated = False
+                    for wf in adoc.get("workflows", []) or []:
+                        if not isinstance(wf, dict):
+                            continue
+                        steps = wf.get("steps")
+                        if isinstance(steps, list):
+                            for st in steps:
+                                if not isinstance(st, dict):
+                                    continue
+                                if "stepId" not in st and "id" in st:
+                                    st["stepId"] = st.pop("id")
+                                    mutated = True
+                                if (
+                                    not any(k in st for k in ("operationId", "operationPath"))
+                                    and "operation" in st
+                                ):
+                                    st["operationId"] = st.pop("operation")
+                                    mutated = True
+                                if "parameters" not in st and isinstance(st.get("params"), dict):
+                                    params_dict = st.pop("params")
+                                    param_list = []
+                                    for pname, pval in params_dict.items():
+                                        param_list.append(
+                                            {
+                                                "name": pname,
+                                                "in": "query",
+                                                "value": pval,
+                                            }
+                                        )
+                                    st["parameters"] = param_list
+                                    mutated = True
+                    if mutated:
+                        logger.debug(
+                            "Runner spec %s had simplified step syntax; normalized", spec_path
+                        )
+            except Exception as norm_err:
+                logger.warning(
+                    "Failed to normalize runner workflows for %s: %s", spec_path, norm_err
+                )
             self._runners[spec_path] = runner
             return runner
         except Exception as e:  # pragma: no cover
