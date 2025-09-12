@@ -92,9 +92,9 @@ async def main():
 
     print("   Sample documentation entries loaded for demo")
 
-    # Test documentation search
-    search_result = await docs_manager.search_docs("metal")
-    print(f"   🔍 Search for 'metal' found {search_result.count('**')} results")
+    # Test documentation search (filename-based)
+    find_result = await docs_manager.find_docs("metal")
+    print(f"   🔍 Find docs for 'metal' found {find_result.count('**')} results")
 
     # Test documentation listing with filter
     filtered_docs = await docs_manager.list_docs("API")

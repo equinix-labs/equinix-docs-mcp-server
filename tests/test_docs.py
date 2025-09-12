@@ -1,6 +1,7 @@
 """Test documentation manager functionality."""
 
 from unittest.mock import AsyncMock, patch
+from pathlib import Path
 
 import pytest
 
@@ -139,8 +140,8 @@ async def test_list_docs_with_filter(docs_manager):
 
 
 @pytest.mark.asyncio
-async def test_search_docs(docs_manager):
-    """Test documentation search."""
+async def test_find_docs(docs_manager):
+    """Test documentation find (filename-based search)."""
     # Setup sample data
     docs_manager.sitemap_cache = [
         {
@@ -157,14 +158,46 @@ async def test_search_docs(docs_manager):
         },
     ]
 
-    # Test search
-    result = await docs_manager.search_docs("metal")
+    # Test find
+    result = await docs_manager.find_docs("metal")
     assert "Getting Started with Metal" in result
     assert "Fabric Overview" not in result
 
     # Test no results
-    result = await docs_manager.search_docs("nonexistent")
+    result = await docs_manager.find_docs("nonexistent")
     assert "No documentation found" in result
+
+
+@pytest.mark.asyncio
+@patch("equinix_mcp_server.docs.httpx.AsyncClient")
+@patch("equinix_mcp_server.docs.aiofiles.open")
+@patch("equinix_mcp_server.docs.Path.exists")
+async def test_search_docs(mock_exists, mock_aiofiles, mock_httpx, docs_manager):
+    """Test documentation search using lunr search."""
+    # Mock the cache file doesn't exist initially
+    mock_exists.return_value = False
+    
+    # Mock HTTP response
+    mock_response = AsyncMock()
+    mock_response.raise_for_status = AsyncMock()
+    mock_response.text = '[]'  # Empty search index for test
+    
+    mock_client = AsyncMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+    mock_httpx.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+    
+    # Mock file operations
+    mock_file = AsyncMock()
+    mock_aiofiles.return_value.__aenter__ = AsyncMock(return_value=mock_file)
+    
+    # Test search - should attempt to fetch and cache the index
+    result = await docs_manager.search_docs("metal")
+    
+    # Should have attempted to fetch the search index
+    mock_client.get.assert_called_once_with("https://docs.equinix.com/search-index.json")
+    
+    # Should contain error message about search results
+    assert "No search results found" in result or "Error searching documentation" in result
 
 
 @pytest.mark.asyncio
