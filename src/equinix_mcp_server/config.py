@@ -75,12 +75,6 @@ class AuthConfig(BaseModel):
     metal_token: Dict[str, Any] = Field(default_factory=dict)
 
 
-class OutputConfig(BaseModel):
-    """Output configuration."""
-
-    merged_spec_path: str = Field(default="merged-openapi.yaml")
-
-
 class DocsConfig(BaseModel):
     """Documentation configuration."""
 
@@ -96,7 +90,6 @@ class Config(BaseModel):
     )
     apis: Dict[str, APIConfig] = Field(default_factory=dict)
     auth: AuthConfig = Field(default_factory=AuthConfig)
-    output: OutputConfig = Field(default_factory=OutputConfig)
     docs: DocsConfig = Field(default_factory=DocsConfig)
     arazzo: Dict[str, Any] = Field(
         default_factory=dict,

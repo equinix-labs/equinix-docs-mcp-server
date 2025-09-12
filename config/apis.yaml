@@ -188,9 +188,6 @@ auth:
   metal_token:
     header_name: "X-Auth-Token"
 
-# Output configuration
-output:
-  merged_spec_path: "merged-openapi.yaml"
 # Documentation configuration
 docs:
   sitemap_url: "https://docs.equinix.com/sitemap.xml"

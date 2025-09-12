@@ -213,7 +213,6 @@ __marimo__/
 # Equinix MCP Server specific files
 # Cache directories for specs and docs
 cache/
-merged-openapi.yaml
 
 # Temporary files
 *.tmp

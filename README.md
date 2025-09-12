@@ -1,23 +1,21 @@
 # Equinix MCP Server
 
-A Model Context Protocol (MCP) server that provides unified access to Equinix APIs through a single, merged OpenAPI specification. This server enables AI agents to interact with Equinix's Metal, Fabric, Network Edge, and Billing APIs seamlessly.
+This project is an experimental Model Context Protocol (MCP) server, for local use and learning, that provides unified access to Equinix APIs and documentation through docs.equinix.com published API specifications and site indexes. This project is not expected to offer high quality (production-ready) results. This is offered for developers learning about MCP, Equinix APIs and documentation, and their potential integration. An example of this is that the full list of Equinix API operationIds will overwhelm the context windows of local LLMs making this tool impractical for more than learning.
 
 ## Features
 
-- **Unified API Access**: Merges multiple Equinix APIs into a single MCP server
-- **Multiple Authentication**: Supports both OAuth2 Client Credentials and Metal API tokens
-- **Configurable Overlays**: Use overlay specifications to normalize APIs before merging
-- **Documentation Integration**: Search and browse Equinix documentation via sitemap
+- **API Access**: Fetches, merges, and caches multiple Equinix API specifications then exposes operationIds as MCP tools.
+- **API Authentication**: Supports both OAuth2 Client Credentials used by most API services and Metal API tokens
+- Configurable Overlays**: Use overlay specifications to normalize APIs before processing
+- **Documentation Integration**: Search and browse Equinix documentation via sitemap and Lunr search
 - **Automated Updates**: GitHub Actions workflow for keeping API specs current
 - **FastMCP Integration**: Built on the FastMCP framework for rapid development
-- **Arazzo Workflows (Experimental)**: Define higher-level workflows chaining multiple API operations
+- **Arazzo Workflows (Experimental)**: Define and execute higher-level workflows chaining multiple API operations
 
 ## Supported APIs
 
-- **Metal API** (v1) - Hardware-as-a-Service platform
-- **Fabric API** (v4) - Network-as-a-Service interconnections
-- **Network Edge API** (v1) - Virtual network functions
-- **Billing API** (v2) - Account and billing management
+Any Equinix API specification can be added to the configuration file but operations may need to be filtered and overlays may be needed for this tool to use the spec in the MCP server.
+The `config/apis.yaml` file defines API specifications that have been used during development to test behavior.
 
 ## Quick Start
 
@@ -155,7 +153,7 @@ The server is configured via `config/apis.yaml`. This file defines:
 - API endpoints and versions
 - Authentication methods
 - Overlay file locations
-- Output settings
+- Documentation settings
 
 ### Example API Configuration
 
@@ -181,7 +179,7 @@ apis:
 
 ## Overlay Files
 
-Overlay files in the `overlays/` directory normalize API specifications before merging:
+Overlay files in the `overlays/` directory normalize API specifications before processing:
 
 - Standardize authentication schemes
 - Normalize base paths and servers
@@ -192,8 +190,8 @@ Overlay files in the `overlays/` directory normalize API specifications before m
 
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   API Catalog   │───▶│  Spec Manager    │───▶│  Merged OpenAPI │
-│   (Remote URLs) │    │  + Overlays      │    │  Specification  │
+│   API Catalog   │───▶│  Spec Manager    │───▶│  Cached OpenAPI │
+│   (Remote URLs) │    │  + Overlays      │    │  Specifications │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
                                 │
                                 ▼
@@ -207,7 +205,7 @@ Overlay files in the `overlays/` directory normalize API specifications before m
 
 The server exposes MCP tools for:
 
-1. **API Operations**: Dynamic tools generated from merged OpenAPI spec
+1. **API Operations**: Dynamic tools generated from individual API specifications
 2. **Documentation**: 
    - `list_docs` - List and filter documentation
    - `find_docs` - Find documentation by filename/title matching
