@@ -10,6 +10,7 @@ A Model Context Protocol (MCP) server that provides unified access to Equinix AP
 - **Documentation Integration**: Search and browse Equinix documentation via sitemap
 - **Automated Updates**: GitHub Actions workflow for keeping API specs current
 - **FastMCP Integration**: Built on the FastMCP framework for rapid development
+- **Arazzo Workflows (Experimental)**: Define higher-level workflows chaining multiple API operations
 
 ## Supported APIs
 
@@ -210,6 +211,51 @@ The server exposes MCP tools for:
 2. **Documentation**: 
    - `list_docs` - List and filter documentation
    - `search_docs` - Search documentation by query
+3. **Workflows (Arazzo)**:
+    - Tools prefixed with `workflow__` represent multi-step orchestrations defined in Arazzo-like YAML files.
+    - Example: `workflow__list_metal_metros_then_prices`
+
+### Defining Workflows (Experimental)
+
+Add an `arazzo` section to your `config/apis.yaml`:
+
+```yaml
+arazzo:
+   specs:
+      - examples/workflows.yaml
+```
+
+Example workflow spec (`examples/workflows.yaml`):
+
+```yaml
+workflows:
+   list_metal_metros_then_prices:
+      description: Retrieve Metal metros then spot market prices.
+      inputs:
+         metro: "SV"
+      steps:
+         - id: get_metros
+            operation: metal_findMetros
+            saveAs: metros
+         - id: get_prices
+            operation: metal_findMetroSpotMarketPrices
+            params:
+               metro: "{{ metro }}"
+            saveAs: prices
+```
+
+Run the server and invoke: `workflow__list_metal_metros_then_prices`.
+
+Currently supported features:
+- Sequential steps referencing existing API tools
+- Simple variable capture via `saveAs`
+- Jinja2 templated parameter rendering (falls back to Python `str.format`)
+
+Planned enhancements:
+- Conditional / branching logic
+- Parallel execution
+- Schema introspection for richer tool signatures
+- Error handling policies per step
 
 ## Development
 

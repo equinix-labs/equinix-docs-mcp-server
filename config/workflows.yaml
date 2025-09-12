@@ -1,0 +1,29 @@
+arazzo: 1.0.1
+info:
+  title: Equinix Workflows to get metros
+  version: 2.0.0
+  description: |
+    This workflow retrieves the available Equinix metros
+  summary: Retrieve Equinix metros
+sourceDescriptions:
+  - name: ne
+    url: https://docs.equinix.com/api-catalog/network-edgev1/openapi.yaml
+    type: openapi
+  - name: metal
+    url: https://docs.equinix.com/api-catalog/metalv1/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: list_metal_metros
+    description: Retrieve Metal metros
+    steps:
+      - stepId: get_metros
+        operationId: metal.findMetros
+        outputs:
+          metros: "{{ steps.get_metros.outputs.metros }}"
+  - workflowId: list_ne_metros
+    description: Retrieve Network Edge metros
+    steps:
+      - stepId: get_metros
+        operationId: ne.getMetrosUsingGET
+        outputs:
+          metros: "{{ steps.get_metros.outputs.data }}"

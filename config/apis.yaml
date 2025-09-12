@@ -191,8 +191,11 @@ auth:
 # Output configuration
 output:
   merged_spec_path: "merged-openapi.yaml"
-
 # Documentation configuration
 docs:
   sitemap_url: "https://docs.equinix.com/sitemap.xml"
-  cache_path: "docs/sitemap_cache.xml"
+  cache_path: "cache/docs/sitemap_cache.xml"
+arazzo:
+   specs:
+      - config/workflows.yaml
+

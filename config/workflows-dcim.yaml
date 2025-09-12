@@ -12,19 +12,19 @@ info:
 
 sourceDescriptions:
   - name: EquinixAssetsAPI
-    url: https://docs.equinix.com/api-catalog/assetsv1/
+    url: "https://docs.equinix.com/api-catalog/ibx-assetsv1/openapi.yaml"
     type: openapi
   - name: EquinixHierarchyAPI
-    url: https://docs.equinix.com/api-catalog/hierarchyv1/
+    url: "https://docs.equinix.com/api-catalog/hierarchyv1/openapi.yaml"
     type: openapi
   - name: EquinixEnvironmentalAPI
-    url: https://docs.equinix.com/api-catalog/environmentalv1/
+    url: "https://docs.equinix.com/api-catalog/environmentalv1/openapi.yaml"
     type: openapi
   - name: EquinixPowerAPI
-    url: https://docs.equinix.com/api-catalog/powerv1/
+    url: "https://docs.equinix.com/api-catalog/powerv1/openapi.yaml"
     type: openapi
   - name: EquinixSystemAlertsAPI
-    url: https://docs.equinix.com/api-catalog/system-alertsv2/
+    url: "https://docs.equinix.com/api-catalog/system-alertsv2/openapi.yaml"
     type: openapi
 
 workflows:
@@ -54,7 +54,7 @@ workflows:
 
       - stepId: searchPage
         description: Call Equinix Assets search endpoint for one page
-        operationPath: '{$sourceDescriptions.EquinixAssetsAPI.url}#/paths/~1assets~1search/post'
+        operationId: EquinixAssetsAPI.searchAsset
         parameters:
           - name: Authorization
             in: header
@@ -159,7 +159,7 @@ workflows:
         steps:
           - stepId: callHierarchy
             description: Call Hierarchy Location API
-            operationPath: '{$sourceDescriptions.EquinixHierarchyAPI.url}#/paths/~1hierarchy~1location/get'
+            operationPath: EquinixHierarchyAPI.getLocationHierarchy
             parameters:
               - name: Authorization
                 in: header
@@ -214,7 +214,7 @@ workflows:
                 in: header
                 value: 'Bearer $inputs.bearerToken'
               - name: Content-Type
-                in: header
+                in: headerq
                 value: application/json
               - name: accountNumber
                 in: query
