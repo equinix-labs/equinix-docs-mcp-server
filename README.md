@@ -210,7 +210,8 @@ The server exposes MCP tools for:
 1. **API Operations**: Dynamic tools generated from merged OpenAPI spec
 2. **Documentation**: 
    - `list_docs` - List and filter documentation
-   - `search_docs` - Search documentation by query
+   - `find_docs` - Find documentation by filename/title matching
+   - `search_docs` - Full-text search documentation using indexed content
 3. **Workflows (Arazzo)**:
     - Tools prefixed with `workflow__` represent multi-step orchestrations defined in Arazzo-like YAML files.
     - Example: `workflow__list_metal_metros_then_prices`

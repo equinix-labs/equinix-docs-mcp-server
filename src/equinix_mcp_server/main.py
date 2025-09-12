@@ -562,9 +562,14 @@ class EquinixMCPServer:
             """
             return await self.docs_manager.list_docs(filter_term)
 
-        @self.mcp.tool(name="search_docs", description="Search Equinix documentation")
+        @self.mcp.tool(name="find_docs", description="Find Equinix documentation by filename")
+        async def find_docs(query: str) -> str:
+            """Find documentation by filename-based search."""
+            return await self.docs_manager.find_docs(query)
+
+        @self.mcp.tool(name="search_docs", description="Search Equinix documentation using full-text search")
         async def search_docs(query: str) -> str:
-            """Search documentation by query."""
+            """Search documentation using lunr search against indexed content."""
             return await self.docs_manager.search_docs(query)
 
     async def run(self, force_update_specs: bool = False) -> None:

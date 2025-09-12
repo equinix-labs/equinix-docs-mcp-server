@@ -1,5 +1,6 @@
 """Documentation management using Equinix sitemap."""
 
+import json
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -9,6 +10,7 @@ import aiofiles
 import httpx
 
 from .config import Config
+from .lunr_search.search_client import Client as SearchClient
 
 
 class DocsManager:
@@ -184,8 +186,8 @@ class DocsManager:
 
         return "\n".join(result)
 
-    async def search_docs(self, query: str) -> str:
-        """Search documentation by query."""
+    async def find_docs(self, query: str) -> str:
+        """Find documentation by filename-based search."""
         if not self.sitemap_cache:
             await self._load_cached_sitemap()
 
@@ -227,7 +229,7 @@ class DocsManager:
         if not top_results:
             return f"No documentation found for query: '{query}'"
 
-        result = [f"# Search Results for '{query}'\n"]
+        result = [f"# Find Results for '{query}'\n"]
 
         for score, doc in top_results:
             result.append(f"**{doc['title']}** ({doc['category']})")
@@ -237,6 +239,56 @@ class DocsManager:
             result.append("")
 
         return "\n".join(result)
+
+    async def search_docs(self, query: str, limit: int = 8) -> str:
+        """Search documentation using lunr search against indexed content."""
+        search_index_url = "https://docs.equinix.com/search-index.json"
+        cache_dir = Path("cache/search")
+        cache_file = cache_dir / "search-index.json"
+        
+        # Ensure cache directory exists
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Check if we need to fetch the search index
+        if not cache_file.exists():
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(search_index_url)
+                    response.raise_for_status()
+                    
+                    # Save to cache
+                    async with aiofiles.open(cache_file, "w") as f:
+                        await f.write(response.text)
+            except Exception as e:
+                return f"Error fetching search index: {str(e)}"
+        
+        # Initialize search client with cached file
+        try:
+            search_client = SearchClient(str(cache_file))
+            search_client.load()
+            
+            # Perform search
+            results = search_client.search(query, limit=limit)
+            
+            if not results:
+                return f"No search results found for query: '{query}'"
+            
+            result_lines = [f"# Search Results for '{query}'\n"]
+            
+            for result in results:
+                title = result.get("title", "No title")
+                url = result.get("url", "")
+                result_lines.append(f"**{title}**")
+                result_lines.append(f"  {url}")
+                result_lines.append("")
+            
+            if len(results) == limit:
+                result_lines.append(f"Showing top {limit} results. Refine your query for more specific results.")
+            
+            return "\n".join(result_lines)
+            
+        except Exception as e:
+            return f"Error searching documentation: {str(e)}"
 
     async def _load_cached_sitemap(self) -> None:
         """Load sitemap from cache file if available."""
