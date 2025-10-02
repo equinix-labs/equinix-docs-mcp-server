@@ -1,9 +1,8 @@
 """Package initialization for equinix_docs_mcp_server."""
 
 __version__ = "0.1.0"
-__author__ = "displague"
-__email__ = "displague@example.com"
-__description__ = "MCP Server for agentive tasks against Equinix APIs"
+__author__ = "Equinix Labs"
+__description__ = "Equinix Docs and API specifications MCP Server (experimental)"
 
 from .auth import AuthManager
 from .config import Config

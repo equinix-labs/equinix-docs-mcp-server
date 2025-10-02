@@ -1,9 +1,9 @@
 [project]
 name = "equinix-docs-mcp-server"
 version = "0.1.0"
-description = "MCP Server for agentive tasks against Equinix APIs"
+description = "Equinix Docs and API specifications MCP Server (experimental)"
 authors = [
-    { name = "displague", email = "displague@example.com" }
+    { name = "Equinix Labs" }
 ]
 readme = "README.md"
 license = { text = "MIT" }
