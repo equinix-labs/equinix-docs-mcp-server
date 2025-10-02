@@ -22,7 +22,7 @@ pip install -e .[dev]
 
 # Verify installation
 echo "🔍 Verifying installation..."
-if ! command -v equinix-mcp-server &> /dev/null; then
+if ! command -v equinix-docs-mcp-server &> /dev/null; then
     echo "❌ Installation failed - command not found"
     exit 1
 fi
@@ -35,11 +35,11 @@ python -m pytest tests/test_config.py -v
 
 # Check configuration
 echo "📋 Validating configuration..."
-python -c "from equinix_mcp_server.config import Config; Config.load('config/apis.yaml'); print('✅ Configuration is valid')"
+python -c "from equinix_docs_mcp_server.config import Config; Config.load('config/apis.yaml'); print('✅ Configuration is valid')"
 
 # Check CLI help
 echo "🔧 Testing CLI..."
-equinix-mcp-server --help > /dev/null
+equinix-docs-mcp-server --help > /dev/null
 
 echo ""
 echo "🎉 Setup completed successfully!"
@@ -51,9 +51,9 @@ echo "   export EQUINIX_CLIENT_SECRET='your_client_secret'"
 echo "   export EQUINIX_METAL_TOKEN='your_metal_token'  # Optional"
 echo ""
 echo "2. Start the server:"
-echo "   equinix-mcp-server"
+echo "   equinix-docs-mcp-server"
 echo ""
 echo "3. Or update API specs:"
-echo "   equinix-mcp-server --update-specs"
+echo "   equinix-docs-mcp-server --update-specs"
 echo ""
 echo "For more information, see README.md"

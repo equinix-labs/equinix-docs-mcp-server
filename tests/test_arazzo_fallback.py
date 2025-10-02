@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from equinix_mcp_server.arazzo_manager import ArazzoManager, WorkflowMeta
+from equinix_docs_mcp_server.arazzo_manager import ArazzoManager, WorkflowMeta
 
 
 class DummyStepExecutor:

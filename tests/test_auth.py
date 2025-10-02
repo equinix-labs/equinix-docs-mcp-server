@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from equinix_mcp_server.auth import AuthManager
-from equinix_mcp_server.config import Config
+from equinix_docs_mcp_server.auth import AuthManager
+from equinix_docs_mcp_server.config import Config
 
 
 @pytest.fixture

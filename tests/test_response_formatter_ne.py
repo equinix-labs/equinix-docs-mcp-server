@@ -6,8 +6,8 @@ import pytest
 # Ensure repo "src" is on path when running tests directly
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from equinix_mcp_server.config import APIConfig, Config
-from equinix_mcp_server.response_formatter import ResponseFormatter
+from equinix_docs_mcp_server.config import APIConfig, Config
+from equinix_docs_mcp_server.response_formatter import ResponseFormatter
 
 
 def test_network_edge_get_metros_format_lookup():

@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 import aiofiles
 import yaml
 
-from equinix_mcp_server.config import Config
+from equinix_docs_mcp_server.config import Config
 
 logger = logging.getLogger(__name__)
 

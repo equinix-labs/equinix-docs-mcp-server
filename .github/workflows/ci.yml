@@ -72,7 +72,7 @@ jobs:
         
     - name: Validate configuration
       run: |
-        python -c "from equinix_mcp_server.config import Config; Config.load('config/apis.yaml')"
+        python -c "from equinix_docs_mcp_server.config import Config; Config.load('config/apis.yaml')"
         echo "✅ Configuration is valid"
         
     - name: Test spec fetching (dry run)
@@ -80,8 +80,8 @@ jobs:
         # This would test spec fetching without actually running the server
         python -c "
         import asyncio
-        from equinix_mcp_server.config import Config
-        from equinix_mcp_server.spec_manager import SpecManager
+        from equinix_docs_mcp_server.config import Config
+        from equinix_docs_mcp_server.spec_manager import SpecManager
         
         async def test():
             config = Config.load('config/apis.yaml')

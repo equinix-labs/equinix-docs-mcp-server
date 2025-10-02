@@ -1,4 +1,4 @@
-"""Package initialization for equinix_mcp_server."""
+"""Package initialization for equinix_docs_mcp_server."""
 
 __version__ = "0.1.0"
 __author__ = "displague"

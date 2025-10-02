@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import yaml
 import pytest
 
-from equinix_mcp_server.arazzo_manager import ArazzoManager
+from equinix_docs_mcp_server.arazzo_manager import ArazzoManager
 
 SIMPLE_SPEC = """
 workflows:

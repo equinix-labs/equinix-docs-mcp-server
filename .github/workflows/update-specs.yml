@@ -32,7 +32,7 @@ jobs:
         
     - name: Update API specs
       run: |
-        equinix-mcp-server --update-specs
+        equinix-docs-mcp-server --update-specs
         
     - name: Check for changes
       id: changes

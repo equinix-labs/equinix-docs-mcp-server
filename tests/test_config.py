@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from equinix_mcp_server.config import APIConfig, Config
+from equinix_docs_mcp_server.config import APIConfig, Config
 
 
 def test_config_loading():

@@ -9,8 +9,8 @@ import sys
 # Add src to path
 sys.path.insert(0, "src")
 
-from equinix_mcp_server.auth import AuthManager
-from equinix_mcp_server.config import Config
+from equinix_docs_mcp_server.auth import AuthManager
+from equinix_docs_mcp_server.config import Config
 
 # Set up logging to see everything
 logging.basicConfig(

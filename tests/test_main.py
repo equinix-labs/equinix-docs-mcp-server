@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from equinix_mcp_server.config import Config
-from equinix_mcp_server.main import AuthenticatedClient, EquinixMCPServer
+from equinix_docs_mcp_server.config import Config
+from equinix_docs_mcp_server.main import AuthenticatedClient, EquinixMCPServer
 
 
 class TestAuthenticatedClient:
@@ -50,7 +50,7 @@ class TestEquinixMCPServer:
 
     def test_server_initialization(self):
         """Test server can be initialized."""
-        with patch("equinix_mcp_server.config.Config.load") as mock_load:
+        with patch("equinix_docs_mcp_server.config.Config.load") as mock_load:
             mock_config = MagicMock()
             mock_load.return_value = mock_config
 
@@ -65,14 +65,14 @@ class TestEquinixMCPServer:
     @pytest.mark.asyncio
     async def test_server_initialization_with_fastmcp(self):
         """Test server initialization uses FastMCP.from_openapi."""
-        with patch("equinix_mcp_server.main.Config.load") as mock_config_load, patch(
-            "equinix_mcp_server.main.SpecManager"
+        with patch("equinix_docs_mcp_server.main.Config.load") as mock_config_load, patch(
+            "equinix_docs_mcp_server.main.SpecManager"
         ) as mock_spec_mgr, patch(
-            "equinix_mcp_server.main.AuthManager"
+            "equinix_docs_mcp_server.main.AuthManager"
         ) as mock_auth_mgr, patch(
-            "equinix_mcp_server.main.DocsManager"
+            "equinix_docs_mcp_server.main.DocsManager"
         ) as mock_docs_mgr, patch(
-            "equinix_mcp_server.main.FastMCP"
+            "equinix_docs_mcp_server.main.FastMCP"
         ) as mock_fastmcp_class:
 
             # Setup mocks

@@ -12,7 +12,7 @@ from pathlib import Path
 # Add the src directory to Python path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from equinix_mcp_server.main import EquinixMCPServer
+from equinix_docs_mcp_server.main import EquinixMCPServer
 
 
 async def demonstrate_network_edge_tools():

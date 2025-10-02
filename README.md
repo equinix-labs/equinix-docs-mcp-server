@@ -45,7 +45,7 @@ code --add-mcp '{
    "command": ".venv/bin/python",
    "args": [
     "-m",
-    "equinix_mcp_server.main"
+    "equinix_docs_mcp_server.main"
    ],
    "cwd": "'$PWD'",
    "env": {
@@ -104,7 +104,7 @@ export EQUINIX_METAL_TOKEN="your_metal_token"
 The server uses cached API specifications by default for faster startup. Use `--update-specs` to force fetching fresh specs from remote sources.
 
 ```bash
-equinix-mcp-server --update-specs # --config path/to/custom/config.yaml
+equinix-docs-mcp-server --update-specs # --config path/to/custom/config.yaml
 ```
 
 ## Server Configuration

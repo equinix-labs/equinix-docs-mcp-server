@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from equinix_mcp_server.config import Config
-from equinix_mcp_server.docs import DocsManager
+from equinix_docs_mcp_server.config import Config
+from equinix_docs_mcp_server.docs import DocsManager
 
 
 @pytest.fixture
@@ -169,9 +169,9 @@ async def test_find_docs(docs_manager):
 
 
 @pytest.mark.asyncio
-@patch("equinix_mcp_server.docs.httpx.AsyncClient")
-@patch("equinix_mcp_server.docs.aiofiles.open")
-@patch("equinix_mcp_server.docs.Path.exists")
+@patch("equinix_docs_mcp_server.docs.httpx.AsyncClient")
+@patch("equinix_docs_mcp_server.docs.aiofiles.open")
+@patch("equinix_docs_mcp_server.docs.Path.exists")
 async def test_search_docs(mock_exists, mock_aiofiles, mock_httpx, docs_manager):
     """Test documentation search using lunr search."""
     # Mock the cache file doesn't exist initially

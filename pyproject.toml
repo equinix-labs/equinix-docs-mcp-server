@@ -1,5 +1,5 @@
 [project]
-name = "equinix-mcp-server"
+name = "equinix-docs-mcp-server"
 version = "0.1.0"
 description = "MCP Server for agentive tasks against Equinix APIs"
 authors = [
@@ -39,7 +39,7 @@ dev = [
 ]
 
 [project.scripts]
-equinix-mcp-server = "equinix_mcp_server.main:main"
+equinix-docs-mcp-server = "equinix_docs_mcp_server.main:main"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
@@ -47,7 +47,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["equinix_mcp_server*"]
+include = ["equinix_docs_mcp_server*"]
 
 [tool.black]
 line-length = 88
