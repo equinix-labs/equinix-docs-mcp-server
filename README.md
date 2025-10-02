@@ -1,16 +1,18 @@
-# Equinix MCP Server
+# Equinix Docs and API Specifications MCP Server
 
-This project is an experimental Model Context Protocol (MCP) server, for local use and learning, that provides unified access to Equinix APIs and documentation through docs.equinix.com published API specifications and site indexes. This project is not expected to offer high quality (production-ready) results. This is offered for developers learning about MCP, Equinix APIs and documentation, and their potential integration. An example of this is that the full list of Equinix API operationIds will overwhelm the context windows of local LLMs making this tool impractical for more than learning.
+This project is an experimental Model Context Protocol (MCP) server, for local use and learning, that provides access to Equinix APIs and documentation. This project is not expected to offer high quality (production-ready) results. This is offered for developers learning about MCP, Equinix APIs and documentation, and their potential integration. 
+
+> [!NOTE]
+> The full list of Equinix API operationIds will overwhelm the context windows of local LLMs making this tool impractical for more than learning.
 
 ## Features
 
-- **API Access**: Fetches, merges, and caches multiple Equinix API specifications then exposes operationIds as MCP tools.
-- **API Authentication**: Supports both OAuth2 Client Credentials used by most API services and Metal API tokens
-- Configurable Overlays**: Use overlay specifications to normalize APIs before processing
-- **Documentation Integration**: Search and browse Equinix documentation via sitemap and Lunr search
-- **Automated Updates**: GitHub Actions workflow for keeping API specs current
-- **FastMCP Integration**: Built on the FastMCP framework for rapid development
-- **Arazzo Workflows (Experimental)**: Define and execute higher-level workflows chaining multiple API operations
+- **API Access**: Fetches and caches Equinix API specifications then exposes operationIds as MCP tools.
+   - **API Authentication**: Supports both OAuth2 Client Credentials used by most API services and Metal API tokens
+   - **Configurable Overlays**: Use overlay specifications to normalize API responses before LLM processing
+   - **Arazzo Workflows (Experimental)**: Define and execute higher-level workflows chaining multiple API operations
+- **Documentation Integration**: Search Equinix documentation via sitemap and Lunr search
+   - TODO: fetch docs content (and not just the URLs)
 
 ## Supported APIs
 
@@ -97,54 +99,13 @@ export EQUINIX_CLIENT_SECRET="your_client_secret"
 export EQUINIX_METAL_TOKEN="your_metal_token"
 ```
 
-#### Start the MCP Server
+#### API Spec Fetching
 
-```bash
-python -m equinix_mcp_server.main```
-
-#### Test with MCP Clients
-
-**Claude Desktop, Continue.dev, etc.:**
-
-1. **Copy the MCP configuration** to your client's config file:
-   ```bash
-   # For Claude Desktop
-   cp claude_desktop_config.json ~/Library/Application\ Support/Claude/claude_desktop_config.json
-   ```
-
-2. **Start your MCP client** (Claude Desktop, Continue.dev, etc.)
-
-3. **Test Network Edge device listing**:
-   Ask your AI: *"Can you list the available Network Edge devices using the Equinix API?"*
-
-**Ollama (via mcp-client-for-ollama bridge):**
-
-1. **Install the bridge**:
-   ```bash
-   pip install --upgrade ollmcp
-   ```
-
-2. **Create MCP config** (see `TESTING_WITH_OLLAMA.md` for details)
-
-3. **Connect Ollama to MCP server**:
-   ```bash
-   ollmcp --servers-json equinix-mcp-config.json --model qwen2.5:7b
-   ```
-
-4. **Expected behavior**:
-   - ✅ MCP server connects and tools are available
-   - ✅ API call is attempted to Network Edge API
-   - ❌ Authentication failure (without credentials) - this proves it's working!
-
-See `TESTING_WITH_OLLAMA.md` for detailed Ollama integration instructions.
-
-#### Test API Spec Fetching
+The server uses cached API specifications by default for faster startup. Use `--update-specs` to force fetching fresh specs from remote sources.
 
 ```bash
 equinix-mcp-server --update-specs # --config path/to/custom/config.yaml
 ```
-
-**Note:** The server uses cached API specifications by default for faster startup. Use `--update-specs` to force fetching fresh specs from remote sources.
 
 ## Server Configuration
 
@@ -186,21 +147,6 @@ Overlay files in the `overlays/` directory normalize API specifications before p
 - Add consistent tagging
 - Handle API-specific quirks
 
-## Architecture
-
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   API Catalog   │───▶│  Spec Manager    │───▶│  Cached OpenAPI │
-│   (Remote URLs) │    │  + Overlays      │    │  Specifications │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-                                │
-                                ▼
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Documentation │    │   Auth Manager   │    │   FastMCP       │
-│   (Sitemap)     │───▶│  (OAuth2/Token)  │───▶│   Server        │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-```
-
 ## Available MCP Tools
 
 The server exposes MCP tools for:
@@ -214,7 +160,7 @@ The server exposes MCP tools for:
     - Tools prefixed with `workflow__` represent multi-step orchestrations defined in Arazzo-like YAML files.
     - Example: `workflow__list_metal_metros_then_prices`
 
-### Defining Workflows (Experimental)
+### Defining Arazzo Workflows (Experimental)
 
 Add an `arazzo` section to your `config/apis.yaml`:
 
@@ -249,13 +195,7 @@ Currently supported features:
 - Sequential steps referencing existing API tools
 - Simple variable capture via `saveAs`
 - Jinja2 templated parameter rendering (falls back to Python `str.format`)
-
-Planned enhancements:
-- Conditional / branching logic
-- Parallel execution
-- Schema introspection for richer tool signatures
-- Error handling policies per step
-
+  
 ## Development
 
 ### Running Tests
@@ -265,59 +205,13 @@ pip install -e .[dev]
 pytest
 ```
 
-### Code Formatting
-
-```bash
-black src tests
-isort src tests
-flake8 src tests
-```
-
-### Type Checking
-
-```bash
-mypy src
-```
-
-## GitHub Actions
-
-The repository includes automated workflows:
-
-- **CI**: Runs tests, linting, and validation on pull requests
-- **Update Specs**: Daily job to fetch latest API specs and create PRs
-
-## Authentication Details
-
-### Client Credentials (OAuth2)
-
-Most Equinix APIs use OAuth2 Client Credentials flow:
-
-1. Get client ID and secret from Equinix portal
-2. Exchange for access token at `/oauth2/v1/token`
-3. Use Bearer token in Authorization header
-
-### Metal API Token
-
-Metal API can use either OAuth2 or API token:
-
-1. Get API token from Metal console
-2. Use token in `X-Auth-Token` header
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Run the test suite
-6. Submit a pull request
-
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
 
 ## Links
 
-- [Equinix API Documentation](https://docs.equinix.com/api-catalog/)
+- [Equinix Documentation](https://docs.equinix.com/)
+- [Equinix API Documentation](https://docs.equinix.com/equinix-api)
 - [FastMCP Framework](https://gofastmcp.com/)
 - [Model Context Protocol](https://github.com/modelcontextprotocol)
