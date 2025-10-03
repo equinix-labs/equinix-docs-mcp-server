@@ -4,4 +4,4 @@ WORKDIR /app
 COPY . .
 RUN pip install -e .
 
-CMD ["python", "main.py"]
+CMD ["python", "-m", "src.equinix_docs_mcp_server.main"]
