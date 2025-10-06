@@ -1,7 +1,7 @@
 """Test documentation manager functionality."""
 
-from unittest.mock import AsyncMock, patch
 from pathlib import Path
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -176,28 +176,32 @@ async def test_search_docs(mock_exists, mock_aiofiles, mock_httpx, docs_manager)
     """Test documentation search using lunr search."""
     # Mock the cache file doesn't exist initially
     mock_exists.return_value = False
-    
+
     # Mock HTTP response
     mock_response = AsyncMock()
     mock_response.raise_for_status = AsyncMock()
-    mock_response.text = '[]'  # Empty search index for test
-    
+    mock_response.text = "[]"  # Empty search index for test
+
     mock_client = AsyncMock()
     mock_client.get = AsyncMock(return_value=mock_response)
     mock_httpx.return_value.__aenter__ = AsyncMock(return_value=mock_client)
-    
+
     # Mock file operations
     mock_file = AsyncMock()
     mock_aiofiles.return_value.__aenter__ = AsyncMock(return_value=mock_file)
-    
+
     # Test search - should attempt to fetch and cache the index
     result = await docs_manager.search_docs("metal")
-    
+
     # Should have attempted to fetch the search index
-    mock_client.get.assert_called_once_with("https://docs.equinix.com/search-index.json")
-    
+    mock_client.get.assert_called_once_with(
+        "https://docs.equinix.com/search-index.json"
+    )
+
     # Should contain error message about search results
-    assert "No search results found" in result or "Error searching documentation" in result
+    assert (
+        "No search results found" in result or "Error searching documentation" in result
+    )
 
 
 @pytest.mark.asyncio

@@ -65,7 +65,9 @@ class TestEquinixMCPServer:
     @pytest.mark.asyncio
     async def test_server_initialization_with_fastmcp(self):
         """Test server initialization uses FastMCP.from_openapi."""
-        with patch("equinix_docs_mcp_server.main.Config.load") as mock_config_load, patch(
+        with patch(
+            "equinix_docs_mcp_server.main.Config.load"
+        ) as mock_config_load, patch(
             "equinix_docs_mcp_server.main.SpecManager"
         ) as mock_spec_mgr, patch(
             "equinix_docs_mcp_server.main.AuthManager"

@@ -245,48 +245,50 @@ class DocsManager:
         search_index_url = "https://docs.equinix.com/search-index.json"
         cache_dir = Path("cache/search")
         cache_file = cache_dir / "search-index.json"
-        
+
         # Ensure cache directory exists
         cache_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Check if we need to fetch the search index
         if not cache_file.exists():
             try:
                 async with httpx.AsyncClient() as client:
                     response = await client.get(search_index_url)
                     response.raise_for_status()
-                    
+
                     # Save to cache
                     async with aiofiles.open(cache_file, "w") as f:
                         await f.write(response.text)
             except Exception as e:
                 return f"Error fetching search index: {str(e)}"
-        
+
         # Initialize search client with cached file
         try:
             search_client = SearchClient(str(cache_file))
             search_client.load()
-            
+
             # Perform search
             results = search_client.search(query, limit=limit)
-            
+
             if not results:
                 return f"No search results found for query: '{query}'"
-            
+
             result_lines = [f"# Search Results for '{query}'\n"]
-            
+
             for result in results:
                 title = result.get("title", "No title")
                 url = result.get("url", "")
                 result_lines.append(f"**{title}**")
                 result_lines.append(f"  {url}")
                 result_lines.append("")
-            
+
             if len(results) == limit:
-                result_lines.append(f"Showing top {limit} results. Refine your query for more specific results.")
-            
+                result_lines.append(
+                    f"Showing top {limit} results. Refine your query for more specific results."
+                )
+
             return "\n".join(result_lines)
-            
+
         except Exception as e:
             return f"Error searching documentation: {str(e)}"
 

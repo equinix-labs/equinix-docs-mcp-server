@@ -1,6 +1,6 @@
 import json
 import re
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 try:
     import requests  # type: ignore
@@ -18,12 +18,15 @@ class SearchDocument:
 
 
 class SearchIndex:
-    def __init__(self, documents: List[Dict[str, Any]], inverted_index: List[List[Any]]):
+    def __init__(
+        self, documents: List[Dict[str, Any]], inverted_index: List[List[Any]]
+    ):
         # documents: list of shortened documents
         self.documents = [SearchDocument(d) for d in documents]
         # inverted_index: the serialized lunr inverted index structure
         # We build a simple mapping term -> set(refs)
         self.inverted = {}
+
         def _collect_refs(obj, out_set: set):
             """Recursively walk an object (dict/list/scalar) and collect doc id-like refs.
 
@@ -75,7 +78,11 @@ class SearchIndex:
                 continue
             first = entry[0]
             # extract term
-            if isinstance(first, (list, tuple)) and len(first) > 0 and isinstance(first[0], str):
+            if (
+                isinstance(first, (list, tuple))
+                and len(first) > 0
+                and isinstance(first[0], str)
+            ):
                 term = first[0]
             elif isinstance(first, str):
                 term = first
@@ -109,7 +116,9 @@ class SearchIndex:
             refs = self.inverted.get(term, set())
             return [d for d in self.documents if str(d.i) in refs]
 
-    def search_with_pylunr(self, raw_query: str, limit: int = 8) -> List[SearchDocument]:
+    def search_with_pylunr(
+        self, raw_query: str, limit: int = 8
+    ) -> List[SearchDocument]:
         """Use python-lunr index if present (set externally as `pylunr_index`)."""
         idx = getattr(self, "pylunr_index", None)
         if not idx:
@@ -146,6 +155,7 @@ class Client:
         # optional lunr Python package (not required)
         try:
             from lunr import lunr as _lunr  # type: ignore
+
             self._lunr = _lunr
         except Exception:
             self._lunr = None
@@ -183,7 +193,9 @@ class Client:
                         doc["t"] = d.get("t", "")
                         # join breadcrumb list if present
                         b = d.get("b")
-                        doc["b"] = " ".join(b) if isinstance(b, (list, tuple)) else (b or "")
+                        doc["b"] = (
+                            " ".join(b) if isinstance(b, (list, tuple)) else (b or "")
+                        )
                         doc["s"] = d.get("s", "")
                         docs_for_lunr.append(doc)
 
@@ -208,7 +220,11 @@ class Client:
         for idx in self.indexes:
             # search by tokens
             # If python-lunr available for this index, use it for better results
-            pylunr_hits = idx.search_with_pylunr(query, limit=limit) if getattr(idx, "pylunr_index", None) else None
+            pylunr_hits = (
+                idx.search_with_pylunr(query, limit=limit)
+                if getattr(idx, "pylunr_index", None)
+                else None
+            )
             if pylunr_hits:
                 for doc in pylunr_hits:
                     results.append({"id": doc.i, "title": doc.t, "url": doc.u})

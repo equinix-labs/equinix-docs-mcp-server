@@ -132,12 +132,17 @@ class ArazzoManager:
                                     st["stepId"] = st.pop("id")
                                     mutated = True
                                 if (
-                                    not any(k in st for k in ("operationId", "operationPath"))
+                                    not any(
+                                        k in st
+                                        for k in ("operationId", "operationPath")
+                                    )
                                     and "operation" in st
                                 ):
                                     st["operationId"] = st.pop("operation")
                                     mutated = True
-                                if "parameters" not in st and isinstance(st.get("params"), dict):
+                                if "parameters" not in st and isinstance(
+                                    st.get("params"), dict
+                                ):
                                     params_dict = st.pop("params")
                                     param_list = []
                                     for pname, pval in params_dict.items():
@@ -288,7 +293,9 @@ class ArazzoManager:
                     return result
                 except Exception as simplify_err:  # pragma: no cover
                     logger.debug(
-                        "Failed to simplify workflow result for %s: %s", _wf_id, simplify_err
+                        "Failed to simplify workflow result for %s: %s",
+                        _wf_id,
+                        simplify_err,
                     )
                     return result
 
@@ -383,12 +390,17 @@ class ArazzoManager:
                                     st["stepId"] = st.pop("id")
                                     mutated = True
                                 if (
-                                    not any(k in st for k in ("operationId", "operationPath"))
+                                    not any(
+                                        k in st
+                                        for k in ("operationId", "operationPath")
+                                    )
                                     and "operation" in st
                                 ):
                                     st["operationId"] = st.pop("operation")
                                     mutated = True
-                                if "parameters" not in st and isinstance(st.get("params"), dict):
+                                if "parameters" not in st and isinstance(
+                                    st.get("params"), dict
+                                ):
                                     params_dict = st.pop("params")
                                     param_list = []
                                     for pname, pval in params_dict.items():
@@ -403,11 +415,14 @@ class ArazzoManager:
                                     mutated = True
                     if mutated:
                         logger.debug(
-                            "Runner spec %s had simplified step syntax; normalized", spec_path
+                            "Runner spec %s had simplified step syntax; normalized",
+                            spec_path,
                         )
             except Exception as norm_err:
                 logger.warning(
-                    "Failed to normalize runner workflows for %s: %s", spec_path, norm_err
+                    "Failed to normalize runner workflows for %s: %s",
+                    spec_path,
+                    norm_err,
                 )
             self._runners[spec_path] = runner
             return runner
