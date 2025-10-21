@@ -548,6 +548,37 @@ class EquinixMCPServer:
         assert self.mcp is not None, "MCP server must be initialized first"
 
         @self.mcp.tool(
+            name="search",
+            description="Search Equinix documentation using full-text search. Returns URLs that can be fetched with the 'fetch' tool to retrieve full content.",
+        )
+        async def search(query: str, limit: int = 8) -> str:
+            """Search documentation using lunr search against indexed content.
+
+            Args:
+                query: The search query string
+                limit: Maximum number of results to return (default: 8)
+
+            Returns:
+                Search results with titles and URLs
+            """
+            return await self.docs_manager.search_docs(query, limit)
+
+        @self.mcp.tool(
+            name="fetch",
+            description="Fetch the full markdown content of an Equinix documentation page by URL. Use URLs returned from the 'search' tool.",
+        )
+        async def fetch(url: str) -> str:
+            """Fetch the markdown content of a documentation page.
+
+            Args:
+                url: The URL of the documentation page (e.g., from search results)
+
+            Returns:
+                The full markdown content of the documentation page
+            """
+            return await self.docs_manager.fetch_doc(url)
+
+        @self.mcp.tool(
             name="list_docs",
             description="List and filter Equinix documentation by topic, product, or keywords. Supports flexible word matching (e.g., 'Fabric providers' will find 'Fabric Provider Guide', 'Provider Management', etc.)",
         )
@@ -568,14 +599,6 @@ class EquinixMCPServer:
         async def find_docs(query: str) -> str:
             """Find documentation by filename-based search."""
             return await self.docs_manager.find_docs(query)
-
-        @self.mcp.tool(
-            name="search_docs",
-            description="Search Equinix documentation using full-text search",
-        )
-        async def search_docs(query: str) -> str:
-            """Search documentation using lunr search against indexed content."""
-            return await self.docs_manager.search_docs(query)
 
     async def run(self, force_update_specs: bool = False) -> None:
         """Run the MCP server."""
