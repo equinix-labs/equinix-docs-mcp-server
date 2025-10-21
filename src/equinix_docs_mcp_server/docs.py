@@ -304,6 +304,42 @@ class DocsManager:
             # If no cache, update from remote
             await self.update_sitemap()
 
+    async def fetch_doc(self, url: str) -> str:
+        """Fetch the markdown content of a documentation page.
+
+        Args:
+            url: The URL of the documentation page to fetch. Can be a full URL
+                 or a path. Will attempt to fetch the markdown version.
+
+        Returns:
+            The markdown content of the page, or an error message if fetch fails.
+        """
+        # Normalize the URL to ensure it ends with .md
+        if not url.endswith(".md"):
+            # Remove trailing slash if present
+            url = url.rstrip("/")
+            # Add .md extension
+            url = f"{url}.md"
+
+        # Ensure we have a full URL
+        if not url.startswith("http"):
+            url = f"https://docs.equinix.com/{url.lstrip('/')}"
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url, timeout=30.0)
+                response.raise_for_status()
+
+                # Return the markdown content
+                return response.text
+
+        except httpx.HTTPStatusError as e:
+            return f"Error fetching document: HTTP {e.response.status_code} - {url}\n\nThe document may not be available in markdown format."
+        except httpx.RequestError as e:
+            return f"Error fetching document: {str(e)}\n\nURL: {url}"
+        except Exception as e:
+            return f"Unexpected error fetching document: {str(e)}\n\nURL: {url}"
+
     async def get_docs_summary(self) -> str:
         """Get a summary of available documentation."""
         if not self.sitemap_cache:

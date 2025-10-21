@@ -219,3 +219,120 @@ async def test_get_docs_summary(docs_manager):
     assert "Total documents: 3" in result
     assert "Metal**: 2" in result
     assert "Fabric**: 1" in result
+
+
+@pytest.mark.asyncio
+@patch("equinix_docs_mcp_server.docs.httpx.AsyncClient")
+async def test_fetch_doc_success(mock_httpx, docs_manager):
+    """Test successful document fetching."""
+    # Mock HTTP response
+    mock_response = AsyncMock()
+    mock_response.raise_for_status = AsyncMock()
+    mock_response.text = "# Test Document\n\nThis is test content."
+
+    mock_client = AsyncMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+    mock_httpx.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_httpx.return_value.__aexit__ = AsyncMock()
+
+    # Test with full URL without .md extension
+    result = await docs_manager.fetch_doc("https://docs.equinix.com/metal/getting-started")
+
+    # Should have called with .md extension
+    mock_client.get.assert_called_once()
+    call_args = mock_client.get.call_args
+    assert call_args[0][0] == "https://docs.equinix.com/metal/getting-started.md"
+
+    # Should return the content
+    assert "# Test Document" in result
+    assert "This is test content." in result
+
+
+@pytest.mark.asyncio
+@patch("equinix_docs_mcp_server.docs.httpx.AsyncClient")
+async def test_fetch_doc_with_md_extension(mock_httpx, docs_manager):
+    """Test fetching a document that already has .md extension."""
+    # Mock HTTP response
+    mock_response = AsyncMock()
+    mock_response.raise_for_status = AsyncMock()
+    mock_response.text = "# Another Test\n\nContent here."
+
+    mock_client = AsyncMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+    mock_httpx.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_httpx.return_value.__aexit__ = AsyncMock()
+
+    # Test with URL that already has .md extension
+    result = await docs_manager.fetch_doc("https://docs.equinix.com/fabric/overview.md")
+
+    # Should not double the .md extension
+    mock_client.get.assert_called_once()
+    call_args = mock_client.get.call_args
+    assert call_args[0][0] == "https://docs.equinix.com/fabric/overview.md"
+
+    assert "# Another Test" in result
+
+
+@pytest.mark.asyncio
+@patch("equinix_docs_mcp_server.docs.httpx.AsyncClient")
+async def test_fetch_doc_relative_url(mock_httpx, docs_manager):
+    """Test fetching with a relative URL."""
+    # Mock HTTP response
+    mock_response = AsyncMock()
+    mock_response.raise_for_status = AsyncMock()
+    mock_response.text = "# Relative URL Test"
+
+    mock_client = AsyncMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+    mock_httpx.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_httpx.return_value.__aexit__ = AsyncMock()
+
+    # Test with relative URL
+    result = await docs_manager.fetch_doc("metal/api-reference")
+
+    # Should prepend https://docs.equinix.com/ and add .md
+    mock_client.get.assert_called_once()
+    call_args = mock_client.get.call_args
+    assert call_args[0][0] == "https://docs.equinix.com/metal/api-reference.md"
+
+
+@pytest.mark.asyncio
+@patch("equinix_docs_mcp_server.docs.httpx.AsyncClient")
+async def test_fetch_doc_http_error(mock_httpx, docs_manager):
+    """Test handling of HTTP errors when fetching documents."""
+    # Mock HTTP error response
+    mock_response = AsyncMock()
+    mock_response.status_code = 404
+    mock_error = httpx.HTTPStatusError(
+        "Not Found", request=AsyncMock(), response=mock_response
+    )
+    mock_response.raise_for_status = AsyncMock(side_effect=mock_error)
+
+    mock_client = AsyncMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+    mock_httpx.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_httpx.return_value.__aexit__ = AsyncMock()
+
+    result = await docs_manager.fetch_doc("https://docs.equinix.com/nonexistent")
+
+    # Should return error message
+    assert "Error fetching document" in result
+    assert "HTTP 404" in result
+    assert "may not be available in markdown format" in result
+
+
+@pytest.mark.asyncio
+@patch("equinix_docs_mcp_server.docs.httpx.AsyncClient")
+async def test_fetch_doc_request_error(mock_httpx, docs_manager):
+    """Test handling of request errors when fetching documents."""
+    # Mock request error
+    mock_client = AsyncMock()
+    mock_client.get = AsyncMock(side_effect=httpx.RequestError("Connection failed"))
+    mock_httpx.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_httpx.return_value.__aexit__ = AsyncMock()
+
+    result = await docs_manager.fetch_doc("https://docs.equinix.com/test")
+
+    # Should return error message
+    assert "Error fetching document" in result
+    assert "Connection failed" in result
