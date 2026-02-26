@@ -11,8 +11,8 @@ This project is an experimental Model Context Protocol (MCP) server, for local u
    - **API Authentication**: Supports both OAuth2 Client Credentials used by most API services and Metal API tokens
    - **Configurable Overlays**: Use overlay specifications to normalize API responses before LLM processing
    - **Arazzo Workflows (Experimental)**: Define and execute higher-level workflows chaining multiple API operations
-- **Documentation Integration**: Search Equinix documentation via sitemap and Lunr search
-   - TODO: fetch docs content (and not just the URLs)
+- **Documentation Integration**: Search Equinix documentation via sitemap and Lunr search, fetch full markdown content
+   - OpenAI MCP compatible `search` and `fetch` tools for ChatGPT Connectors and deep research
 
 ## Supported APIs
 
@@ -153,9 +153,10 @@ The server exposes MCP tools for:
 
 1. **API Operations**: Dynamic tools generated from individual API specifications
 2. **Documentation**: 
+   - `search` - Full-text search documentation using indexed content (OpenAI MCP compatible)
+   - `fetch` - Fetch full markdown content of a documentation page by URL (OpenAI MCP compatible)
    - `list_docs` - List and filter documentation
    - `find_docs` - Find documentation by filename/title matching
-   - `search_docs` - Full-text search documentation using indexed content
 3. **Workflows (Arazzo)**:
     - Tools prefixed with `workflow__` represent multi-step orchestrations defined in Arazzo-like YAML files.
     - Example: `workflow__list_metal_metros_then_prices`
