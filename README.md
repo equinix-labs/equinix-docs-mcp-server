@@ -11,7 +11,7 @@ This project is an experimental Model Context Protocol (MCP) server, for local u
    - **API Authentication**: Supports both OAuth2 Client Credentials used by most API services and Metal API tokens
    - **Configurable Overlays**: Use overlay specifications to normalize API responses before LLM processing
    - **Arazzo Workflows (Experimental)**: Define and execute higher-level workflows chaining multiple API operations
-- **Documentation Integration**: Search Equinix documentation via sitemap and Lunr search, fetch full markdown content
+- **Documentation Integration**: Search Equinix documentation via sitemap, `llms.txt`, and Lunr search, fetch full markdown content
    - OpenAI MCP compatible `search` and `fetch` tools for ChatGPT Connectors and deep research
 
 ## Supported APIs

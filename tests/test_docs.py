@@ -107,6 +107,33 @@ async def test_parse_sitemap(docs_manager):
     second_doc = docs_manager.sitemap_cache[1]
     assert second_doc["url"] == "https://docs.equinix.com/fabric/overview"
     assert second_doc["category"] == "Fabric"
+    assert second_doc["source"] == "sitemap"
+
+
+@pytest.mark.asyncio
+async def test_parse_llms_txt(docs_manager):
+    """Test llms.txt parsing."""
+    sample_llms = """
+    # Metal
+    - [Getting Started with Metal](https://docs.equinix.com/metal/getting-started): Quickstart for Metal
+    # Fabric
+    - [Fabric Overview](https://docs.equinix.com/fabric/overview.md) - Core Fabric concepts
+    """
+
+    await docs_manager._parse_llms_txt(sample_llms)
+
+    assert len(docs_manager.llms_cache) == 2
+
+    first_doc = docs_manager.llms_cache[0]
+    assert first_doc["url"] == "https://docs.equinix.com/metal/getting-started"
+    assert first_doc["title"] == "Getting Started with Metal"
+    assert first_doc["category"] == "Metal"
+    assert first_doc["description"] == "Quickstart for Metal"
+    assert first_doc["source"] == "llms"
+
+    second_doc = docs_manager.llms_cache[1]
+    assert second_doc["url"] == "https://docs.equinix.com/fabric/overview"
+    assert second_doc["category"] == "Fabric"
 
 
 @pytest.mark.asyncio
@@ -170,6 +197,28 @@ async def test_find_docs(docs_manager):
 
 
 @pytest.mark.asyncio
+async def test_find_docs_uses_llms_cache(docs_manager):
+    """Test documentation find across llms.txt-backed metadata."""
+    docs_manager.sitemap_cache = []
+    docs_manager.llms_cache = [
+        {
+            "url": "https://docs.equinix.com/metal/bare-metal-automation",
+            "title": "Bare Metal Automation",
+            "category": "Metal",
+            "lastmod": "",
+            "changefreq": "",
+            "priority": "",
+            "description": "Automation workflows for Metal",
+            "source": "llms",
+        }
+    ]
+
+    result = await docs_manager.find_docs("automation")
+
+    assert "Bare Metal Automation" in result
+
+
+@pytest.mark.asyncio
 @patch("equinix_docs_mcp_server.docs.httpx.AsyncClient")
 @patch("equinix_docs_mcp_server.docs.aiofiles.open")
 @patch("equinix_docs_mcp_server.docs.Path.exists")
@@ -206,6 +255,35 @@ async def test_search_docs(mock_exists, mock_aiofiles, mock_httpx, docs_manager)
 
 
 @pytest.mark.asyncio
+@patch("equinix_docs_mcp_server.docs.SearchClient")
+async def test_search_docs_includes_llms_results(mock_search_client, docs_manager):
+    """Test documentation search includes llms.txt metadata results."""
+    docs_manager.sitemap_cache = []
+    docs_manager.llms_cache = [
+        {
+            "url": "https://docs.equinix.com/metal/getting-started",
+            "title": "Getting Started with Metal",
+            "category": "Metal",
+            "lastmod": "",
+            "changefreq": "",
+            "priority": "",
+            "description": "Quickstart for Metal servers",
+            "source": "llms",
+        }
+    ]
+
+    mock_search = mock_search_client.return_value
+    mock_search.load.return_value = None
+    mock_search.search.return_value = []
+
+    result = await docs_manager.search_docs("metal quickstart")
+
+    assert "Getting Started with Metal" in result
+    assert "https://docs.equinix.com/metal/getting-started" in result
+    assert "Quickstart for Metal servers" in result
+
+
+@pytest.mark.asyncio
 async def test_get_docs_summary(docs_manager):
     """Test getting documentation summary."""
     # Setup sample data
@@ -234,7 +312,7 @@ async def test_fetch_doc_success(mock_httpx, docs_manager):
     mock_client = AsyncMock()
     mock_client.get = AsyncMock(return_value=mock_response)
     mock_httpx.return_value.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_httpx.return_value.__aexit__ = AsyncMock()
+    mock_httpx.return_value.__aexit__ = AsyncMock(return_value=False)
 
     # Test with full URL without .md extension
     result = await docs_manager.fetch_doc("https://docs.equinix.com/metal/getting-started")
@@ -299,6 +377,27 @@ async def test_fetch_doc_relative_url(mock_httpx, docs_manager):
 
 @pytest.mark.asyncio
 @patch("equinix_docs_mcp_server.docs.httpx.AsyncClient")
+async def test_fetch_doc_html_url_normalization(mock_httpx, docs_manager):
+    """Test fetching with an HTML documentation URL."""
+    mock_response = AsyncMock()
+    mock_response.raise_for_status = AsyncMock()
+    mock_response.text = "# HTML URL Test"
+
+    mock_client = AsyncMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+    mock_httpx.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_httpx.return_value.__aexit__ = AsyncMock()
+
+    result = await docs_manager.fetch_doc("https://docs.equinix.com/fabric/overview.html")
+
+    mock_client.get.assert_called_once()
+    call_args = mock_client.get.call_args
+    assert call_args[0][0] == "https://docs.equinix.com/fabric/overview.md"
+    assert "# HTML URL Test" in result
+
+
+@pytest.mark.asyncio
+@patch("equinix_docs_mcp_server.docs.httpx.AsyncClient")
 async def test_fetch_doc_http_error(mock_httpx, docs_manager):
     """Test handling of HTTP errors when fetching documents."""
     # Mock HTTP error response
@@ -330,7 +429,7 @@ async def test_fetch_doc_request_error(mock_httpx, docs_manager):
     mock_client = AsyncMock()
     mock_client.get = AsyncMock(side_effect=httpx.RequestError("Connection failed"))
     mock_httpx.return_value.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_httpx.return_value.__aexit__ = AsyncMock()
+    mock_httpx.return_value.__aexit__ = AsyncMock(return_value=False)
 
     result = await docs_manager.fetch_doc("https://docs.equinix.com/test")
 

@@ -15,6 +15,8 @@ def test_config_loading():
     assert len(config.apis) > 0
     assert "metal" in config.apis
     assert "fabric" in config.apis
+    assert config.docs.llms_url == "https://docs.equinix.com/llms.txt"
+    assert config.docs.llms_cache_path == "cache/docs/llms.txt"
 
 
 def test_api_config_structure():

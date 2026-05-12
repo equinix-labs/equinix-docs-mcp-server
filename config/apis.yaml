@@ -192,7 +192,8 @@ auth:
 docs:
   sitemap_url: "https://docs.equinix.com/sitemap.xml"
   cache_path: "cache/docs/sitemap_cache.xml"
+  llms_url: "https://docs.equinix.com/llms.txt"
+  llms_cache_path: "cache/docs/llms.txt"
 arazzo:
    specs:
-      - config/workflows.yaml
-
+       - config/workflows.yaml
