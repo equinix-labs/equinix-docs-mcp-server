@@ -14,6 +14,8 @@ import httpx
 from .config import Config
 from .lunr_search.search_client import Client as SearchClient
 
+GENERAL_CATEGORY = "General"
+
 
 class DocsManager:
     """Manages Equinix documentation discovery and search."""
@@ -92,7 +94,7 @@ class DocsManager:
 
     async def _parse_llms_txt(self, llms_txt: str) -> None:
         """Parse llms.txt and extract linked documentation entries."""
-        current_category = "General"
+        current_category = GENERAL_CATEGORY
         parsed_docs: List[Dict[str, str]] = []
 
         for raw_line in llms_txt.splitlines():
@@ -114,7 +116,7 @@ class DocsManager:
                     if not url:
                         continue
 
-                    description = line[match.end() :].strip(" :-\t")
+                    description = self._clean_description_fragment(line[match.end() :])
                     parsed_docs.append(
                         {
                             "url": url,
@@ -133,6 +135,8 @@ class DocsManager:
             if url_match:
                 url = self._normalize_doc_url(url_match.group(1))
                 if url:
+                    before_url = self._clean_description_fragment(line[: url_match.start()])
+                    after_url = self._clean_description_fragment(line[url_match.end() :])
                     parsed_docs.append(
                         {
                             "url": url,
@@ -141,7 +145,7 @@ class DocsManager:
                             "priority": "",
                             "title": self._extract_title_from_url(url),
                             "category": current_category,
-                            "description": line[: url_match.start()].strip(" -:\t"),
+                            "description": after_url or before_url,
                             "source": "llms",
                         }
                     )
@@ -504,7 +508,7 @@ class DocsManager:
                     or existing.get("title")
                     or self._extract_title_from_url(url),
                     "category": doc.get("category")
-                    if doc.get("category") and doc.get("category") != "General"
+                    if doc.get("category") and doc.get("category") != GENERAL_CATEGORY
                     else existing.get("category")
                     or doc.get("category")
                     or self._categorize_url(url),
@@ -653,6 +657,12 @@ class DocsManager:
             f"{doc.get('title', '')} {doc.get('category', '')} "
             f"{doc.get('description', '')} {doc.get('url', '')}"
         ).lower()
+
+    def _clean_description_fragment(self, text: str) -> str:
+        """Normalize llms.txt description fragments."""
+        cleaned = re.sub(r"^[\s\-–—:|>•]+", "", text or "")
+        cleaned = re.sub(r"[\s\-–—:|>•]+$", "", cleaned)
+        return cleaned.strip()
 
     async def _raise_for_status(self, response: httpx.Response) -> None:
         """Raise HTTP errors for both sync and async-compatible mocks."""
