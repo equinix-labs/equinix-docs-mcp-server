@@ -243,9 +243,10 @@ async def test_search_docs(mock_exists, mock_aiofiles, mock_httpx, docs_manager)
     # Test search - should attempt to fetch and cache the index
     result = await docs_manager.search_docs("metal")
 
-    # Should have attempted to fetch the search index
-    mock_client.get.assert_called_once_with(
-        "https://docs.equinix.com/search-index.json"
+    # Should have attempted to fetch the search index alongside metadata sources
+    assert any(
+        call.args[0] == "https://docs.equinix.com/search-index.json"
+        for call in mock_client.get.call_args_list
     )
 
     # Should contain error message about search results
@@ -339,7 +340,7 @@ async def test_fetch_doc_with_md_extension(mock_httpx, docs_manager):
     mock_client = AsyncMock()
     mock_client.get = AsyncMock(return_value=mock_response)
     mock_httpx.return_value.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_httpx.return_value.__aexit__ = AsyncMock()
+    mock_httpx.return_value.__aexit__ = AsyncMock(return_value=False)
 
     # Test with URL that already has .md extension
     result = await docs_manager.fetch_doc("https://docs.equinix.com/fabric/overview.md")
@@ -364,7 +365,7 @@ async def test_fetch_doc_relative_url(mock_httpx, docs_manager):
     mock_client = AsyncMock()
     mock_client.get = AsyncMock(return_value=mock_response)
     mock_httpx.return_value.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_httpx.return_value.__aexit__ = AsyncMock()
+    mock_httpx.return_value.__aexit__ = AsyncMock(return_value=False)
 
     # Test with relative URL
     result = await docs_manager.fetch_doc("metal/api-reference")
@@ -386,7 +387,7 @@ async def test_fetch_doc_html_url_normalization(mock_httpx, docs_manager):
     mock_client = AsyncMock()
     mock_client.get = AsyncMock(return_value=mock_response)
     mock_httpx.return_value.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_httpx.return_value.__aexit__ = AsyncMock()
+    mock_httpx.return_value.__aexit__ = AsyncMock(return_value=False)
 
     result = await docs_manager.fetch_doc("https://docs.equinix.com/fabric/overview.html")
 
@@ -411,7 +412,7 @@ async def test_fetch_doc_http_error(mock_httpx, docs_manager):
     mock_client = AsyncMock()
     mock_client.get = AsyncMock(return_value=mock_response)
     mock_httpx.return_value.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_httpx.return_value.__aexit__ = AsyncMock()
+    mock_httpx.return_value.__aexit__ = AsyncMock(return_value=False)
 
     result = await docs_manager.fetch_doc("https://docs.equinix.com/nonexistent")
 
