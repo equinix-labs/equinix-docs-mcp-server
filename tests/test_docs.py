@@ -398,6 +398,39 @@ async def test_fetch_doc_html_url_normalization(mock_httpx, docs_manager):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("input_url", "expected_url"),
+    [
+        ("https://docs.equinix.com/fabric", "https://docs.equinix.com/fabric.md"),
+        ("https://docs.equinix.com/fabric/", "https://docs.equinix.com/fabric.md"),
+        (
+            "https://docs.equinix.com/fabric/index.html",
+            "https://docs.equinix.com/fabric.md",
+        ),
+        ("https://docs.equinix.com/", "https://docs.equinix.com/index.md"),
+    ],
+)
+@patch("equinix_docs_mcp_server.docs.httpx.AsyncClient")
+async def test_fetch_doc_directory_markdown_mapping(
+    mock_httpx, docs_manager, input_url, expected_url
+):
+    """Test directory and index-style URLs map to the expected markdown path."""
+    mock_response = AsyncMock()
+    mock_response.raise_for_status = AsyncMock()
+    mock_response.text = "# Directory URL Test"
+
+    mock_client = AsyncMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+    mock_httpx.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_httpx.return_value.__aexit__ = AsyncMock(return_value=False)
+
+    result = await docs_manager.fetch_doc(input_url)
+
+    mock_client.get.assert_called_once_with(expected_url, timeout=30.0)
+    assert "# Directory URL Test" in result
+
+
+@pytest.mark.asyncio
 @patch("equinix_docs_mcp_server.docs.httpx.AsyncClient")
 async def test_fetch_doc_http_error(mock_httpx, docs_manager):
     """Test handling of HTTP errors when fetching documents."""

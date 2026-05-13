@@ -621,7 +621,9 @@ class DocsManager:
         parsed = urlparse(normalized)
         path = parsed.path or "/"
 
-        if path.endswith(".html"):
+        if re.search(r"/index(?:\.html|\.md)?$", path):
+            path = path[: path.rfind("/index")] or "/"
+        elif path.endswith(".html"):
             path = path[:-5]
         elif path.endswith(".md"):
             path = path[:-3]
@@ -645,8 +647,6 @@ class DocsManager:
     def _to_markdown_url(self, url: str) -> str:
         """Convert a documentation URL or path to its markdown endpoint."""
         normalized = self._normalize_doc_url(url)
-        if normalized.endswith("/"):
-            return f"{normalized}index.md"
         if normalized == "https://docs.equinix.com/":
             return "https://docs.equinix.com/index.md"
         return f"{normalized}.md"
