@@ -622,7 +622,7 @@ class DocsManager:
         path = parsed.path or "/"
 
         if re.search(r"/index(?:\.html|\.md)?$", path):
-            path = path[: path.rfind("/index")] or "/"
+            path = re.sub(r"/index(?:\.html|\.md)?$", "", path) or "/"
         elif path.endswith(".html"):
             path = path[:-5]
         elif path.endswith(".md"):
