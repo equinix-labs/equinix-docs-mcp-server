@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/equinix-labs-equinix-docs-mcp-server-badge.png)](https://mseep.ai/app/equinix-labs-equinix-docs-mcp-server)
+
 # Equinix Docs and API Specifications MCP Server
 
 This project is an experimental Model Context Protocol (MCP) server, for local use and learning, that provides access to Equinix APIs and documentation. This project is not expected to offer high quality (production-ready) results. This is offered for developers learning about MCP, Equinix APIs and documentation, and their potential integration. 
