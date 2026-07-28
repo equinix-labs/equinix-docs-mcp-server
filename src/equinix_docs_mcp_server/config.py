@@ -79,6 +79,7 @@ class DocsConfig(BaseModel):
     """Documentation configuration."""
 
     sitemap_url: str = Field(default="https://docs.equinix.com/sitemap.xml")
+    llms_txt_url: str = Field(default="https://docs.equinix.com/llms.txt")
     cache_path: str = Field(default="docs/sitemap_cache.xml")
 
 

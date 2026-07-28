@@ -39,6 +39,71 @@ class DocsManager:
             # Parse the sitemap
             await self._parse_sitemap(response.text)
 
+    async def update_index(self) -> None:
+        """Update the documentation index (llms.txt or sitemap)."""
+        # Try llms.txt first
+        llms_txt_url = self.config.docs.llms_txt_url
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(llms_txt_url)
+                if response.status_code == 200:
+                    await self._parse_llms_txt(response.text)
+                    # Cache it
+                    cache_path = Path(self.config.docs.cache_path).with_suffix(".txt")
+                    cache_path.parent.mkdir(parents=True, exist_ok=True)
+                    async with aiofiles.open(cache_path, "w") as f:
+                        await f.write(response.text)
+                    return
+        except Exception as e:
+            # Log error but continue to sitemap
+            print(f"Failed to fetch llms.txt: {e}")
+
+        # Fallback to sitemap
+        await self.update_sitemap()
+
+    async def _parse_llms_txt(self, content: str) -> None:
+        """Parse llms.txt content."""
+        self.sitemap_cache = []
+        current_category = "General"
+        
+        for line in content.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Check for headers as categories
+            if line.startswith("#"):
+                current_category = line.lstrip("#").strip()
+                continue
+                
+            # Check for links: - [Title](url) - Description
+            if line.startswith("-") and "[" in line and "](" in line:
+                try:
+                    # Extract title and URL
+                    start_bracket = line.find("[")
+                    end_bracket = line.find("]")
+                    start_paren = line.find("(", end_bracket)
+                    end_paren = line.find(")", start_paren)
+                    
+                    if start_bracket != -1 and end_bracket != -1 and start_paren != -1 and end_paren != -1:
+                        title = line[start_bracket+1:end_bracket]
+                        url = line[start_paren+1:end_paren]
+                        
+                        # Extract description if present (after the link)
+                        description = line[end_paren+1:].strip(" -:")
+                        
+                        self.sitemap_cache.append({
+                            "url": url,
+                            "title": title,
+                            "category": current_category,
+                            "description": description,
+                            "lastmod": "",
+                            "changefreq": "",
+                            "priority": ""
+                        })
+                except Exception:
+                    continue
+
     async def _parse_sitemap(self, sitemap_xml: str) -> None:
         """Parse the sitemap XML and extract URL information."""
         root = ET.fromstring(sitemap_xml)
@@ -111,7 +176,7 @@ class DocsManager:
     async def list_docs(self, filter_term: Optional[str] = None) -> str:
         """List documentation with optional filtering."""
         if not self.sitemap_cache:
-            await self._load_cached_sitemap()
+            await self._load_cached_index()
 
         filtered_docs = self.sitemap_cache
 
@@ -172,7 +237,8 @@ class DocsManager:
         for category, docs in sorted(categories.items()):
             result.append(f"## {category}\n")
             for doc in docs[:10]:  # Limit to 10 per category
-                result.append(f"- **{doc['title']}**: {doc['url']}")
+                desc = f" - {doc['description']}" if doc.get('description') else ""
+                result.append(f"- **{doc['title']}**: {doc['url']}{desc}")
 
             if len(docs) > 10:
                 result.append(f"  ... and {len(docs) - 10} more")
@@ -303,6 +369,19 @@ class DocsManager:
         else:
             # If no cache, update from remote
             await self.update_sitemap()
+
+    async def _load_cached_index(self) -> None:
+        """Load index from cache (llms.txt or sitemap)."""
+        # Try llms.txt cache first
+        llms_cache = Path(self.config.docs.cache_path).with_suffix(".txt")
+        if llms_cache.exists():
+            async with aiofiles.open(llms_cache, "r") as f:
+                content = await f.read()
+                await self._parse_llms_txt(content)
+                return
+
+        # Fallback to sitemap cache
+        await self._load_cached_sitemap()
 
     async def fetch_doc(self, url: str) -> str:
         """Fetch the markdown content of a documentation page.
