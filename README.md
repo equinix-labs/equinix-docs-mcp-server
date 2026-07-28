@@ -13,6 +13,7 @@ This project is an experimental Model Context Protocol (MCP) server, for local u
    - **Arazzo Workflows (Experimental)**: Define and execute higher-level workflows chaining multiple API operations
 - **Documentation Integration**: Search Equinix documentation via sitemap and Lunr search, fetch full markdown content
    - OpenAI MCP compatible `search` and `fetch` tools for ChatGPT Connectors and deep research
+- **Modular Server Entry Points**: Run the combined server or narrower docs, discovery, and execution servers depending on the MCP client's needs
 
 ## Supported APIs
 
@@ -107,6 +108,17 @@ The server uses cached API specifications by default for faster startup. Use `--
 equinix-docs-mcp-server --update-specs # --config path/to/custom/config.yaml
 ```
 
+#### Dedicated Server Entry Points
+
+Use the combined server when you want one MCP endpoint with everything, or run one of the narrower entry points when you want to reduce tool surface area:
+
+```bash
+equinix-docs-mcp-server
+equinix-docs-server
+equinix-discovery-server
+equinix-execution-server
+```
+
 ## Server Configuration
 
 The server is configured via `config/apis.yaml`. This file defines:
@@ -157,7 +169,10 @@ The server exposes MCP tools for:
    - `fetch` - Fetch full markdown content of a documentation page by URL (OpenAI MCP compatible)
    - `list_docs` - List and filter documentation
    - `find_docs` - Find documentation by filename/title matching
-3. **Workflows (Arazzo)**:
+3. **API Discovery**:
+   - `search_api` - Search indexed tags, operations, and paths from the merged OpenAPI specs
+   - `fetch_api` - Fetch the full indexed definition for a tag, operationId, or path
+4. **Workflows (Arazzo)**:
     - Tools prefixed with `workflow__` represent multi-step orchestrations defined in Arazzo-like YAML files.
     - Example: `workflow__list_metal_metros_then_prices`
 

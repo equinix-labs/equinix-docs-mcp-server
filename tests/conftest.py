@@ -1,6 +1,7 @@
 """Test fixtures and configuration."""
 
 import os
+import sys
 import tempfile
 from pathlib import Path
 
@@ -13,12 +14,16 @@ def test_environment():
     # Ensure we're in the right directory
     original_cwd = os.getcwd()
     repo_root = Path(__file__).parent.parent
+    src_path = repo_root / "src"
+    sys.path.insert(0, str(src_path))
     os.chdir(repo_root)
 
     yield
 
     # Cleanup
     os.chdir(original_cwd)
+    if str(src_path) in sys.path:
+        sys.path.remove(str(src_path))
 
 
 @pytest.fixture

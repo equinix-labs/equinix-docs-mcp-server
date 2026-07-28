@@ -13,8 +13,10 @@ from .arazzo_manager import ArazzoManager
 from .auth import AuthManager
 from .config import Config
 from .docs import DocsManager
+from .env import load_project_env
 from .response_formatter import ResponseFormatter
 from .spec_manager import SpecManager
+from .discovery import DiscoveryManager
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -202,15 +204,26 @@ class AuthenticatedClient:
 class EquinixMCPServer:
     """Main Equinix MCP Server class leveraging FastMCP's OpenAPI integration."""
 
-    def __init__(self, config_path: str = "config/apis.yaml"):
+    def __init__(
+        self, 
+        config_path: str = "config/apis.yaml",
+        enable_docs: bool = True,
+        enable_discovery: bool = True,
+        enable_execution: bool = True
+    ):
         """Initialize the server with configuration."""
         self.config = Config.load(config_path)
         self.auth_manager = AuthManager(self.config)
         self.spec_manager = SpecManager(self.config)
         self.docs_manager = DocsManager(self.config)
+        self.discovery_manager = DiscoveryManager(self.config)
         self.response_formatter = ResponseFormatter(self.config)
         self.arazzo_manager = ArazzoManager(self.config, auth_manager=self.auth_manager)
         self.mcp: Optional[Any] = None  # Will be initialized in initialize()
+        
+        self.enable_docs = enable_docs
+        self.enable_discovery = enable_discovery
+        self.enable_execution = enable_execution
 
     async def initialize(self, force_update_specs: bool = False) -> None:
         """Initialize the server components using FastMCP's OpenAPI integration."""
@@ -220,17 +233,19 @@ class EquinixMCPServer:
         os.environ["FASTMCP_EXPERIMENTAL_ENABLE_NEW_OPENAPI_PARSER"] = "true"
 
         # Load and merge API specs - only update if forced or no cached specs exist
-        needs_update = (
-            force_update_specs or not self.spec_manager.has_all_cached_specs()
-        )
+        # We need specs for both execution and discovery
+        if self.enable_execution or self.enable_discovery:
+            needs_update = (
+                force_update_specs or not self.spec_manager.has_all_cached_specs()
+            )
 
-        if needs_update:
-            logger.info("Updating API specifications from remote sources...")
-            await self.spec_manager.update_specs()
-        else:
-            logger.info("Using cached API specifications for faster startup")
+            if needs_update:
+                logger.info("Updating API specifications from remote sources...")
+                await self.spec_manager.update_specs()
+            else:
+                logger.info("Using cached API specifications for faster startup")
 
-        merged_spec = self.spec_manager.get_merged_spec()
+        merged_spec = self.spec_manager.get_merged_spec() if (self.enable_execution or self.enable_discovery) else {}
 
         # Create authenticated HTTP client for API calls
         client = AuthenticatedClient(
@@ -250,26 +265,33 @@ class EquinixMCPServer:
             ),
         )
 
-        # Create a temporary FastMCP instance to get the tools, then apply transformations
-        temp_mcp = FastMCP.from_openapi(
-            openapi_spec=merged_spec,
-            client=client,  # type: ignore[arg-type]
-            name="Temp",
-        )
+        # 1. Execution Tools (OpenAPI)
+        if self.enable_execution:
+            # Create a temporary FastMCP instance to get the tools, then apply transformations
+            temp_mcp = FastMCP.from_openapi(
+                openapi_spec=merged_spec,
+                client=client,  # type: ignore[arg-type]
+                name="Temp",
+            )
 
-        # Apply tool transformations for formatting and transfer to main instance
-        await self._apply_tool_transformations(temp_mcp)
-        # Local workaround: ensure tool output schemas include required $defs
-        await self._attach_defs_to_tool_schemas(merged_spec)
+            # Apply tool transformations for formatting and transfer to main instance
+            await self._apply_tool_transformations(temp_mcp)
+            # Local workaround: ensure tool output schemas include required $defs
+            await self._attach_defs_to_tool_schemas(merged_spec)
 
-        # Set up context-aware serialization by decorating tools
-        # await self._setup_context_aware_tools()  # Replaced by tool transformations
+        # 2. Discovery Tools
+        if self.enable_discovery:
+            await self._register_discovery_tools()
 
-        # Register additional documentation tools that aren't part of the API
-        await self._register_docs_tools()
-        # Load and register Arazzo workflows (after API tools exist)
-        await self.arazzo_manager.load()
-        await self.arazzo_manager.register_with_fastmcp(self.mcp)
+        # 3. Documentation Tools
+        if self.enable_docs:
+            await self._register_docs_tools()
+            
+        # 4. Arazzo Workflows
+        if self.enable_execution:
+            # Load and register Arazzo workflows (after API tools exist)
+            await self.arazzo_manager.load()
+            await self.arazzo_manager.register_with_fastmcp(self.mcp)
 
     async def _apply_tool_transformations(self, temp_mcp: Any) -> None:
         """Apply tool transformations for formatting and transfer tools to main instance."""
@@ -600,6 +622,29 @@ class EquinixMCPServer:
             """Find documentation by filename-based search."""
             return await self.docs_manager.find_docs(query)
 
+    async def _register_discovery_tools(self) -> None:
+        """Register discovery tools on the FastMCP server."""
+        assert self.mcp is not None, "MCP server must be initialized first"
+        
+        # Ensure index is built
+        await self.discovery_manager.ensure_index()
+
+        @self.mcp.tool(
+            name="search_api",
+            description="Search for API tags, operations, or paths. Returns a list of matching elements.",
+        )
+        async def search_api(query: str, limit: int = 10) -> str:
+            """Search API elements."""
+            return await self.discovery_manager.search_api(query, limit)
+
+        @self.mcp.tool(
+            name="fetch_api",
+            description="Fetch details for a specific API element (tag name, operationId, or path). Returns the full schema/definition.",
+        )
+        async def fetch_api(target: str) -> str:
+            """Fetch API element details."""
+            return await self.discovery_manager.fetch_api(target)
+
     async def run(self, force_update_specs: bool = False) -> None:
         """Run the MCP server."""
         await self.initialize(force_update_specs)
@@ -705,6 +750,9 @@ def main(config: str, update_specs: bool, log_level: str) -> None:
 
     # Configure logging based on the provided level
     _configure_logging(log_level.upper())
+
+    # Load environment variables with local overrides first.
+    load_project_env()
 
     async def _main() -> None:
         server = EquinixMCPServer(config)
