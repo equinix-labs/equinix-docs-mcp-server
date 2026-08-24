@@ -3,9 +3,11 @@
 import base64
 import logging
 import os
+from pathlib import Path
 from typing import Dict, Optional
 
 import httpx2
+import yaml
 from pydantic import BaseModel
 
 from .config import Config
@@ -17,6 +19,30 @@ logging.basicConfig(
 )
 
 
+def _load_equinix_yaml() -> dict:
+    """Load ~/.config/equinix/equinix.yaml if it exists."""
+    path = Path.home() / ".config" / "equinix" / "equinix.yaml"
+    if path.exists():
+        try:
+            with open(path) as f:
+                return yaml.safe_load(f) or {}
+        except Exception as e:
+            logger.debug(f"Could not read {path}: {e}")
+    return {}
+
+
+def _load_metal_yaml() -> dict:
+    """Load ~/.config/equinix/metal.yaml if it exists (metal-cli config)."""
+    path = Path.home() / ".config" / "equinix" / "metal.yaml"
+    if path.exists():
+        try:
+            with open(path) as f:
+                return yaml.safe_load(f) or {}
+        except Exception as e:
+            logger.debug(f"Could not read {path}: {e}")
+    return {}
+
+
 class AuthManager:
     """Manages authentication for different Equinix APIs."""
 
@@ -25,10 +51,23 @@ class AuthManager:
         self.config = config
         self._token_cache: Dict[str, str] = {}
 
-        # Get credentials from environment
-        self.client_id = os.getenv("EQUINIX_CLIENT_ID")
-        self.client_secret = os.getenv("EQUINIX_CLIENT_SECRET")
-        self.metal_token = os.getenv("EQUINIX_METAL_TOKEN")
+        # Resolve credentials: env vars take priority, then equinix.yaml,
+        # then metal.yaml (for metal token only) — matching equinix-cli/cmd/root.go
+        equinix_cfg = _load_equinix_yaml()
+
+        self.client_id = os.getenv("EQUINIX_CLIENT_ID") or equinix_cfg.get(
+            "equinix_client_id"
+        )
+        self.client_secret = os.getenv("EQUINIX_CLIENT_SECRET") or equinix_cfg.get(
+            "equinix_client_secret"
+        )
+
+        metal_token = os.getenv("EQUINIX_METAL_TOKEN") or equinix_cfg.get(
+            "metal_auth_token"
+        )
+        if not metal_token:
+            metal_token = _load_metal_yaml().get("token")
+        self.metal_token = metal_token
 
         # Log credential availability (without exposing values)
         logger.info(f"AuthManager initialized:")
@@ -66,10 +105,12 @@ class AuthManager:
 
         if not self.metal_token:
             logger.error(
-                "EQUINIX_METAL_TOKEN environment variable is required for Metal API"
+                "Metal token not found. Set EQUINIX_METAL_TOKEN, or add metal_auth_token "
+                "to ~/.config/equinix/equinix.yaml, or token to ~/.config/equinix/metal.yaml"
             )
             raise ValueError(
-                "EQUINIX_METAL_TOKEN environment variable is required for Metal API"
+                "Metal token not found. Set EQUINIX_METAL_TOKEN, or add metal_auth_token "
+                "to ~/.config/equinix/equinix.yaml, or token to ~/.config/equinix/metal.yaml"
             )
 
         header_name = self.config.auth.metal_token.get("header_name", "X-Auth-Token")
@@ -82,10 +123,12 @@ class AuthManager:
 
         if not self.client_id or not self.client_secret:
             logger.error(
-                "EQUINIX_CLIENT_ID and EQUINIX_CLIENT_SECRET environment variables are required"
+                "Client credentials not found. Set EQUINIX_CLIENT_ID / EQUINIX_CLIENT_SECRET, "
+                "or add equinix_client_id / equinix_client_secret to ~/.config/equinix/equinix.yaml"
             )
             raise ValueError(
-                "EQUINIX_CLIENT_ID and EQUINIX_CLIENT_SECRET environment variables are required"
+                "Client credentials not found. Set EQUINIX_CLIENT_ID / EQUINIX_CLIENT_SECRET, "
+                "or add equinix_client_id / equinix_client_secret to ~/.config/equinix/equinix.yaml"
             )
 
         # Check cache first
