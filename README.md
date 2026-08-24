@@ -37,7 +37,7 @@ This scans [docs.equinix.com/api-catalog](https://docs.equinix.com/api-catalog) 
 No clone or checkout is required. With [uv](https://docs.astral.sh/uv/getting-started/installation/) installed, run the server directly from GitHub (uv fetches a suitable Python automatically):
 
 ```bash
-uvx --from git+https://github.com/equinix-labs/equinix-docs-mcp-server equinix-docs-mcp-server
+uvx --system-certs --from git+https://github.com/equinix-labs/equinix-docs-mcp-server equinix-docs-mcp-server
 ```
 
 The bundled API/docs configuration ships inside the package, and caches are written to your user cache directory (override with the `EQUINIX_MCP_CACHE_DIR` environment variable). Pass `--config path/to/apis.yaml` to use a custom configuration.
@@ -63,8 +63,11 @@ claude mcp add --env EQUINIX_CLIENT_ID=your_client_id \
   --env EQUINIX_CLIENT_SECRET=your_client_secret \
   --env EQUINIX_METAL_TOKEN=your_metal_token \
   --transport stdio equinix \
-  -- uvx --from git+https://github.com/equinix-labs/equinix-docs-mcp-server equinix-docs-mcp-server
+  -- uvx --system-certs --from git+https://github.com/equinix-labs/equinix-docs-mcp-server equinix-docs-mcp-server
 ```
+
+> [!TIP]
+> The `--env` flags are optional if you already have credentials configured via the [Equinix CLI](https://github.com/equinix/cli) config file (`~/.config/equinix/equinix.yaml`). The server reads `equinix_client_id`, `equinix_client_secret`, and `metal_auth_token` from that file automatically, and falls back to `token` in `~/.config/equinix/metal.yaml` (the [Metal CLI](https://github.com/equinix/metal-cli) format) for the Metal token.
 
 Add `--scope project` to share the configuration with the team via a `.mcp.json` file (omit the `--env` flags in that case and export the credentials in your shell instead, so secrets stay out of the committed file). Note the flag ordering: another option (here `--transport stdio`) must sit between the last `--env` and the server name, or the CLI parses the name as another KEY=value pair.
 
@@ -75,7 +78,7 @@ For more details, see the [Claude Code MCP documentation](https://code.claude.co
 Add the server with a single command (the JSON is one server object, with the name inline):
 
 ```bash
-code --add-mcp '{"name":"equinix","type":"stdio","command":"uvx","args":["--from","git+https://github.com/equinix-labs/equinix-docs-mcp-server","equinix-docs-mcp-server"]}'
+code --add-mcp '{"name":"equinix","type":"stdio","command":"uvx","args":["--system-certs","--from","git+https://github.com/equinix-labs/equinix-docs-mcp-server","equinix-docs-mcp-server"]}'
 ```
 
 Or create a `.vscode/mcp.json` in your workspace to prompt for credentials on first use:
@@ -87,6 +90,7 @@ Or create a `.vscode/mcp.json` in your workspace to prompt for credentials on fi
       "type": "stdio",
       "command": "uvx",
       "args": [
+        "--system-certs",
         "--from",
         "git+https://github.com/equinix-labs/equinix-docs-mcp-server",
         "equinix-docs-mcp-server"
@@ -127,16 +131,18 @@ For more details, see the [VS Code MCP Server documentation](https://code.visual
 
 ### Configuration
 
-Set your Equinix API credentials as environment variables:
+Set your Equinix API credentials as environment variables, or configure them once via the [Equinix CLI](https://github.com/equinix/cli) (`~/.config/equinix/equinix.yaml`) — the server reads the same file automatically:
 
 ```bash
-# Required for most APIs (OAuth2 Client Credentials)
+# OAuth2 Client Credentials (required for most APIs)
 export EQUINIX_CLIENT_ID="your_client_id"
 export EQUINIX_CLIENT_SECRET="your_client_secret"
 
-# Optional for Metal API (if you prefer API token over OAuth2)
+# Metal API token (optional — falls back to Metal CLI config if omitted)
 export EQUINIX_METAL_TOKEN="your_metal_token"
 ```
+
+If you have already run `equinix init` or `metal init`, credentials are stored in `~/.config/equinix/equinix.yaml` (keys: `equinix_client_id`, `equinix_client_secret`, `metal_auth_token`) or `~/.config/equinix/metal.yaml` (key: `token`). No environment variables are needed in that case.
 
 #### API Spec Fetching
 
