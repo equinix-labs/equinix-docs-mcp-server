@@ -18,6 +18,7 @@ from .arazzo_manager import ArazzoManager
 from .auth import AuthManager
 from .config import APIConfig, Config
 from .docs import DocsManager
+from .openapi_annotations import annotate_openapi_component
 from .response_formatter import ResponseFormatter
 from .spec_manager import SpecManager
 
@@ -218,6 +219,7 @@ class EquinixMCPServer:
                     openapi_spec=spec,
                     client=self._build_api_client(api_config),
                     tags={"equinix", api_name, *api_config.tags},
+                    mcp_component_fn=annotate_openapi_component,
                 )
             except Exception as e:
                 logger.error(f"Failed to build provider for '{api_name}': {e}")
