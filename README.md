@@ -208,6 +208,19 @@ The server exposes MCP tools for:
     - Tools prefixed with `workflow__` represent multi-step orchestrations defined in Arazzo-like YAML files.
     - Example: `workflow__list_metal_metros_then_prices`
 
+### Tool Catalog Reference (OpenRPC)
+
+The complete tool catalog, including every generated API tool, is published as an [OpenRPC](https://open-rpc.org/) document in [`docs/openrpc/openrpc.json`](docs/openrpc/openrpc.json), with a browsable single-page rendering in [`docs/openrpc/index.html`](docs/openrpc/index.html). Each OpenRPC method is one MCP tool: its by-name params are the tool arguments, sent over MCP as `tools/call` with `{"name": "<method>", "arguments": {...}}`.
+
+Regenerate both files after changing the server (specs are always refreshed, so the output does not depend on your local cache):
+
+```bash
+equinix-docs-mcp-server --export-openrpc docs/openrpc
+npx @redocly/cli lint docs/openrpc/openrpc.json   # optional validation
+```
+
+The *OpenRPC Docs* workflow regenerates and lints the catalog on every pull request, uploads it as the `openrpc-docs` artifact, and fails when a PR changes the server without committing regenerated docs. Drift caused only by upstream spec updates is reported as a warning and refreshed by a weekly PR.
+
 ### Defining Arazzo Workflows (Experimental)
 
 Add an `arazzo` section to your `apis.yaml` (spec paths resolve relative to the config file's parent directory):

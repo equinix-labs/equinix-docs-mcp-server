@@ -384,6 +384,16 @@ class EquinixMCPServer:
     ),
 )
 @click.option(
+    "--export-openrpc",
+    "export_openrpc_dir",
+    default=None,
+    metavar="DIR",
+    help=(
+        "Refresh specs, write the full tool catalog as DIR/openrpc.json and "
+        "an HTML rendering as DIR/index.html, and exit"
+    ),
+)
+@click.option(
     "--tool-catalog",
     type=click.Choice(["search", "code-mode", "full"], case_sensitive=False),
     default="search",
@@ -406,6 +416,7 @@ def main(
     update_specs: bool,
     discover_apis: bool,
     write_discovered: bool,
+    export_openrpc_dir: Optional[str],
     tool_catalog: str,
     log_level: str,
 ) -> None:
@@ -415,6 +426,15 @@ def main(
     _configure_logging(log_level.upper())
 
     async def _main() -> None:
+        if export_openrpc_dir:
+            from .openrpc import export_openrpc
+
+            json_path, html_path, count = await export_openrpc(
+                config, export_openrpc_dir
+            )
+            click.echo(f"Wrote {count} methods to {json_path} and {html_path}")
+            return
+
         server = EquinixMCPServer(config, tool_catalog=tool_catalog.lower())
 
         if discover_apis:
