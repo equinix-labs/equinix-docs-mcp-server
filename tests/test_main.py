@@ -200,3 +200,70 @@ class TestEquinixMCPServer:
         hint = server.mcp._mcp_server.cache_hints["tools/list"]
         assert hint.ttl_ms == 3600000
         assert hint.scope == "public"
+
+
+class TestTransport:
+    """Test stdio/HTTP transport selection."""
+
+    @pytest.mark.asyncio
+    async def test_run_defaults_to_stdio(self):
+        server = make_server()
+        with (
+            patch("fastmcp.FastMCP.run_stdio_async", new=AsyncMock()) as stdio,
+            patch("fastmcp.FastMCP.run_http_async", new=AsyncMock()) as http,
+        ):
+            await server.run()
+
+        stdio.assert_awaited_once()
+        http.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_run_http_binds_host_and_port(self):
+        server = make_server()
+        with (
+            patch("fastmcp.FastMCP.run_stdio_async", new=AsyncMock()) as stdio,
+            patch("fastmcp.FastMCP.run_http_async", new=AsyncMock()) as http,
+        ):
+            await server.run(transport="http", host="0.0.0.0", port=9001)
+
+        stdio.assert_not_awaited()
+        http.assert_awaited_once()
+        kwargs = http.await_args.kwargs
+        assert (kwargs["transport"], kwargs["host"], kwargs["port"]) == (
+            "http",
+            "0.0.0.0",
+            9001,
+        )
+
+    @pytest.mark.parametrize(
+        "args, env, expected",
+        [
+            ([], {}, ("stdio", "127.0.0.1", 8000)),
+            (
+                ["--transport", "http", "--host", "0.0.0.0", "--port", "9000"],
+                {},
+                ("http", "0.0.0.0", 9000),
+            ),
+            (
+                [],
+                {"EQUINIX_MCP_TRANSPORT": "http", "PORT": "8081"},
+                ("http", "127.0.0.1", 8081),
+            ),
+        ],
+    )
+    def test_cli_transport_options(self, args, env, expected, monkeypatch):
+        from click.testing import CliRunner
+
+        from equinix_docs_mcp_server.main import main
+
+        for name in ("EQUINIX_MCP_TRANSPORT", "EQUINIX_MCP_HOST", "EQUINIX_MCP_PORT"):
+            monkeypatch.delenv(name, raising=False)
+        monkeypatch.delenv("PORT", raising=False)
+
+        with patch("equinix_docs_mcp_server.main.EquinixMCPServer") as server_cls:
+            server_cls.return_value.run = AsyncMock()
+            result = CliRunner().invoke(main, args, env=env)
+
+        assert result.exit_code == 0, result.output
+        kwargs = server_cls.return_value.run.await_args.kwargs
+        assert (kwargs["transport"], kwargs["host"], kwargs["port"]) == expected

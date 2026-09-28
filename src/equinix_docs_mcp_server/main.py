@@ -36,6 +36,11 @@ DOCS_TOOL_NAMES = ["search", "fetch", "list_docs", "find_docs"]
 
 API_BASE_URL = "https://api.equinix.com"
 
+# HTTP transport defaults: loopback-only unless a host is chosen explicitly
+# (the container image binds 0.0.0.0).
+DEFAULT_HTTP_HOST = "127.0.0.1"
+DEFAULT_HTTP_PORT = 8000
+
 
 def _configure_logging(log_level: str):
     """Configure logging with the specified level and suppress third-party library noise"""
@@ -345,13 +350,31 @@ class EquinixMCPServer:
             """Find documentation by filename-based search."""
             return await self.docs_manager.find_docs(query)
 
-    async def run(self, force_update_specs: bool = False) -> None:
-        """Run the MCP server."""
+    async def run(
+        self,
+        force_update_specs: bool = False,
+        transport: str = "stdio",
+        host: str = DEFAULT_HTTP_HOST,
+        port: int = DEFAULT_HTTP_PORT,
+    ) -> None:
+        """Run the MCP server.
+
+        Args:
+            force_update_specs: Refresh API specs before starting.
+            transport: "stdio" (default) or "http" (Streamable HTTP, served
+                at ``/mcp``).
+            host: Interface to bind for the HTTP transport.
+            port: Port to bind for the HTTP transport.
+        """
         await self.initialize(force_update_specs)
         assert self.mcp is not None, "MCP server must be initialized first"
 
-        # Use stdio_server for MCP transport to avoid asyncio loop conflicts
-        await self.mcp.run_stdio_async(show_banner=True)
+        if transport == "http":
+            await self.mcp.run_http_async(
+                show_banner=True, transport="http", host=host, port=port
+            )
+        else:
+            await self.mcp.run_stdio_async(show_banner=True)
 
 
 @click.command()
@@ -394,6 +417,32 @@ class EquinixMCPServer:
     ),
 )
 @click.option(
+    "--transport",
+    type=click.Choice(["stdio", "http"], case_sensitive=False),
+    default="stdio",
+    envvar="EQUINIX_MCP_TRANSPORT",
+    show_envvar=True,
+    help=(
+        "MCP transport: 'stdio' (default) or 'http' (Streamable HTTP at "
+        "http://HOST:PORT/mcp)"
+    ),
+)
+@click.option(
+    "--host",
+    default=DEFAULT_HTTP_HOST,
+    envvar="EQUINIX_MCP_HOST",
+    show_envvar=True,
+    help="Interface to bind with --transport http (default: 127.0.0.1)",
+)
+@click.option(
+    "--port",
+    type=int,
+    default=DEFAULT_HTTP_PORT,
+    envvar=["EQUINIX_MCP_PORT", "PORT"],
+    show_envvar=True,
+    help="Port to bind with --transport http (default: 8000)",
+)
+@click.option(
     "--log-level",
     type=click.Choice(
         ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], case_sensitive=False
@@ -407,6 +456,9 @@ def main(
     discover_apis: bool,
     write_discovered: bool,
     tool_catalog: str,
+    transport: str,
+    host: str,
+    port: int,
     log_level: str,
 ) -> None:
     """Start the Equinix MCP Server."""
@@ -442,7 +494,13 @@ def main(
             click.echo("✅ API spec fetching and validation completed successfully")
             return
 
-        await server.run(force_update_specs=False)  # Normal startup uses cached specs
+        # Normal startup uses cached specs
+        await server.run(
+            force_update_specs=False,
+            transport=transport.lower(),
+            host=host,
+            port=port,
+        )
 
     asyncio.run(_main())
 

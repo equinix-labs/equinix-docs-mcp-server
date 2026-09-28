@@ -144,6 +144,23 @@ export EQUINIX_METAL_TOKEN="your_metal_token"
 
 If you have already run `equinix init` or `metal init`, credentials are stored in `~/.config/equinix/equinix.yaml` (keys: `equinix_client_id`, `equinix_client_secret`, `metal_auth_token`) or `~/.config/equinix/metal.yaml` (key: `token`). No environment variables are needed in that case.
 
+#### HTTP Transport
+
+The server speaks MCP over stdio by default. To serve [Streamable HTTP](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#streamable-http) instead (for remote clients, containers, or hosts like Smithery), pass `--transport http`; the endpoint is `http://HOST:PORT/mcp`:
+
+```bash
+equinix-docs-mcp-server --transport http --host 127.0.0.1 --port 8000
+```
+
+Each option can also be set from the environment: `EQUINIX_MCP_TRANSPORT`, `EQUINIX_MCP_HOST`, and `EQUINIX_MCP_PORT` (or `PORT`, which hosting platforms set). The host defaults to loopback. The server calls Equinix APIs with *its own* configured credentials for every client, so only bind a public interface behind authentication or on a trusted network.
+
+The Docker image serves HTTP on `0.0.0.0:8000` (override with `-e PORT=...`):
+
+```bash
+docker build -t equinix-docs-mcp-server .
+docker run --rm -p 8000:8000 -e EQUINIX_CLIENT_ID -e EQUINIX_CLIENT_SECRET -e EQUINIX_METAL_TOKEN equinix-docs-mcp-server
+```
+
 #### API Spec Fetching
 
 The server uses cached API specifications by default for faster startup. Use `--update-specs` to force fetching fresh specs from remote sources.
