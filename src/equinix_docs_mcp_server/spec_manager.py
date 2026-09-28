@@ -618,6 +618,9 @@ class SpecManager:
           where they must be numeric. Converting to the numeric form would
           break the OpenAPI 3.0 document parse (a catch-22 between the two
           dialects), so drop the boolean and keep the inclusive bound.
+        - Swagger 2.0 `collectionFormat` left inside OpenAPI 3 array schemas
+          (assets) is not a JSON Schema keyword and would leak into tool
+          input schemas; OpenAPI 3 expresses it with parameter `style`.
         """
         if isinstance(node, dict):
             if node.get("type") == "file":
@@ -631,6 +634,9 @@ class SpecManager:
             for exclusive in ("exclusiveMaximum", "exclusiveMinimum"):
                 if isinstance(node.get(exclusive), bool):
                     node.pop(exclusive)
+
+            if isinstance(node.get("collectionFormat"), str) and "items" in node:
+                node.pop("collectionFormat")
 
             for value in node.values():
                 self._sanitize_schema_quirks(value)

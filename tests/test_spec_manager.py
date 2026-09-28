@@ -156,6 +156,15 @@ def test_sanitize_schema_quirks(spec_manager):
                     "minimum": 1,
                     "exclusiveMinimum": False,
                 },
+                "SortList": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "collectionFormat": "csv",
+                },
+                "Settings": {
+                    "type": "object",
+                    "properties": {"collectionFormat": {"type": "string"}},
+                },
             }
         },
     }
@@ -172,6 +181,9 @@ def test_sanitize_schema_quirks(spec_manager):
     assert schemas["Lookbehind"]["pattern"] == "(?<=a)b(?<!c)"
     assert schemas["Bounded"] == {"type": "integer", "maximum": 10}
     assert schemas["BoundedFalse"] == {"type": "integer", "minimum": 1}
+    assert schemas["SortList"] == {"type": "array", "items": {"type": "string"}}
+    # A property that happens to be named collectionFormat is kept
+    assert "collectionFormat" in schemas["Settings"]["properties"]
 
 
 def test_inject_family_context(spec_manager):

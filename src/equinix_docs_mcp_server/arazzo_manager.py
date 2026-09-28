@@ -173,6 +173,7 @@ class ArazzoManager:
         @mcp.tool(
             name="arazzo_list_workflows",
             description="List registered Arazzo workflow IDs.",
+            tags={"workflows"},
         )
         async def list_workflows() -> List[str]:  # type: ignore
             return sorted(self.workflows.keys())
@@ -180,6 +181,7 @@ class ArazzoManager:
         @mcp.tool(
             name="arazzo_describe_workflow",
             description="Describe a specific Arazzo workflow (summary, inputs).",
+            tags={"workflows"},
         )
         async def describe_workflow(workflow_id: str) -> Dict[str, Any]:  # type: ignore
             meta = self.workflows.get(workflow_id)
@@ -304,7 +306,9 @@ class ArazzoManager:
 
             dynamic_func.__globals__["__execute_workflow"] = __execute_workflow
 
-            mcp.tool(name=tool_name, description=description)(dynamic_func)  # type: ignore
+            mcp.tool(name=tool_name, description=description, tags={"workflows"})(
+                dynamic_func
+            )  # type: ignore
             logger.info(
                 f"Registered Arazzo workflow tool {tool_name} (params: {list(input_props.keys())})"
             )
