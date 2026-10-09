@@ -10,6 +10,7 @@ This project is an experimental Model Context Protocol (MCP) server, for local u
 - **API Access**: Fetches and caches Equinix API specifications then exposes operationIds as MCP tools.
    - **Per-family providers**: Each API family (Metal, Fabric, Network Edge, Billing, Smart View) is served by its own OpenAPI provider; tools are namespaced `<family>_<operationId>` (e.g. `metal_findPlans`)
    - **Searchable catalog**: API tools are hidden from `tools/list` and discovered on demand via `search_tools`, following the MCP 2026-07-28 progressive-discovery guidance; `--tool-catalog code-mode` enables FastMCP's experimental sandboxed code execution instead
+   - **Tool annotations**: API tools carry MCP behavior hints derived from their HTTP method — `GET` is `readOnlyHint`, `PUT`/`DELETE` are `destructiveHint` + `idempotentHint`, `POST`/`PATCH` are neither read-only nor idempotent — and all are `openWorldHint`; an operation's `x-mcp-annotations` extension (e.g. via an overlay) overrides these
    - **Cache hints**: `tools/list` and related results carry `ttlMs`/`cacheScope` hints per the MCP 2026-07-28 caching utility
    - **API Authentication**: Supports both OAuth2 Client Credentials used by most API services and Metal API tokens
    - **Configurable Overlays**: Use overlay specifications to normalize API responses before LLM processing
