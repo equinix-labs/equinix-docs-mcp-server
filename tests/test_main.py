@@ -1,5 +1,6 @@
 """Tests for the main Equinix MCP Server implementation."""
 
+from typing import Optional
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx2
@@ -45,10 +46,14 @@ def make_config() -> Config:
     )
 
 
-def make_server(tool_catalog: str = "search") -> EquinixMCPServer:
+def make_server(
+    tool_catalog: str = "search", auth_token: Optional[str] = None
+) -> EquinixMCPServer:
     """Build a server against the minimal config with spec IO stubbed out."""
     with patch("equinix_docs_mcp_server.main.Config.load", return_value=make_config()):
-        server = EquinixMCPServer("test_config.yaml", tool_catalog=tool_catalog)
+        server = EquinixMCPServer(
+            "test_config.yaml", tool_catalog=tool_catalog, auth_token=auth_token
+        )
     server.spec_manager.has_all_cached_specs = MagicMock(return_value=True)
     server.spec_manager.get_provider_spec = MagicMock(return_value=TINY_METAL_SPEC)
     return server
@@ -200,3 +205,146 @@ class TestEquinixMCPServer:
         hint = server.mcp._mcp_server.cache_hints["tools/list"]
         assert hint.ttl_ms == 3600000
         assert hint.scope == "public"
+
+
+class TestTransport:
+    """Test stdio/HTTP transport selection."""
+
+    @pytest.mark.asyncio
+    async def test_run_defaults_to_stdio(self):
+        server = make_server()
+        with (
+            patch("fastmcp.FastMCP.run_stdio_async", new=AsyncMock()) as stdio,
+            patch("fastmcp.FastMCP.run_http_async", new=AsyncMock()) as http,
+        ):
+            await server.run()
+
+        stdio.assert_awaited_once()
+        http.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_run_http_binds_host_and_port(self):
+        server = make_server()
+        with (
+            patch("fastmcp.FastMCP.run_stdio_async", new=AsyncMock()) as stdio,
+            patch("fastmcp.FastMCP.run_http_async", new=AsyncMock()) as http,
+        ):
+            await server.run(transport="http", host="0.0.0.0", port=9001)
+
+        stdio.assert_not_awaited()
+        http.assert_awaited_once()
+        kwargs = http.await_args.kwargs
+        assert (kwargs["transport"], kwargs["host"], kwargs["port"]) == (
+            "http",
+            "0.0.0.0",
+            9001,
+        )
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "host, auth_token, warned",
+        [
+            ("0.0.0.0", None, True),
+            ("0.0.0.0", "s3cret", False),
+            ("127.0.0.1", None, False),
+            ("localhost", None, False),
+        ],
+    )
+    async def test_run_http_warns_when_exposed_without_auth(
+        self, host, auth_token, warned, caplog
+    ):
+        server = make_server(auth_token=auth_token)
+        with patch("fastmcp.FastMCP.run_http_async", new=AsyncMock()):
+            await server.run(transport="http", host=host, port=9001)
+
+        assert ("without authentication" in caplog.text) is warned
+
+    @pytest.mark.asyncio
+    async def test_http_requires_bearer_token_when_configured(self):
+        from starlette.testclient import TestClient
+
+        server = make_server(auth_token="s3cret")
+        await server.initialize()
+        initialize = {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-06-18",
+                "capabilities": {},
+                "clientInfo": {"name": "test", "version": "1"},
+            },
+        }
+        accept = {"Accept": "application/json, text/event-stream"}
+
+        with TestClient(server.mcp.http_app()) as client:
+
+            def post(token: Optional[str]) -> int:
+                headers = dict(accept)
+                if token:
+                    headers["Authorization"] = f"Bearer {token}"
+                return client.post("/mcp", json=initialize, headers=headers).status_code
+
+            assert post(None) == 401
+            assert post("wrong") == 401
+            assert post("s3cret") == 200
+
+    @pytest.mark.parametrize(
+        "args, env, expected",
+        [
+            ([], {}, ("stdio", "127.0.0.1", 8000)),
+            (
+                ["--transport", "http", "--host", "0.0.0.0", "--port", "9000"],
+                {},
+                ("http", "0.0.0.0", 9000),
+            ),
+            (
+                [],
+                {"EQUINIX_MCP_TRANSPORT": "http", "PORT": "8081"},
+                ("http", "127.0.0.1", 8081),
+            ),
+        ],
+    )
+    def test_cli_transport_options(self, args, env, expected, monkeypatch):
+        from click.testing import CliRunner
+
+        from equinix_docs_mcp_server.main import main
+
+        for name in (
+            "EQUINIX_MCP_TRANSPORT",
+            "EQUINIX_MCP_HOST",
+            "EQUINIX_MCP_PORT",
+            "EQUINIX_MCP_AUTH_TOKEN",
+        ):
+            monkeypatch.delenv(name, raising=False)
+        monkeypatch.delenv("PORT", raising=False)
+
+        with patch("equinix_docs_mcp_server.main.EquinixMCPServer") as server_cls:
+            server_cls.return_value.run = AsyncMock()
+            result = CliRunner().invoke(main, args, env=env)
+
+        assert result.exit_code == 0, result.output
+        kwargs = server_cls.return_value.run.await_args.kwargs
+        assert (kwargs["transport"], kwargs["host"], kwargs["port"]) == expected
+
+    @pytest.mark.parametrize(
+        "args, env, expected",
+        [
+            ([], {}, None),
+            (["--auth-token", "flag"], {}, "flag"),
+            ([], {"EQUINIX_MCP_AUTH_TOKEN": "env"}, "env"),
+        ],
+    )
+    def test_cli_auth_token(self, args, env, expected, monkeypatch):
+        from click.testing import CliRunner
+
+        from equinix_docs_mcp_server.main import main
+
+        monkeypatch.delenv("EQUINIX_MCP_AUTH_TOKEN", raising=False)
+
+        with patch("equinix_docs_mcp_server.main.EquinixMCPServer") as server_cls:
+            server_cls.return_value.run = AsyncMock()
+            result = CliRunner().invoke(main, args, env=env)
+
+        assert result.exit_code == 0, result.output
+        assert server_cls.call_args.kwargs["auth_token"] == expected

@@ -1,6 +1,8 @@
 """Main entry point for the Equinix MCP Server."""
 
 import asyncio
+import hmac
+import ipaddress
 import logging
 from typing import Any, AsyncGenerator, List, Literal, Optional
 
@@ -8,6 +10,7 @@ import click
 import httpx2
 import yaml
 from fastmcp import FastMCP
+from fastmcp.server.auth import AccessToken, TokenVerifier
 from fastmcp.server.middleware import CallNext, Middleware, MiddlewareContext
 from fastmcp.server.providers.openapi import OpenAPIProvider
 from fastmcp.server.transforms.search import BM25SearchTransform
@@ -37,6 +40,11 @@ DOCS_TOOL_NAMES = ["search", "fetch", "list_docs", "find_docs"]
 
 API_BASE_URL = "https://api.equinix.com"
 
+# HTTP transport defaults: loopback-only unless a host is chosen explicitly.
+# The Dockerfile sets EQUINIX_MCP_HOST=0.0.0.0 so the port can be published.
+DEFAULT_HTTP_HOST = "127.0.0.1"
+DEFAULT_HTTP_PORT = 8000
+
 
 def _configure_logging(log_level: str):
     """Configure logging with the specified level and suppress third-party library noise"""
@@ -51,6 +59,33 @@ def _configure_logging(log_level: str):
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpx2").setLevel(logging.WARNING)
+
+
+def _is_loopback(host: str) -> bool:
+    """Whether ``host`` binds only the loopback interface."""
+    if host == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
+
+
+class SharedTokenVerifier(TokenVerifier):
+    """Accepts requests bearing one shared secret (``Authorization: Bearer``).
+
+    Guards the HTTP transport: every client acts with the server's own
+    Equinix credentials, so possession of this token is the access check.
+    """
+
+    def __init__(self, token: str):
+        super().__init__()
+        self._token = token.encode()
+
+    async def verify_token(self, token: str) -> Optional[AccessToken]:
+        if not hmac.compare_digest(token.encode(), self._token):
+            return None
+        return AccessToken(token=token, client_id="shared-token", scopes=[])
 
 
 class EquinixAuth(httpx2.Auth):
@@ -134,6 +169,7 @@ class EquinixMCPServer:
         self,
         config_path: Optional[str] = None,
         tool_catalog: str = "search",
+        auth_token: Optional[str] = None,
     ):
         """Initialize the server with configuration.
 
@@ -143,6 +179,8 @@ class EquinixMCPServer:
             tool_catalog: How to expose the tool catalog — "search" (BM25
                 search transform, default), "code-mode" (experimental
                 sandboxed code execution), or "full" (every tool listed).
+            auth_token: Shared bearer token required on HTTP transport
+                requests; None leaves the HTTP endpoint unauthenticated.
         """
         self.config = Config.load(config_path)
         self.auth_manager = AuthManager(self.config)
@@ -151,6 +189,7 @@ class EquinixMCPServer:
         self.response_formatter = ResponseFormatter(self.config)
         self.arazzo_manager = ArazzoManager(self.config, auth_manager=self.auth_manager)
         self.tool_catalog = tool_catalog
+        self.auth_token = auth_token
         self.mcp: Optional[FastMCP] = None
         self._api_clients: List[httpx2.AsyncClient] = []
 
@@ -179,6 +218,7 @@ class EquinixMCPServer:
             ),
             cache_ttl=CATALOG_CACHE_TTL_SECONDS,
             cache_scope=CATALOG_CACHE_SCOPE,
+            auth=SharedTokenVerifier(self.auth_token) if self.auth_token else None,
         )
 
         self._register_api_providers()
@@ -347,13 +387,38 @@ class EquinixMCPServer:
             """Find documentation by filename-based search."""
             return await self.docs_manager.find_docs(query)
 
-    async def run(self, force_update_specs: bool = False) -> None:
-        """Run the MCP server."""
+    async def run(
+        self,
+        force_update_specs: bool = False,
+        transport: str = "stdio",
+        host: str = DEFAULT_HTTP_HOST,
+        port: int = DEFAULT_HTTP_PORT,
+    ) -> None:
+        """Run the MCP server.
+
+        Args:
+            force_update_specs: Refresh API specs before starting.
+            transport: "stdio" (default) or "http" (Streamable HTTP, served
+                at ``/mcp``).
+            host: Interface to bind for the HTTP transport.
+            port: Port to bind for the HTTP transport.
+        """
         await self.initialize(force_update_specs)
         assert self.mcp is not None, "MCP server must be initialized first"
 
-        # Use stdio_server for MCP transport to avoid asyncio loop conflicts
-        await self.mcp.run_stdio_async(show_banner=True)
+        if transport == "http":
+            if not self.auth_token and not _is_loopback(host):
+                logger.warning(
+                    f"Serving HTTP on {host}:{port} without authentication; any "
+                    "client that can reach it acts with this server's Equinix "
+                    "credentials. Set EQUINIX_MCP_AUTH_TOKEN or put an "
+                    "authenticating proxy in front."
+                )
+            await self.mcp.run_http_async(
+                show_banner=True, transport="http", host=host, port=port
+            )
+        else:
+            await self.mcp.run_stdio_async(show_banner=True)
 
 
 @click.command()
@@ -396,6 +461,42 @@ class EquinixMCPServer:
     ),
 )
 @click.option(
+    "--transport",
+    type=click.Choice(["stdio", "http"], case_sensitive=False),
+    default="stdio",
+    envvar="EQUINIX_MCP_TRANSPORT",
+    show_envvar=True,
+    help=(
+        "MCP transport: 'stdio' (default) or 'http' (Streamable HTTP at "
+        "http://HOST:PORT/mcp)"
+    ),
+)
+@click.option(
+    "--host",
+    default=DEFAULT_HTTP_HOST,
+    envvar="EQUINIX_MCP_HOST",
+    show_envvar=True,
+    help="Interface to bind with --transport http (default: 127.0.0.1)",
+)
+@click.option(
+    "--port",
+    type=int,
+    default=DEFAULT_HTTP_PORT,
+    envvar=["EQUINIX_MCP_PORT", "PORT"],
+    show_envvar=True,
+    help="Port to bind with --transport http (default: 8000)",
+)
+@click.option(
+    "--auth-token",
+    default=None,
+    envvar="EQUINIX_MCP_AUTH_TOKEN",
+    show_envvar=True,
+    help=(
+        "Require 'Authorization: Bearer <token>' on --transport http requests "
+        "(prefer the env var so the token stays out of process listings)"
+    ),
+)
+@click.option(
     "--log-level",
     type=click.Choice(
         ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], case_sensitive=False
@@ -409,6 +510,10 @@ def main(
     discover_apis: bool,
     write_discovered: bool,
     tool_catalog: str,
+    transport: str,
+    host: str,
+    port: int,
+    auth_token: Optional[str],
     log_level: str,
 ) -> None:
     """Start the Equinix MCP Server."""
@@ -417,7 +522,9 @@ def main(
     _configure_logging(log_level.upper())
 
     async def _main() -> None:
-        server = EquinixMCPServer(config, tool_catalog=tool_catalog.lower())
+        server = EquinixMCPServer(
+            config, tool_catalog=tool_catalog.lower(), auth_token=auth_token
+        )
 
         if discover_apis:
             from .catalog_discovery import (
@@ -444,7 +551,13 @@ def main(
             click.echo("✅ API spec fetching and validation completed successfully")
             return
 
-        await server.run(force_update_specs=False)  # Normal startup uses cached specs
+        # Normal startup uses cached specs
+        await server.run(
+            force_update_specs=False,
+            transport=transport.lower(),
+            host=host,
+            port=port,
+        )
 
     asyncio.run(_main())
 

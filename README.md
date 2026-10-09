@@ -145,6 +145,38 @@ export EQUINIX_METAL_TOKEN="your_metal_token"
 
 If you have already run `equinix init` or `metal init`, credentials are stored in `~/.config/equinix/equinix.yaml` (keys: `equinix_client_id`, `equinix_client_secret`, `metal_auth_token`) or `~/.config/equinix/metal.yaml` (key: `token`). No environment variables are needed in that case.
 
+#### HTTP Transport
+
+The server speaks MCP over stdio by default. To serve [Streamable HTTP](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#streamable-http) instead (for remote clients, containers, or hosts like Smithery), pass `--transport http`; the endpoint is `http://HOST:PORT/mcp`:
+
+```bash
+equinix-docs-mcp-server --transport http --host 127.0.0.1 --port 8000
+```
+
+Each option can also be set from the environment: `EQUINIX_MCP_TRANSPORT`, `EQUINIX_MCP_HOST`, and `EQUINIX_MCP_PORT` (or `PORT`, which hosting platforms set). The host defaults to loopback.
+
+> [!WARNING]
+> The server calls Equinix APIs with *its own* configured credentials on behalf of every client. Anyone who can reach the HTTP endpoint can act with those credentials. The server logs a warning at startup if it binds a non-loopback interface with no authentication configured.
+
+To require a shared bearer token, set `EQUINIX_MCP_AUTH_TOKEN`. You can also pass `--auth-token`, but then the token shows up in process listings. Clients must then send `Authorization: Bearer <token>`:
+
+```bash
+export EQUINIX_MCP_AUTH_TOKEN="$(openssl rand -hex 32)"
+equinix-docs-mcp-server --transport http --host 0.0.0.0
+```
+
+The Docker image serves HTTP on port 8000 inside the container (override with `-e PORT=...`). Publish it on loopback unless you have set a token or put an authenticating proxy in front. A bare `-p 8000:8000` listens on every host interface:
+
+```bash
+docker build -t equinix-docs-mcp-server .
+docker run --rm -p 127.0.0.1:8000:8000 \
+  -e EQUINIX_CLIENT_ID -e EQUINIX_CLIENT_SECRET -e EQUINIX_METAL_TOKEN \
+  -e EQUINIX_MCP_AUTH_TOKEN \
+  equinix-docs-mcp-server
+```
+
+When a hosting platform such as Smithery runs the image, that platform is responsible for authenticating clients before their requests reach the server. Set `EQUINIX_MCP_AUTH_TOKEN` as well if the platform can forward a bearer token.
+
 #### API Spec Fetching
 
 The server uses cached API specifications by default for faster startup. Use `--update-specs` to force fetching fresh specs from remote sources.
