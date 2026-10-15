@@ -14,6 +14,7 @@ import copy
 import hashlib
 import html
 import json
+import logging
 import re
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
@@ -21,6 +22,8 @@ from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from fastmcp import Client
 from jinja2 import Environment, select_autoescape
+
+logger = logging.getLogger(__name__)
 
 OPENRPC_VERSION = "1.3.2"
 COMPONENT_PREFIX = "#/components/schemas/"
@@ -642,15 +645,21 @@ async def export_openrpc(
     """Build the full server catalog and write openrpc.json + index.html.
 
     Specs are always refreshed so the output does not depend on the state
-    of a local spec cache.
+    of a local spec cache, and families whose api-catalog spec is no longer
+    listed in the RFC 9727 catalog are left out rather than served from a
+    stale cache.
 
     Returns:
         The JSON path, the HTML path, and the number of methods written.
     """
 
+    from .catalog_discovery import discover_catalog_apis, uncataloged_families
     from .main import EquinixMCPServer
 
     server = EquinixMCPServer(config_path, tool_catalog="full")
+    for family in uncataloged_families(server.config, await discover_catalog_apis()):
+        logger.warning(f"Skipping {family}: its spec is not in the API catalog")
+        server.config.apis[family].enabled = False
     await server.initialize(force_update_specs=True)
     tools = await collect_tools(server)
     doc = build_openrpc_document(tools, families=server.config.apis)

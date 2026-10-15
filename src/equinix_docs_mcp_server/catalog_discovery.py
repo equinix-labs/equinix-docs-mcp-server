@@ -1,18 +1,18 @@
 """Discover Equinix API specs from the docs.equinix.com API catalog.
 
-The catalog page at https://docs.equinix.com/api-catalog links one page per
-API (e.g. /api-catalog/fabricv4), and each serves a machine-readable spec at
-<slug>/openapi.yaml (with rare AsyncAPI-only exceptions such as emgv1, which
-serves <slug>/asyncapi.yaml instead). There is no machine-readable index of
-the catalog itself, so the slugs are scraped from the page HTML.
+docs.equinix.com publishes its API catalog as an RFC 9727 linkset at
+https://docs.equinix.com/.well-known/api-catalog. Each API is a link context
+anchored at its reference page (e.g. /api-catalog/fabricv4/) whose
+``service-desc`` links point at the machine-readable spec: usually
+<slug>/openapi.yaml, with rare AsyncAPI-only exceptions such as emgv1, which
+publishes <slug>/asyncapi.yaml instead.
 """
 
-import asyncio
 import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import httpx2
 
@@ -20,10 +20,9 @@ from .config import Config
 
 logger = logging.getLogger(__name__)
 
-CATALOG_URL = "https://docs.equinix.com/api-catalog"
+CATALOG_URL = "https://docs.equinix.com/.well-known/api-catalog"
 
-# docs.equinix.com answers 403 to non-browser user agents on the catalog
-# page (the spec files themselves are unrestricted).
+# docs.equinix.com answers 403 to some non-browser user agents.
 BROWSER_USER_AGENT = "Mozilla/5.0 (compatible; Equinix-MCP-Server)"
 
 _SLUG_PATTERN = re.compile(r"api-catalog/([a-z0-9-]+)")
@@ -34,53 +33,68 @@ class CatalogEntry:
     """One API discovered in the catalog."""
 
     slug: str
-    spec_url: Optional[str] = None  # resolved URL of the spec, if any
+    spec_url: Optional[str] = None  # URL of the spec, if any
     kind: str = "unknown"  # "openapi", "asyncapi", or "unknown"
-    redirected_to: Optional[str] = None  # final URL when the slug 301s away
 
 
-def extract_slugs(html: str) -> List[str]:
-    """Extract unique api-catalog slugs from the catalog page HTML."""
-    return sorted(set(_SLUG_PATTERN.findall(html)))
+def _spec_kind(link: Dict[str, Any]) -> str:
+    """Classify a service-desc link as an OpenAPI or AsyncAPI description."""
+    href = link.get("href", "")
+    hint = f"{href.rsplit('/', 1)[-1]} {link.get('title', '')}".lower()
+    if "asyncapi" in hint:
+        return "asyncapi"
+    if "openapi" in hint:
+        return "openapi"
+    return "unknown"
 
 
-async def _classify_slug(client: httpx2.AsyncClient, slug: str) -> CatalogEntry:
-    """Determine which spec flavor a catalog slug serves."""
-    for filename, kind in (("openapi.yaml", "openapi"), ("asyncapi.yaml", "asyncapi")):
-        url = f"{CATALOG_URL}/{slug}/{filename}"
-        try:
-            response = await client.head(url)
-        except httpx2.HTTPError as e:
-            logger.debug(f"HEAD {url} failed: {e}")
+def parse_catalog(linkset: Dict[str, Any]) -> List[CatalogEntry]:
+    """Extract one entry per API from an RFC 9727 linkset document.
+
+    The catalog's own context (anchored at the well-known URL) only lists
+    ``item`` links to the API pages; every API context anchored under
+    /api-catalog/<slug>/ becomes an entry, taking its spec from the first
+    OpenAPI ``service-desc`` link (falling back to any other description).
+    """
+    entries: Dict[str, CatalogEntry] = {}
+    for context in linkset.get("linkset") or []:
+        match = _SLUG_PATTERN.search(str(context.get("anchor", "")))
+        if not match:
             continue
-        if response.status_code == 200:
-            final_url = str(response.url)
-            return CatalogEntry(
-                slug=slug,
-                spec_url=final_url,
-                kind=kind,
-                redirected_to=final_url if final_url != url else None,
+        slug = match.group(1)
+        links = [
+            link
+            for link in context.get("service-desc") or []
+            if isinstance(link, dict) and link.get("href")
+        ]
+        kinds = [_spec_kind(link) for link in links]
+        index = kinds.index("openapi") if "openapi" in kinds else 0
+        if links:
+            entries[slug] = CatalogEntry(
+                slug=slug, spec_url=links[index]["href"], kind=kinds[index]
             )
-    return CatalogEntry(slug=slug)
+        else:
+            entries.setdefault(slug, CatalogEntry(slug=slug))
+    return [entries[slug] for slug in sorted(entries)]
 
 
 async def discover_catalog_apis(
     catalog_url: str = CATALOG_URL,
 ) -> List[CatalogEntry]:
-    """Scrape the catalog page and classify every listed API's spec."""
+    """Fetch the RFC 9727 API catalog and return every listed API's spec."""
     async with httpx2.AsyncClient(
         follow_redirects=True,
         timeout=30.0,
-        headers={"User-Agent": BROWSER_USER_AGENT},
+        headers={
+            "User-Agent": BROWSER_USER_AGENT,
+            "Accept": "application/linkset+json, application/json",
+        },
     ) as client:
         response = await client.get(catalog_url)
         response.raise_for_status()
-        slugs = extract_slugs(response.text)
-        logger.info(f"Found {len(slugs)} API slugs in the catalog")
-
-        return list(
-            await asyncio.gather(*(_classify_slug(client, slug) for slug in slugs))
-        )
+        entries = parse_catalog(response.json())
+        logger.info(f"Found {len(entries)} APIs in the catalog")
+        return entries
 
 
 def configured_slugs(config: Config) -> Dict[str, str]:
@@ -92,6 +106,22 @@ def configured_slugs(config: Config) -> Dict[str, str]:
             if match:
                 slugs[match.group(1)] = family
     return slugs
+
+
+def uncataloged_families(config: Config, entries: List[CatalogEntry]) -> List[str]:
+    """Families with a spec from the api-catalog that the catalog no longer lists.
+
+    Families sourced only from outside the api-catalog are never reported.
+    """
+    listed = {entry.spec_url for entry in entries if entry.spec_url}
+    return sorted(
+        {
+            family
+            for family, api_config in config.apis.items()
+            for spec_source in api_config.specs
+            if _SLUG_PATTERN.search(spec_source.url) and spec_source.url not in listed
+        }
+    )
 
 
 def _classify_entries(
@@ -117,8 +147,6 @@ def _classify_entries(
             status = "skipped: AsyncAPI only"
         elif entry.kind == "unknown":
             status = "skipped: no spec found"
-        elif entry.redirected_to:
-            status = f"skipped: redirects to {entry.redirected_to}"
         else:
             family = re.sub(r"v\d+$", "", entry.slug)
             if family in used_families:

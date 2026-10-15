@@ -3,8 +3,9 @@
 from equinix_docs_mcp_server.catalog_discovery import (
     CatalogEntry,
     configured_slugs,
-    extract_slugs,
+    parse_catalog,
     propose_config_entries,
+    uncataloged_families,
 )
 from equinix_docs_mcp_server.config import APIConfig, Config, SpecSource
 
@@ -25,13 +26,65 @@ def make_config() -> Config:
     )
 
 
-def test_extract_slugs_dedupes_and_sorts():
-    html = (
-        '<a href="/api-catalog/fabricv4">Fabric</a>'
-        '<a href="/api-catalog/metalv1">Metal</a>'
-        '<a href="https://docs.equinix.com/api-catalog/fabricv4/openapi.yaml">spec</a>'
+def api_context(slug: str, *descs: str) -> dict:
+    base = f"https://docs.equinix.com/api-catalog/{slug}/"
+    return {
+        "anchor": base,
+        "service-desc": [
+            {"href": base + d, "type": "application/yaml", "title": f"{d} of {slug}"}
+            for d in descs
+        ],
+        "service-doc": [{"href": base, "type": "text/html"}],
+    }
+
+
+LINKSET = {
+    "linkset": [
+        {
+            "anchor": "https://docs.equinix.com/.well-known/api-catalog",
+            "item": [
+                {"href": "https://docs.equinix.com/api-catalog/fabricv4/"},
+                {"href": "https://docs.equinix.com/api-catalog/emgv1/"},
+            ],
+        },
+        api_context("fabricv4", "openapi.yaml"),
+        api_context("emgv1", "asyncapi.yaml"),
+        api_context("bothv1", "asyncapi.yaml", "openapi.yaml"),
+        {"anchor": "https://docs.equinix.com/api-catalog/ghostv1/"},
+    ]
+}
+
+
+def test_parse_catalog_reads_service_desc_links():
+    entries = {entry.slug: entry for entry in parse_catalog(LINKSET)}
+
+    # The catalog's own context is not an API
+    assert sorted(entries) == ["bothv1", "emgv1", "fabricv4", "ghostv1"]
+    assert entries["fabricv4"].kind == "openapi"
+    assert entries["fabricv4"].spec_url == (
+        "https://docs.equinix.com/api-catalog/fabricv4/openapi.yaml"
     )
-    assert extract_slugs(html) == ["fabricv4", "metalv1"]
+    assert entries["emgv1"].kind == "asyncapi"
+    # OpenAPI is preferred when an API publishes several descriptions
+    assert entries["bothv1"].spec_url.endswith("/bothv1/openapi.yaml")
+    assert entries["ghostv1"].kind == "unknown"
+    assert entries["ghostv1"].spec_url is None
+
+
+def test_uncataloged_families():
+    config = make_config()
+    config.apis["metal"] = APIConfig(
+        name="metal",
+        specs=[
+            SpecSource(url="https://docs.equinix.com/api-catalog/metalv1/openapi.yaml")
+        ],
+    )
+    config.apis["external"] = APIConfig(
+        name="external",
+        specs=[SpecSource(url="https://example.com/openapi.yaml")],
+    )
+
+    assert uncataloged_families(config, parse_catalog(LINKSET)) == ["metal"]
 
 
 def test_configured_slugs_maps_to_families():
@@ -56,21 +109,14 @@ def test_propose_config_entries():
             kind="openapi",
         ),
         CatalogEntry(slug="emgv1", kind="asyncapi"),
-        CatalogEntry(
-            slug="oldpagev1",
-            spec_url="https://docs.equinix.com/api-catalog/newpagev2/openapi.yaml",
-            kind="openapi",
-            redirected_to="https://docs.equinix.com/api-catalog/newpagev2/openapi.yaml",
-        ),
         CatalogEntry(slug="ghostv1"),
     ]
 
     report = propose_config_entries(config, entries)
 
-    # Configured, asyncapi, redirected, and missing entries are not proposed
+    # Configured, asyncapi, and missing entries are not proposed
     assert "configured (family: fabric)" in report
     assert "AsyncAPI only" in report
-    assert "redirects to" in report
     assert "no spec found" in report
     # The one genuinely new OpenAPI entry is proposed with a versionless family
     assert "  orders:\n" in report

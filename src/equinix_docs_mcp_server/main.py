@@ -372,8 +372,8 @@ class EquinixMCPServer:
     "--discover-apis",
     is_flag=True,
     help=(
-        "Scan docs.equinix.com/api-catalog for API specs not yet in the "
-        "configuration, print proposed apis.yaml entries, and exit"
+        "Read the docs.equinix.com RFC 9727 API catalog for specs not yet "
+        "in the configuration, print proposed apis.yaml entries, and exit"
     ),
 )
 @click.option(
