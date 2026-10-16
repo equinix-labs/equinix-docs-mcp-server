@@ -73,10 +73,12 @@ def test_parse_catalog_reads_service_desc_links():
 
 def test_uncataloged_families():
     config = make_config()
-    config.apis["metal"] = APIConfig(
-        name="metal",
+    config.apis["retired"] = APIConfig(
+        name="retired",
         specs=[
-            SpecSource(url="https://docs.equinix.com/api-catalog/metalv1/openapi.yaml")
+            SpecSource(
+                url="https://docs.equinix.com/api-catalog/retiredv1/openapi.yaml"
+            )
         ],
     )
     config.apis["external"] = APIConfig(
@@ -84,13 +86,13 @@ def test_uncataloged_families():
         specs=[SpecSource(url="https://example.com/openapi.yaml")],
     )
 
-    assert uncataloged_families(config, parse_catalog(LINKSET)) == ["metal"]
+    assert uncataloged_families(config, parse_catalog(LINKSET)) == ["retired"]
 
 
 def test_configured_slugs_maps_to_families():
     config = Config.load()
     slugs = configured_slugs(config)
-    assert slugs.get("metalv1") == "metal"
+    assert slugs.get("network-edgev1") == "network-edge"
     assert slugs.get("fabricv4") == "fabric"
     assert slugs.get("workvisitv1") == "workvisit"
 

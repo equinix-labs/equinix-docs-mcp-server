@@ -1,46 +1,5 @@
 # Configuration for Equinix API specs
 apis:
-  # Metal API - uses different auth (X-Auth-Token) and base path
-  metal:
-    description: "Equinix Metal bare metal servers: provision and manage on-demand dedicated servers, IPs, and VLANs."
-    tags: [compute, bare-metal]
-    auth_type: "metal_token"
-    service_name: "metal"
-    format:
-      # Human-readable text format for plans - simplified and robust
-      findPlans: |
-        (if type == "array" then . else .plans end) | 
-        if length == 0 then 
-          "No plans available."
-        else
-          map(
-            "**" + (.name // .slug // "Unknown Plan") + "**\n" +
-            "- ID: " + (.id // "N/A") + "\n" +
-            "- Slug: " + (.slug // "N/A") + "\n" +
-            (if .description then "- Description: " + .description + "\n" else "" end) +
-            (if .pricing.hour then "- Hourly Price: $" + (.pricing.hour | tostring) + "\n" else "" end) +
-            (if .available_in then "- Available in " + (.available_in | length | tostring) + " locations\n" else "" end) +
-            (if .specs then 
-              "- Hardware: " + (
-                [
-                  (if .specs.cpus then (.specs.cpus | length | tostring) + " CPU types" else null end),
-                  (if .specs.memory then (.specs.memory.total // "Memory available") else null end),
-                  (if .specs.drives then (.specs.drives | length | tostring) + " storage options" else null end)
-                ] | map(select(. != null)) | join(", ")
-              ) + "\n" 
-            else "" end) +
-            "---\n"
-          ) | join("\n")
-        end
-      
-      # Simple metro listing
-      findMetros: |
-        (.metros | map(.code + " - " + .name + " (" + .country + ")") | sort | join("\n")) + 
-        "\n\nTotal metros: " + (.metros | length | tostring)
-    specs:
-      - url: "https://docs.equinix.com/api-catalog/metalv1/openapi.yaml"
-        overlay: "overlays/metal.yaml"
-
   # Network Edge API
   network-edge:
     tags: [network, virtual-devices]
@@ -388,10 +347,6 @@ auth:
   # Client Credentials flow for most APIs
   client_credentials:
     token_url: "https://api.equinix.com/oauth2/v1/token"
-
-  # Metal API uses different auth
-  metal_token:
-    header_name: "X-Auth-Token"
 
 # Documentation configuration
 docs:

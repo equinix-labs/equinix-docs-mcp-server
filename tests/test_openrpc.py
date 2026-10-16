@@ -39,7 +39,7 @@ def test_tools_become_by_name_methods():
     doc = build_openrpc_document(
         [
             tool(
-                "metal_findPlans",
+                "fabric_searchPorts",
                 {
                     "type": "object",
                     "properties": {
@@ -48,24 +48,24 @@ def test_tools_become_by_name_methods():
                     },
                     "required": ["id"],
                 },
-                description="List plans. Returns every plan.",
-                tags=["equinix", "metal", "compute"],
+                description="List ports. Returns every port.",
+                tags=["equinix", "fabric", "network"],
                 annotations={"readOnlyHint": True},
             )
         ],
-        families=["metal"],
+        families=["fabric"],
     )
 
     assert doc["openrpc"] == "1.3.2"
     method = doc["methods"][0]
-    assert method["name"] == "metal_findPlans"
-    assert method["summary"] == "List plans."
+    assert method["name"] == "fabric_searchPorts"
+    assert method["summary"] == "List ports."
     assert method["paramStructure"] == "by-name"
     # Required params come first; the family tag leads and "equinix" is dropped
     assert [p["name"] for p in method["params"]] == ["id", "include"]
     assert method["params"][0]["required"] is True
     assert method["params"][1]["description"] == "Nested"
-    assert [t["name"] for t in method["tags"]] == ["metal", "compute"]
+    assert [t["name"] for t in method["tags"]] == ["fabric", "network"]
     assert method["x-mcp-annotations"] == {"readOnlyHint": True}
     assert method["result"]["schema"] == ref("CallToolResult")
     assert "CallToolResult" in doc["components"]["schemas"]
@@ -218,7 +218,7 @@ async def test_collect_tools_from_server():
     doc = build_openrpc_document(tools, families=server.config.apis)
 
     methods = methods_by_name(doc)
-    assert "metal_findPlans" in methods
-    assert methods["metal_findPlans"]["tags"][0] == {"name": "metal"}
+    assert "fabric_getPorts" in methods
+    assert methods["fabric_getPorts"]["tags"][0] == {"name": "fabric"}
     assert methods["search"]["tags"][0] == {"name": "docs"}
     assert [p["name"] for p in methods["search"]["params"]] == ["query", "limit"]

@@ -44,7 +44,7 @@ jobs:
           found API specs that are not yet in the packaged configuration.
 
           New entries default to `client_credentials` auth. Review each one:
-          - Confirm the auth type (Metal-style token APIs need `metal_token`)
+          - Confirm the auth type
           - Add an overlay if the spec needs normalization
           - Add `include`/`exclude` filters only if curation is wanted; the
             searchable tool catalog handles large operation counts

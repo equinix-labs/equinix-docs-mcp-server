@@ -32,15 +32,15 @@ def test_extract_title_from_url(docs_manager):
     """Test URL title extraction."""
     # Test basic URL
     title = docs_manager._extract_title_from_url(
-        "https://docs.equinix.com/metal/getting-started"
+        "https://docs.equinix.com/network-edge/getting-started"
     )
     assert title == "Getting Started"
 
     # Test URL with dashes
     title = docs_manager._extract_title_from_url(
-        "https://docs.equinix.com/api-catalog/metalv1"
+        "https://docs.equinix.com/api-catalog/fabricv4"
     )
-    assert title == "Metalv1"
+    assert title == "Fabricv4"
 
     # Test root URL
     title = docs_manager._extract_title_from_url("https://docs.equinix.com/")
@@ -51,13 +51,9 @@ def test_categorize_url(docs_manager):
     """Test URL categorization."""
     # Test API catalog URLs
     category = docs_manager._categorize_url(
-        "https://docs.equinix.com/api-catalog/metalv1"
+        "https://docs.equinix.com/api-catalog/fabricv4"
     )
     assert category == "API"
-
-    # Test Metal URLs
-    category = docs_manager._categorize_url("https://docs.equinix.com/metal/overview")
-    assert category == "Metal"
 
     # Test Fabric URLs
     category = docs_manager._categorize_url(
@@ -82,7 +78,7 @@ async def test_parse_sitemap(docs_manager):
     sample_sitemap = """<?xml version="1.0" encoding="UTF-8"?>
     <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
         <url>
-            <loc>https://docs.equinix.com/metal/getting-started</loc>
+            <loc>https://docs.equinix.com/network-edge/getting-started</loc>
             <lastmod>2023-12-01</lastmod>
             <changefreq>weekly</changefreq>
             <priority>0.8</priority>
@@ -98,9 +94,9 @@ async def test_parse_sitemap(docs_manager):
     assert len(docs_manager.sitemap_cache) == 2
 
     first_doc = docs_manager.sitemap_cache[0]
-    assert first_doc["url"] == "https://docs.equinix.com/metal/getting-started"
+    assert first_doc["url"] == "https://docs.equinix.com/network-edge/getting-started"
     assert first_doc["title"] == "Getting Started"
-    assert first_doc["category"] == "Metal"
+    assert first_doc["category"] == "Network Edge"
     assert first_doc["lastmod"] == "2023-12-01"
 
     second_doc = docs_manager.sitemap_cache[1]
@@ -114,9 +110,9 @@ async def test_list_docs_with_filter(docs_manager):
     # Setup sample data
     docs_manager.sitemap_cache = [
         {
-            "url": "https://docs.equinix.com/metal/getting-started",
+            "url": "https://docs.equinix.com/network-edge/getting-started",
             "title": "Getting Started",
-            "category": "Metal",
+            "category": "Network Edge",
             "lastmod": "2023-12-01",
         },
         {
@@ -129,12 +125,12 @@ async def test_list_docs_with_filter(docs_manager):
 
     # Test without filter
     result = await docs_manager.list_docs()
-    assert "Metal" in result
+    assert "Network Edge" in result
     assert "Fabric" in result
     assert "Getting Started" in result
 
     # Test with filter
-    result = await docs_manager.list_docs("metal")
+    result = await docs_manager.list_docs("network")
     assert "Getting Started" in result
     assert "Fabric Overview" not in result
 
@@ -145,9 +141,9 @@ async def test_find_docs(docs_manager):
     # Setup sample data
     docs_manager.sitemap_cache = [
         {
-            "url": "https://docs.equinix.com/metal/getting-started",
-            "title": "Getting Started with Metal",
-            "category": "Metal",
+            "url": "https://docs.equinix.com/network-edge/getting-started",
+            "title": "Getting Started with Network Edge",
+            "category": "Network Edge",
             "lastmod": "2023-12-01",
         },
         {
@@ -159,8 +155,8 @@ async def test_find_docs(docs_manager):
     ]
 
     # Test find
-    result = await docs_manager.find_docs("metal")
-    assert "Getting Started with Metal" in result
+    result = await docs_manager.find_docs("network")
+    assert "Getting Started with Network Edge" in result
     assert "Fabric Overview" not in result
 
     # Test no results
@@ -200,7 +196,7 @@ async def test_search_docs(
     mock_search_client_cls.return_value = mock_search_client
 
     # Test search - should attempt to fetch and cache the index
-    result = await docs_manager.search_docs("metal")
+    result = await docs_manager.search_docs("network")
 
     # Should have attempted to fetch the search index
     mock_client.get.assert_called_once_with(
@@ -217,15 +213,15 @@ async def test_get_docs_summary(docs_manager):
     """Test getting documentation summary."""
     # Setup sample data
     docs_manager.sitemap_cache = [
-        {"category": "Metal", "url": "url1", "title": "title1", "lastmod": ""},
-        {"category": "Metal", "url": "url2", "title": "title2", "lastmod": ""},
+        {"category": "Network Edge", "url": "url1", "title": "title1", "lastmod": ""},
+        {"category": "Network Edge", "url": "url2", "title": "title2", "lastmod": ""},
         {"category": "Fabric", "url": "url3", "title": "title3", "lastmod": ""},
     ]
 
     result = await docs_manager.get_docs_summary()
 
     assert "Total documents: 3" in result
-    assert "Metal**: 2" in result
+    assert "Network Edge**: 2" in result
     assert "Fabric**: 1" in result
 
 
@@ -245,13 +241,13 @@ async def test_fetch_doc_success(mock_httpx, docs_manager):
 
     # Test with full URL without .md extension
     result = await docs_manager.fetch_doc(
-        "https://docs.equinix.com/metal/getting-started"
+        "https://docs.equinix.com/network-edge/getting-started"
     )
 
     # Should have called with .md extension
     mock_client.get.assert_called_once()
     call_args = mock_client.get.call_args
-    assert call_args[0][0] == "https://docs.equinix.com/metal/getting-started.md"
+    assert call_args[0][0] == "https://docs.equinix.com/network-edge/getting-started.md"
 
     # Should return the content
     assert "# Test Document" in result
@@ -298,12 +294,12 @@ async def test_fetch_doc_relative_url(mock_httpx, docs_manager):
     mock_httpx.return_value.__aexit__ = AsyncMock(return_value=None)
 
     # Test with relative URL
-    result = await docs_manager.fetch_doc("metal/api-reference")
+    result = await docs_manager.fetch_doc("network-edge/api-reference")
 
     # Should prepend https://docs.equinix.com/ and add .md
     mock_client.get.assert_called_once()
     call_args = mock_client.get.call_args
-    assert call_args[0][0] == "https://docs.equinix.com/metal/api-reference.md"
+    assert call_args[0][0] == "https://docs.equinix.com/network-edge/api-reference.md"
 
 
 @pytest.mark.asyncio
