@@ -64547,40 +64547,6 @@
       }
     },
     {
-      "name": "workflow__list_metal_metros",
-      "summary": "Retrieve Metal metros",
-      "description": "Retrieve Metal metros",
-      "tags": [
-        {
-          "name": "workflows"
-        }
-      ],
-      "paramStructure": "by-name",
-      "params": [
-        {
-          "name": "inputs_json",
-          "required": false,
-          "schema": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null
-          }
-        }
-      ],
-      "result": {
-        "name": "workflow__list_metal_metrosResult",
-        "schema": {
-          "$ref": "#/components/schemas/CallToolResult"
-        }
-      }
-    },
-    {
       "name": "workflow__list_ne_metros",
       "summary": "Retrieve Network Edge metros",
       "description": "Retrieve Network Edge metros",

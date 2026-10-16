@@ -17,7 +17,7 @@ Run it (from a checkout with cached specs):
 ```bash
 EQUINIX_MCP_CACHE_DIR=$PWD/.cache python scripts/vet_specs.py --report vet-report.md
 # or a subset:
-python scripts/vet_specs.py --families metal,fabric
+python scripts/vet_specs.py --families fabric,network-edge
 ```
 
 ## Findings (2026-08-05, 33 families, 690 tools)
@@ -38,16 +38,15 @@ of aborting startup.
 
 ## Known issues
 
-- `metal_updateBgpSession`: the upstream spec declares the PUT request body
-  as a bare `type: boolean`. FastMCP's request builder does not serialize
-  primitive (non-object) JSON bodies and fails with
-  `Unexpected type for 'content', <class 'bool'>`. Not fixable with an
-  overlay without changing the wire format; candidate for an upstream
-  FastMCP issue.
-- Exact-tool-name search misses (6 tools, e.g. `metal_createDevice`,
+- FastMCP's request builder does not serialize primitive (non-object) JSON
+  request bodies and fails with `Unexpected type for 'content', <class 'bool'>`.
+  The only affected tool in the 2026-08-05 sweep, `metal_updateBgpSession`,
+  went away with the Metal API; candidate for an upstream FastMCP issue if
+  another spec declares a bare primitive body.
+- Exact-tool-name search misses (6 tools in the 2026-08-05 sweep, e.g.
   `smartview_getAlerts`): these are precisely the largest-schema tools. The
   BM25 index includes all parameter descriptions, so doc-length
   normalization outranks them for short queries that also match many small
-  tools. Searching the bare operation name (`createDevice`) ranks them #1.
+  tools. Searching the bare operation name ranks them #1.
   An upstream tuning question for FastMCP's search transform, not a spec
   defect.

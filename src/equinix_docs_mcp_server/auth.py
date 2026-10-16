@@ -31,18 +31,6 @@ def _load_equinix_yaml() -> dict:
     return {}
 
 
-def _load_metal_yaml() -> dict:
-    """Load ~/.config/equinix/metal.yaml if it exists (metal-cli config)."""
-    path = Path.home() / ".config" / "equinix" / "metal.yaml"
-    if path.exists():
-        try:
-            with open(path) as f:
-                return yaml.safe_load(f) or {}
-        except Exception as e:
-            logger.debug(f"Could not read {path}: {e}")
-    return {}
-
-
 class AuthManager:
     """Manages authentication for different Equinix APIs."""
 
@@ -51,8 +39,8 @@ class AuthManager:
         self.config = config
         self._token_cache: Dict[str, str] = {}
 
-        # Resolve credentials: env vars take priority, then equinix.yaml,
-        # then metal.yaml (for metal token only) — matching equinix-cli/cmd/root.go
+        # Resolve credentials: env vars take priority, then equinix.yaml —
+        # matching equinix-cli/cmd/root.go
         equinix_cfg = _load_equinix_yaml()
 
         self.client_id = os.getenv("EQUINIX_CLIENT_ID") or equinix_cfg.get(
@@ -62,18 +50,10 @@ class AuthManager:
             "equinix_client_secret"
         )
 
-        metal_token = os.getenv("EQUINIX_METAL_TOKEN") or equinix_cfg.get(
-            "metal_auth_token"
-        )
-        if not metal_token:
-            metal_token = _load_metal_yaml().get("token")
-        self.metal_token = metal_token
-
         # Log credential availability (without exposing values)
         logger.info(f"AuthManager initialized:")
         logger.info(f"  - CLIENT_ID available: {bool(self.client_id)}")
         logger.info(f"  - CLIENT_SECRET available: {bool(self.client_secret)}")
-        logger.info(f"  - METAL_TOKEN available: {bool(self.metal_token)}")
         if self.client_id:
             logger.info(f"  - CLIENT_ID length: {len(self.client_id)}")
         if self.client_secret:
@@ -91,31 +71,11 @@ class AuthManager:
         auth_type = api_config.auth_type
         logger.debug(f"Service {service_name} uses auth type: {auth_type}")
 
-        if auth_type == "metal_token":
-            return await self._get_metal_auth_header()
-        elif auth_type == "client_credentials":
+        if auth_type == "client_credentials":
             return await self._get_client_credentials_auth_header()
         else:
             logger.error(f"Unknown auth type: {auth_type}")
             raise ValueError(f"Unknown auth type: {auth_type}")
-
-    async def _get_metal_auth_header(self) -> Dict[str, str]:
-        """Get Metal API authentication header."""
-        logger.debug("Getting Metal auth header")
-
-        if not self.metal_token:
-            logger.error(
-                "Metal token not found. Set EQUINIX_METAL_TOKEN, or add metal_auth_token "
-                "to ~/.config/equinix/equinix.yaml, or token to ~/.config/equinix/metal.yaml"
-            )
-            raise ValueError(
-                "Metal token not found. Set EQUINIX_METAL_TOKEN, or add metal_auth_token "
-                "to ~/.config/equinix/equinix.yaml, or token to ~/.config/equinix/metal.yaml"
-            )
-
-        header_name = self.config.auth.metal_token.get("header_name", "X-Auth-Token")
-        logger.debug(f"Using Metal token header: {header_name}")
-        return {header_name: self.metal_token}
 
     async def _get_client_credentials_auth_header(self) -> Dict[str, str]:
         """Get Client Credentials authentication header."""

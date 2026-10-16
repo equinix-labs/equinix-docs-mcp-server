@@ -23,23 +23,23 @@ Search Equinix documentation using full-text search. Returns URLs that can be fe
 ### Example Usage
 
 ```python
-# Search for Metal API documentation
-results = await search(query="metal api authentication", limit=5)
+# Search for Fabric API documentation
+results = await search(query="fabric api authentication", limit=5)
 ```
 
 ### Example Output
 
 ```markdown
-# Search Results for 'metal api authentication'
+# Search Results for 'fabric api authentication'
 
-**Metal API Authentication**
-  https://docs.equinix.com/metal/api/authentication
+**API User Authentication**
+  https://docs.equinix.com/equinix-api/api-authentication
 
-**Getting Started with Metal API**
-  https://docs.equinix.com/metal/api/getting-started
+**The Equinix API**
+  https://docs.equinix.com/equinix-api
 
-**API Tokens and Keys**
-  https://docs.equinix.com/metal/security/api-keys
+**Developer Settings**
+  https://docs.equinix.com/equinix-api/developer-settings
 
 Showing top 3 results. Refine your query for more specific results.
 ```
@@ -58,8 +58,8 @@ The `fetch` tool automatically handles various URL formats:
 
 1. **Full URLs without .md extension**
    ```python
-   fetch(url="https://docs.equinix.com/metal/getting-started")
-   # Fetches: https://docs.equinix.com/metal/getting-started.md
+   fetch(url="https://docs.equinix.com/fabric")
+   # Fetches: https://docs.equinix.com/fabric.md
    ```
 
 2. **Full URLs with .md extension**
@@ -70,35 +70,35 @@ The `fetch` tool automatically handles various URL formats:
 
 3. **Relative URLs**
    ```python
-   fetch(url="metal/api-reference")
-   # Fetches: https://docs.equinix.com/metal/api-reference.md
+   fetch(url="fabric/fabric-api/connect-to-myself")
+   # Fetches: https://docs.equinix.com/fabric/fabric-api/connect-to-myself.md
    ```
 
 4. **URLs with trailing slashes**
    ```python
-   fetch(url="https://docs.equinix.com/metal/getting-started/")
-   # Fetches: https://docs.equinix.com/metal/getting-started.md
+   fetch(url="https://docs.equinix.com/fabric/")
+   # Fetches: https://docs.equinix.com/fabric.md
    ```
 
 ### Example Usage
 
 ```python
 # Fetch a specific documentation page
-content = await fetch(url="https://docs.equinix.com/metal/getting-started")
+content = await fetch(url="https://docs.equinix.com/fabric")
 ```
 
 ### Example Output
 
 ```markdown
-# Getting Started with Equinix Metal
+# Equinix Fabric
 
-Equinix Metal provides on-demand, bare metal infrastructure...
+Use Equinix Fabric to establish direct, low-latency connections to a variety of Service Providers...
 
-## Prerequisites
+## Getting Started
 
-Before you begin, you'll need:
-- An Equinix Metal account
-- API credentials...
+New Equinix users should register for a new account to get access to the Customer Portal...
+- To access the Fabric Dashboard, sign in to the Customer Portal...
+- If you need to request access to Fabric, reach out to your Company administrator...
 
 [Full markdown content of the page]
 ```
@@ -133,7 +133,7 @@ The document may not be available in markdown format.
 ```
 Error fetching document: Connection timeout
 
-URL: https://docs.equinix.com/metal/getting-started.md
+URL: https://docs.equinix.com/fabric.md
 ```
 
 ### Invalid URLs
@@ -170,22 +170,22 @@ These tools complement the new `search` and `fetch` tools but don't follow the O
 ## Example: Complete Research Flow
 
 ```python
-# 1. Search for Metal API documentation
+# 1. Search for Fabric API documentation
 search_results = await search(
-    query="metal api create device server",
+    query="fabric api create connection port",
     limit=5
 )
 
 # Results show:
-# - Metal API Reference
-# - Device Creation Guide
-# - Server Provisioning
+# - Fabric API Reference
+# - Connection Creation Guide
+# - Port Provisioning
 # - API Authentication
 # - Best Practices
 
 # 2. Fetch the most relevant document
-device_guide = await fetch(
-    url="https://docs.equinix.com/metal/api/devices/create"
+connection_guide = await fetch(
+    url="https://docs.equinix.com/fabric/fabric-api/connect-to-myself"
 )
 
 # 3. Process the markdown content
@@ -193,7 +193,7 @@ device_guide = await fetch(
 
 # 4. Fetch related documentation if needed
 auth_guide = await fetch(
-    url="https://docs.equinix.com/metal/api/authentication"
+    url="https://docs.equinix.com/equinix-api/api-authentication"
 )
 ```
 

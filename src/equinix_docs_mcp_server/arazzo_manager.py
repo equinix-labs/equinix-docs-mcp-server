@@ -71,31 +71,6 @@ class ArazzoManager:
             arazzo_cfg.get("specs", []) if isinstance(arazzo_cfg, dict) else []
         )
         self._spec_paths = specs
-        # Bridge credentials: if AuthManager already has a Metal token expose it
-        # using the environment variable name that arazzo-runner's default
-        # credential resolver expects (SOURCE_SCHEMENAME upper‑cased). The Metal
-        # OpenAPI spec defines the security scheme name 'x_auth_token' under the
-        # sourceDescription named 'metal', so arazzo-runner looks for
-        # METAL_X_AUTH_TOKEN. We reuse the existing EQUINIX_METAL_TOKEN value to
-        # avoid asking the user to export a second var.
-        try:  # pragma: no cover - defensive only
-            import os
-
-            if (
-                self.auth_manager
-                and getattr(self.auth_manager, "metal_token", None)
-                and "METAL_X_AUTH_TOKEN" not in os.environ
-            ):
-                os.environ["METAL_X_AUTH_TOKEN"] = getattr(
-                    self.auth_manager, "metal_token"
-                )
-                logger.debug(
-                    "Bridged EQUINIX_METAL_TOKEN -> METAL_X_AUTH_TOKEN for Arazzo"
-                )
-        except Exception as cred_bridge_err:  # pragma: no cover
-            logger.warning(
-                "Failed to bridge Metal token env var for Arazzo: %s", cred_bridge_err
-            )
         if not specs:
             logger.info("No Arazzo specs configured")
             return
@@ -323,18 +298,8 @@ class ArazzoManager:
             if requests:
                 # Provide HTTP client so remote specs load and inject auth headers.
                 session = requests.Session()
-                # If we have a Metal token, pre‑set the header so even if the
-                # arazzo-runner credential lookup misses (e.g. user didn't set
-                # METAL_X_AUTH_TOKEN) requests still authenticate.
                 try:  # pragma: no cover - header injection is simple
-                    if getattr(self.auth_manager, "metal_token", None):
-                        session.headers.setdefault(
-                            "X-Auth-Token", getattr(self.auth_manager, "metal_token")
-                        )
-                        logger.debug(
-                            "Injected X-Auth-Token header into Arazzo HTTP session"
-                        )
-                    # Pre-inject bearer token (client credentials) for non-Metal APIs
+                    # Pre-inject bearer token (client credentials)
                     if self.auth_manager:
                         import asyncio as _asyncio
 
@@ -361,7 +326,7 @@ class ArazzoManager:
                             _asyncio.run(_maybe_bearer())
                 except Exception as hdr_err:  # pragma: no cover
                     logger.warning(
-                        "Failed to inject Metal token into Arazzo session: %s", hdr_err
+                        "Failed to inject auth header into Arazzo session: %s", hdr_err
                     )
                 http_client = session
             runner = ArazzoRunner.from_arazzo_path(spec_path, http_client=http_client)
