@@ -172,8 +172,6 @@ class DocsManager:
 
         if "/api-catalog/" in path:
             return "API"
-        elif "/metal" in path:
-            return "Metal"
         elif "/fabric" in path:
             return "Fabric"
         elif "/network-edge" in path:

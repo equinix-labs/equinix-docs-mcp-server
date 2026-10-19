@@ -8,11 +8,11 @@ This project is an experimental Model Context Protocol (MCP) server, for local u
 ## Features
 
 - **API Access**: Fetches and caches Equinix API specifications then exposes operationIds as MCP tools.
-   - **Per-family providers**: Each API family (Metal, Fabric, Network Edge, Billing, Smart View) is served by its own OpenAPI provider; tools are namespaced `<family>_<operationId>` (e.g. `metal_findPlans`)
+   - **Per-family providers**: Each API family (Fabric, Network Edge, Billing, Smart View, …) is served by its own OpenAPI provider; tools are namespaced `<family>_<operationId>` (e.g. `fabric_searchConnections`)
    - **Searchable catalog**: API tools are hidden from `tools/list` and discovered on demand via `search_tools`, following the MCP 2026-07-28 progressive-discovery guidance; `--tool-catalog code-mode` enables FastMCP's experimental sandboxed code execution instead
    - **Tool annotations**: API tools carry MCP behavior hints derived from their HTTP method — `GET` is `readOnlyHint`, `PUT`/`DELETE` are `destructiveHint` + `idempotentHint`, `POST`/`PATCH` are neither read-only nor idempotent — and all are `openWorldHint`; an operation's `x-mcp-annotations` extension (e.g. via an overlay) overrides these
    - **Cache hints**: `tools/list` and related results carry `ttlMs`/`cacheScope` hints per the MCP 2026-07-28 caching utility
-   - **API Authentication**: Supports both OAuth2 Client Credentials used by most API services and Metal API tokens
+   - **API Authentication**: OAuth2 Client Credentials
    - **Configurable Overlays**: Use overlay specifications to normalize API responses before LLM processing
    - **Arazzo Workflows (Experimental)**: Define and execute higher-level workflows chaining multiple API operations
 - **Documentation Integration**: Search Equinix documentation via sitemap and Lunr search, fetch full markdown content
@@ -62,13 +62,12 @@ The packaged configuration lives at `src/equinix_docs_mcp_server/data/config/api
 ```bash
 claude mcp add --env EQUINIX_CLIENT_ID=your_client_id \
   --env EQUINIX_CLIENT_SECRET=your_client_secret \
-  --env EQUINIX_METAL_TOKEN=your_metal_token \
   --transport stdio equinix \
   -- uvx --system-certs --from git+https://github.com/equinix-labs/equinix-docs-mcp-server equinix-docs-mcp-server
 ```
 
 > [!TIP]
-> The `--env` flags are optional if you already have credentials configured via the [Equinix CLI](https://github.com/equinix/cli) config file (`~/.config/equinix/equinix.yaml`). The server reads `equinix_client_id`, `equinix_client_secret`, and `metal_auth_token` from that file automatically, and falls back to `token` in `~/.config/equinix/metal.yaml` (the [Metal CLI](https://github.com/equinix/metal-cli) format) for the Metal token.
+> The `--env` flags are optional if you already have credentials configured via the [Equinix CLI](https://github.com/equinix/cli) config file (`~/.config/equinix/equinix.yaml`). The server reads `equinix_client_id` and `equinix_client_secret` from that file automatically.
 
 Add `--scope project` to share the configuration with the team via a `.mcp.json` file (omit the `--env` flags in that case and export the credentials in your shell instead, so secrets stay out of the committed file). Note the flag ordering: another option (here `--transport stdio`) must sit between the last `--env` and the server name, or the CLI parses the name as another KEY=value pair.
 
@@ -98,8 +97,7 @@ Or create a `.vscode/mcp.json` in your workspace to prompt for credentials on fi
       ],
       "env": {
         "EQUINIX_CLIENT_ID": "${input:equinix-client-id}",
-        "EQUINIX_CLIENT_SECRET": "${input:equinix-client-secret}",
-        "EQUINIX_METAL_TOKEN": "${input:equinix-metal-token}"
+        "EQUINIX_CLIENT_SECRET": "${input:equinix-client-secret}"
       }
     }
   },
@@ -115,12 +113,6 @@ Or create a `.vscode/mcp.json` in your workspace to prompt for credentials on fi
       "id": "equinix-client-secret",
       "description": "Equinix Client Secret",
       "password": true
-    },
-    {
-      "type": "promptString",
-      "id": "equinix-metal-token",
-      "description": "Equinix Metal API Token",
-      "password": true
     }
   ]
 }
@@ -135,15 +127,12 @@ For more details, see the [VS Code MCP Server documentation](https://code.visual
 Set your Equinix API credentials as environment variables, or configure them once via the [Equinix CLI](https://github.com/equinix/cli) (`~/.config/equinix/equinix.yaml`) — the server reads the same file automatically:
 
 ```bash
-# OAuth2 Client Credentials (required for most APIs)
+# OAuth2 Client Credentials
 export EQUINIX_CLIENT_ID="your_client_id"
 export EQUINIX_CLIENT_SECRET="your_client_secret"
-
-# Metal API token (optional — falls back to Metal CLI config if omitted)
-export EQUINIX_METAL_TOKEN="your_metal_token"
 ```
 
-If you have already run `equinix init` or `metal init`, credentials are stored in `~/.config/equinix/equinix.yaml` (keys: `equinix_client_id`, `equinix_client_secret`, `metal_auth_token`) or `~/.config/equinix/metal.yaml` (key: `token`). No environment variables are needed in that case.
+If you have already run `equinix init`, credentials are stored in `~/.config/equinix/equinix.yaml` (keys: `equinix_client_id`, `equinix_client_secret`). No environment variables are needed in that case.
 
 #### API Spec Fetching
 
@@ -166,19 +155,12 @@ The server is configured via the packaged `apis.yaml` (or a file passed with `--
 
 ```yaml
 apis:
-  metal:
-    auth_type: "metal_token"
-    service_name: "metal"
-    # include: []      # regexes of operationIds to expose (all when omitted)
-    # exclude: []      # regexes of operationIds to hide
-    # enabled: true
-    specs:
-      - url: "https://docs.equinix.com/api-catalog/metalv1/openapi.yaml"
-        overlay: "overlays/metal.yaml"
-
   fabric:
     auth_type: "client_credentials"
     service_name: "fabric"
+    # include: []      # regexes of operationIds to expose (all when omitted)
+    # exclude: []      # regexes of operationIds to hide
+    # enabled: true
     specs:
       - url: "https://docs.equinix.com/api-catalog/fabricv4/openapi.yaml"
         overlay: "overlays/fabric.yaml"
@@ -197,7 +179,7 @@ Overlay files in the `overlays/` directory normalize API specifications before p
 
 The server exposes MCP tools for:
 
-1. **API Operations**: Dynamic tools generated per API family from its OpenAPI specification, named `<family>_<operationId>` (e.g. `metal_findPlans`, `network-edge_getMetros`). With the default `--tool-catalog search`, these are hidden from `tools/list` and reached through:
+1. **API Operations**: Dynamic tools generated per API family from its OpenAPI specification, named `<family>_<operationId>` (e.g. `fabric_searchConnections`, `network-edge_getMetros`). With the default `--tool-catalog search`, these are hidden from `tools/list` and reached through:
    - `search_tools` - Find API tools by natural-language query (returns full schemas)
    - `call_tool` - Execute a discovered tool by name
 2. **Documentation**: 
@@ -207,7 +189,7 @@ The server exposes MCP tools for:
    - `find_docs` - Find documentation by filename/title matching
 3. **Workflows (Arazzo)**:
     - Tools prefixed with `workflow__` represent multi-step orchestrations defined in Arazzo-like YAML files.
-    - Example: `workflow__list_metal_metros_then_prices`
+    - Example: `workflow__list_ne_metros_then_accounts`
 
 ### Tool Catalog Reference (OpenRPC)
 
@@ -236,22 +218,22 @@ Example workflow spec (`examples/workflows.yaml`):
 
 ```yaml
 workflows:
-   list_metal_metros_then_prices:
-      description: Retrieve Metal metros then spot market prices.
+   list_ne_metros_then_accounts:
+      description: Retrieve Network Edge metros then your accounts in one of them.
       inputs:
          metro: "SV"
       steps:
          - id: get_metros
-            operation: metal_findMetros
+            operation: network-edge_getMetros
             saveAs: metros
-         - id: get_prices
-            operation: metal_findMetroSpotMarketPrices
+         - id: get_accounts
+            operation: network-edge_getAccountsWithStatus
             params:
                metro: "{{ metro }}"
-            saveAs: prices
+            saveAs: accounts
 ```
 
-Run the server and invoke: `workflow__list_metal_metros_then_prices`.
+Run the server and invoke: `workflow__list_ne_metros_then_accounts`.
 
 Currently supported features:
 - Sequential steps referencing existing API tools

@@ -106,7 +106,6 @@ class AuthConfig(BaseModel):
     """Authentication configuration."""
 
     client_credentials: Dict[str, Any] = Field(default_factory=dict)
-    metal_token: Dict[str, Any] = Field(default_factory=dict)
 
 
 class DocsConfig(BaseModel):
@@ -135,7 +134,7 @@ class Config(BaseModel):
     def base_dir(self) -> Path:
         """Directory against which relative paths in the config resolve.
 
-        Relative overlay and Arazzo spec paths (e.g. "overlays/metal.yaml",
+        Relative overlay and Arazzo spec paths (e.g. "overlays/fabric.yaml",
         "config/workflows.yaml") are written relative to the directory that
         CONTAINS the config directory, so when the config file sits in a
         directory named "config" the base is one level up. This matches both

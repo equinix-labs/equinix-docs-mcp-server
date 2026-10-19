@@ -15,14 +15,14 @@ from equinix_docs_mcp_server.main import (
     ResponseFormattingMiddleware,
 )
 
-TINY_METAL_SPEC = {
+TINY_FABRIC_SPEC = {
     "openapi": "3.1.0",
-    "info": {"title": "Metal", "version": "1.0.0"},
+    "info": {"title": "Fabric", "version": "1.0.0"},
     "paths": {
-        "/metal/v1/plans": {
+        "/fabric/v4/ports": {
             "get": {
-                "operationId": "findPlans",
-                "summary": "List all server plans available in Equinix Metal",
+                "operationId": "getPorts",
+                "summary": "List all ports available in Equinix Fabric",
                 "responses": {"200": {"description": "ok"}},
             }
         }
@@ -34,9 +34,9 @@ def make_config() -> Config:
     """Build a minimal real Config without touching the filesystem."""
     return Config(
         apis={
-            "metal": APIConfig(
-                name="metal",
-                auth_type="metal_token",
+            "fabric": APIConfig(
+                name="fabric",
+                auth_type="client_credentials",
                 enabled=True,
             )
         },
@@ -50,7 +50,7 @@ def make_server(tool_catalog: str = "search") -> EquinixMCPServer:
     with patch("equinix_docs_mcp_server.main.Config.load", return_value=make_config()):
         server = EquinixMCPServer("test_config.yaml", tool_catalog=tool_catalog)
     server.spec_manager.has_all_cached_specs = MagicMock(return_value=True)
-    server.spec_manager.get_provider_spec = MagicMock(return_value=TINY_METAL_SPEC)
+    server.spec_manager.get_provider_spec = MagicMock(return_value=TINY_FABRIC_SPEC)
     return server
 
 
@@ -61,27 +61,27 @@ class TestEquinixAuth:
     async def test_injects_auth_headers(self):
         auth_manager = MagicMock()
         auth_manager.get_auth_header = AsyncMock(
-            return_value={"X-Auth-Token": "token123"}
+            return_value={"Authorization": "Bearer token123"}
         )
-        auth = EquinixAuth(auth_manager, "metal")
+        auth = EquinixAuth(auth_manager, "fabric")
 
-        request = httpx2.Request("GET", "https://api.equinix.com/metal/v1/plans")
+        request = httpx2.Request("GET", "https://api.equinix.com/fabric/v4/ports")
         flow = auth.async_auth_flow(request)
         sent = await anext(flow)
 
-        assert sent.headers["X-Auth-Token"] == "token123"
-        auth_manager.get_auth_header.assert_awaited_once_with("metal")
+        assert sent.headers["Authorization"] == "Bearer token123"
+        auth_manager.get_auth_header.assert_awaited_once_with("fabric")
 
     @pytest.mark.asyncio
     async def test_auth_failure_sends_request_unauthenticated(self):
         auth_manager = MagicMock()
         auth_manager.get_auth_header = AsyncMock(side_effect=ValueError("no creds"))
-        auth = EquinixAuth(auth_manager, "metal")
+        auth = EquinixAuth(auth_manager, "fabric")
 
-        request = httpx2.Request("GET", "https://api.equinix.com/metal/v1/plans")
+        request = httpx2.Request("GET", "https://api.equinix.com/fabric/v4/ports")
         sent = await anext(auth.async_auth_flow(request))
 
-        assert "X-Auth-Token" not in sent.headers
+        assert "Authorization" not in sent.headers
 
 
 class TestResponseFormattingMiddleware:
@@ -95,24 +95,24 @@ class TestResponseFormattingMiddleware:
     @pytest.mark.asyncio
     async def test_api_tool_result_rendered_as_yaml(self):
         formatter = MagicMock()
-        formatter.format_response = MagicMock(return_value={"plans": ["c3.small.x86"]})
-        middleware = ResponseFormattingMiddleware(formatter, ["metal"])
+        formatter.format_response = MagicMock(return_value={"ports": ["DC-1"]})
+        middleware = ResponseFormattingMiddleware(formatter, ["fabric"])
 
-        original = ToolResult(structured_content={"plans": ["c3.small.x86"]})
+        original = ToolResult(structured_content={"ports": ["DC-1"]})
         call_next = AsyncMock(return_value=original)
 
         result = await middleware.on_call_tool(
-            self._context("metal_findPlans"), call_next
+            self._context("fabric_getPorts"), call_next
         )
 
         formatter.format_response.assert_called_once()
-        assert "c3.small.x86" in result.content[0].text
-        assert result.structured_content == {"plans": ["c3.small.x86"]}
+        assert "DC-1" in result.content[0].text
+        assert result.structured_content == {"ports": ["DC-1"]}
 
     @pytest.mark.asyncio
     async def test_non_api_tool_passes_through(self):
         formatter = MagicMock()
-        middleware = ResponseFormattingMiddleware(formatter, ["metal"])
+        middleware = ResponseFormattingMiddleware(formatter, ["fabric"])
 
         original = ToolResult(content="plain docs text")
         call_next = AsyncMock(return_value=original)
@@ -125,13 +125,13 @@ class TestResponseFormattingMiddleware:
     @pytest.mark.asyncio
     async def test_error_result_passes_through(self):
         formatter = MagicMock()
-        middleware = ResponseFormattingMiddleware(formatter, ["metal"])
+        middleware = ResponseFormattingMiddleware(formatter, ["fabric"])
 
         original = ToolResult(content="boom", is_error=True)
         call_next = AsyncMock(return_value=original)
 
         result = await middleware.on_call_tool(
-            self._context("metal_findPlans"), call_next
+            self._context("fabric_getPorts"), call_next
         )
 
         assert result is original
@@ -174,9 +174,9 @@ class TestEquinixMCPServer:
         await server.initialize()
 
         async with Client(server.mcp) as client:
-            result = await client.call_tool("search_tools", {"query": "server plans"})
+            result = await client.call_tool("search_tools", {"query": "fabric ports"})
 
-        assert "metal_findPlans" in str(result)
+        assert "fabric_getPorts" in str(result)
 
     @pytest.mark.asyncio
     async def test_full_catalog_lists_namespaced_api_tools(self):
@@ -188,7 +188,7 @@ class TestEquinixMCPServer:
             tools = await client.list_tools()
             names = {tool.name for tool in tools}
 
-        assert "metal_findPlans" in names
+        assert "fabric_getPorts" in names
         assert set(DOCS_TOOL_NAMES) <= names
 
     @pytest.mark.asyncio

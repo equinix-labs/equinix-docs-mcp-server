@@ -171,7 +171,7 @@ class EquinixMCPServer:
             name="Equinix API Server",
             instructions=(
                 "This server provides unified access to Equinix's API ecosystem "
-                "including Metal, Fabric, Network Edge, and Billing services, "
+                "including Fabric, Network Edge, and Billing services, "
                 "plus full-text search over docs.equinix.com. Use 'search' and "
                 "'fetch' for documentation. API operations are grouped per "
                 "service and named '<service>_<operationId>'. API responses "
@@ -226,7 +226,7 @@ class EquinixMCPServer:
                 self.failed_providers[api_name] = str(e)
                 continue
             # The namespace yields spec-conformant tool names like
-            # "metal_findPlans" and guarantees per-server uniqueness across
+            # "fabric_searchConnections" and guarantees per-server uniqueness across
             # API families.
             self.mcp.add_provider(provider, namespace=api_name)
             logger.info(f"Registered OpenAPI provider for '{api_name}'")

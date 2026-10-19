@@ -90,7 +90,7 @@ class ResponseFormatter:
     ) -> Optional[Union[str, List[str], Dict[str, str]]]:
         """Get format configuration for an operation ID."""
         # Operation IDs generated from OpenAPI tools are typically prefixed
-        # with the API name, e.g. "metal_findMetros" or "fabric_searchConnections".
+        # with the API name, e.g. "fabric_searchConnections" or "network-edge_getMetros".
         # However, some prefixes may contain hyphens ("network-edge") or be
         # normalized differently by the tool generator (e.g. "network_edge",
         # "ne", etc.). Instead of relying on a single split, try to find the

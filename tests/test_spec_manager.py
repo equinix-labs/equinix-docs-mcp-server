@@ -34,7 +34,7 @@ async def test_create_overlay_template(spec_manager, tmp_path):
     overlay_path = tmp_path / "test_overlay.yaml"
 
     await spec_manager.overlay_manager.create_overlay_template(
-        str(overlay_path), "metal", "metal"
+        str(overlay_path), "fabric", "fabric"
     )
 
     assert overlay_path.exists()
@@ -42,7 +42,7 @@ async def test_create_overlay_template(spec_manager, tmp_path):
     # Check content
     with open(overlay_path) as f:
         content = f.read()
-        assert "Metal" in content
+        assert "Fabric" in content
         assert "overlay: 1.0.0" in content
 
 

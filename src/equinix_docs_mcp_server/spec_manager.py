@@ -169,17 +169,6 @@ class SpecManager:
                     },
                 },
             )
-        elif api_config.auth_type == "metal_token":
-            sec_schemes.setdefault(
-                "MetalToken",
-                {
-                    "type": "apiKey",
-                    "in": "header",
-                    "name": self.config.auth.metal_token.get(
-                        "header_name", "X-Auth-Token"
-                    ),
-                },
-            )
 
         # Normalize auth: promote Authorization header parameters to security requirements
         try:
@@ -193,8 +182,6 @@ class SpecManager:
         if not merged_spec.get("security"):
             if api_config.auth_type == "client_credentials":
                 merged_spec["security"] = [{"ClientCredentials": []}]
-            elif api_config.auth_type == "metal_token":
-                merged_spec["security"] = [{"MetalToken": []}]
 
         self.save_merged_spec(api_name, merged_spec)
 

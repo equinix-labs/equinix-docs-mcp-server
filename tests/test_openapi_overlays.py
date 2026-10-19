@@ -79,21 +79,6 @@ async def test_create_overlay_template_basic(overlay_manager, tmp_path):
     assert "https://api.equinix.com" in content
 
 
-@pytest.mark.asyncio
-async def test_create_overlay_template_metal(overlay_manager, tmp_path):
-    """Test creating overlay template for Metal API with special handling."""
-    overlay_path = tmp_path / "metal_overlay.yaml"
-
-    await overlay_manager.create_overlay_template(str(overlay_path), "metal", "metal")
-
-    assert overlay_path.exists()
-
-    # Load and verify content
-    content = overlay_path.read_text()
-    assert "overlay: 1.0.0" in content
-    assert "Equinix Metal API" in content
-
-
 def test_apply_overlay_simple(overlay_manager):
     """Test applying a simple overlay to a spec."""
     spec = {
