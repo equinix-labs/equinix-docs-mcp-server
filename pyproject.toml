@@ -31,9 +31,8 @@ dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.0.0",
-    "black>=23.0.0",
-    "isort>=5.12.0",
-    "flake8>=6.0.0",
+    # Pinned: ruff's formatter output can change between releases
+    "ruff==0.17.1",
     "mypy>=1.0.0",
     "pre-commit>=3.0.0",
     "types-PyYAML>=6.0.0",
@@ -54,13 +53,14 @@ include = ["equinix_docs_mcp_server*"]
 [tool.setuptools.package-data]
 equinix_docs_mcp_server = ["data/config/*.yaml", "data/overlays/*.yaml"]
 
-[tool.black]
+[tool.ruff]
+# The target version comes from project.requires-python
 line-length = 88
-target-version = ['py38']
 
-[tool.isort]
-profile = "black"
-line_length = 88
+[tool.ruff.lint]
+# The rules flake8 enforced (syntax errors, invalid comparisons, misplaced
+# statements, undefined names) plus import sorting, which isort did
+select = ["E9", "F63", "F7", "F82", "I"]
 
 [tool.mypy]
 python_version = "3.13"
