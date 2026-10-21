@@ -71,6 +71,30 @@ def test_tools_become_by_name_methods():
     assert "CallToolResult" in doc["components"]["schemas"]
 
 
+@pytest.mark.parametrize(
+    "title, expected",
+    [
+        ("Workflow  List Ne Metros", "Retrieve Network Edge metros."),
+        ("Network Edge metros", "Network Edge metros"),
+    ],
+)
+def test_summary_skips_titles_derived_from_the_name(title, expected):
+    """fastmcp's name-derived default title loses to the description."""
+    doc = build_openrpc_document(
+        [
+            tool(
+                "workflow__list_ne_metros",
+                {"type": "object"},
+                title=title,
+                description="Retrieve Network Edge metros. Uses one API call.",
+            )
+        ],
+        families=[],
+    )
+
+    assert doc["methods"][0]["summary"] == expected
+
+
 def test_methods_group_by_family_namespace_not_shared_tags():
     doc = build_openrpc_document(
         [

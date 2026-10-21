@@ -1,7 +1,7 @@
 {
   "openrpc": "1.3.2",
   "info": {
-    "title": "Equinix Docs MCP Server",
+    "title": "Schedule Work Visit",
     "version": "0.1.0",
     "description": "MCP tools exposed by equinix-docs-mcp-server, described as OpenRPC methods. Each method is an MCP tool: call it with the JSON-RPC request `tools/call` and params `{\"name\": \"<method>\", \"arguments\": {<params>}}`. API tools are generated from the Equinix OpenAPI specs and named `<family>_<operationId>`; by default the server lists only the docs tools plus `search_tools`/`call_tool`, and the API tools documented here are reached through them.",
     "license": {
@@ -4215,7 +4215,7 @@
     },
     {
       "name": "arazzo_describe_workflow",
-      "summary": "Arazzo Describe Workflow",
+      "summary": "Describe a specific Arazzo workflow (summary, inputs).",
       "description": "Describe a specific Arazzo workflow (summary, inputs).",
       "tags": [
         {
@@ -4243,7 +4243,7 @@
     },
     {
       "name": "arazzo_list_workflows",
-      "summary": "Arazzo List Workflows",
+      "summary": "List registered Arazzo workflow IDs.",
       "description": "List registered Arazzo workflow IDs.",
       "tags": [
         {
@@ -33102,7 +33102,7 @@
     },
     {
       "name": "fetch",
-      "summary": "Fetch",
+      "summary": "Fetch the full markdown content of an Equinix documentation page by URL.",
       "description": "Fetch the full markdown content of an Equinix documentation page by URL. Use URLs returned from the 'search' tool.",
       "tags": [
         {
@@ -33140,7 +33140,7 @@
     },
     {
       "name": "find_docs",
-      "summary": "Find Docs",
+      "summary": "Find Equinix documentation by filename",
       "description": "Find Equinix documentation by filename",
       "tags": [
         {
@@ -39643,7 +39643,7 @@
     },
     {
       "name": "list_docs",
-      "summary": "List Docs",
+      "summary": "List and filter Equinix documentation by topic, product, or keywords.",
       "description": "List and filter Equinix documentation by topic, product, or keywords. Supports flexible word matching (e.g., 'Fabric providers' will find 'Fabric Provider Guide', 'Provider Management', etc.)",
       "tags": [
         {
@@ -51395,7 +51395,7 @@
     },
     {
       "name": "search",
-      "summary": "Search",
+      "summary": "Search Equinix documentation using full-text search.",
       "description": "Search Equinix documentation using full-text search. Returns URLs that can be fetched with the 'fetch' tool to retrieve full content.",
       "tags": [
         {
@@ -64829,7 +64829,7 @@
     },
     {
       "name": "workflow__list_ne_metros",
-      "summary": "Workflow  List Ne Metros",
+      "summary": "Retrieve Network Edge metros",
       "description": "Retrieve Network Edge metros",
       "tags": [
         {

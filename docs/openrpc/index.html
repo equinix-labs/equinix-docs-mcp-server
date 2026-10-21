@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Equinix Docs MCP Server · MCP tools</title>
+<title>Schedule Work Visit · MCP tools</title>
 <style>
 :root { --bg:#fff; --fg:#1b1f24; --muted:#59636e; --line:#d1d9e0; --card:#f6f8fa;
   --accent:#0969da; --ro:#1a7f37; --warn:#9a6700; --bad:#cf222e; }
@@ -126,7 +126,7 @@ td.desc { color:var(--muted); }
 </nav>
 <main>
 <header>
-  <h1>Equinix Docs MCP Server <small>v0.1.0</small></h1>
+  <h1>Schedule Work Visit <small>v0.1.0</small></h1>
   <p>MCP tools exposed by equinix-docs-mcp-server, described as OpenRPC methods. Each method is an MCP tool: call it with the JSON-RPC request `tools/call` and params `{&#34;name&#34;: &#34;&lt;method&gt;&#34;, &#34;arguments&#34;: {&lt;params&gt;}}`. API tools are generated from the Equinix OpenAPI specs and named `&lt;family&gt;_&lt;operationId&gt;`; by default the server lists only the docs tools plus `search_tools`/`call_tool`, and the API tools documented here are reached through them.</p>
   <p>Generated from <a href="openrpc.json">openrpc.json</a> (OpenRPC 1.3.2).</p>
 </header>
@@ -134,9 +134,9 @@ td.desc { color:var(--muted); }
 <section class="group" id="group-docs">
 <h2>docs</h2>
 
-<details class="method" id="fetch" data-search="fetch fetch">
+<details class="method" id="fetch" data-search="fetch fetch the full markdown content of an equinix documentation page by url.">
 <summary><span class="name">fetch</span>
-<span class="sum">Fetch</span></summary>
+<span class="sum">Fetch the full markdown content of an Equinix documentation page by URL.</span></summary>
 <div class="body">
 <p class="desc-block">Fetch the full markdown content of an Equinix documentation page by URL. Use URLs returned from the &#39;search&#39; tool.</p>
 <p>Tags: <code>docs</code> </p>
@@ -174,11 +174,11 @@ td.desc { color:var(--muted); }
 </div>
 </details>
 
-<details class="method" id="find_docs" data-search="find_docs find docs">
+<details class="method" id="find_docs" data-search="find_docs find equinix documentation by filename">
 <summary><span class="name">find_docs</span>
-<span class="sum">Find Docs</span></summary>
+<span class="sum">Find Equinix documentation by filename</span></summary>
 <div class="body">
-<p class="desc-block">Find Equinix documentation by filename</p>
+
 <p>Tags: <code>docs</code> </p>
 
 <table><thead><tr><th>Param</th><th>Type</th><th>Required</th><th>Description</th></tr></thead><tbody>
@@ -213,9 +213,9 @@ td.desc { color:var(--muted); }
 </div>
 </details>
 
-<details class="method" id="list_docs" data-search="list_docs list docs">
+<details class="method" id="list_docs" data-search="list_docs list and filter equinix documentation by topic, product, or keywords.">
 <summary><span class="name">list_docs</span>
-<span class="sum">List Docs</span></summary>
+<span class="sum">List and filter Equinix documentation by topic, product, or keywords.</span></summary>
 <div class="body">
 <p class="desc-block">List and filter Equinix documentation by topic, product, or keywords. Supports flexible word matching (e.g., &#39;Fabric providers&#39; will find &#39;Fabric Provider Guide&#39;, &#39;Provider Management&#39;, etc.)</p>
 <p>Tags: <code>docs</code> </p>
@@ -258,9 +258,9 @@ td.desc { color:var(--muted); }
 </div>
 </details>
 
-<details class="method" id="search" data-search="search search">
+<details class="method" id="search" data-search="search search equinix documentation using full-text search.">
 <summary><span class="name">search</span>
-<span class="sum">Search</span></summary>
+<span class="sum">Search Equinix documentation using full-text search.</span></summary>
 <div class="body">
 <p class="desc-block">Search Equinix documentation using full-text search. Returns URLs that can be fetched with the &#39;fetch&#39; tool to retrieve full content.</p>
 <p>Tags: <code>docs</code> </p>
@@ -56060,11 +56060,11 @@ Part of the Equinix Notifications API family (unifiednotification). The notifica
 <section class="group" id="group-workflows">
 <h2>workflows</h2>
 
-<details class="method" id="arazzo_describe_workflow" data-search="arazzo_describe_workflow arazzo describe workflow">
+<details class="method" id="arazzo_describe_workflow" data-search="arazzo_describe_workflow describe a specific arazzo workflow (summary, inputs).">
 <summary><span class="name">arazzo_describe_workflow</span>
-<span class="sum">Arazzo Describe Workflow</span></summary>
+<span class="sum">Describe a specific Arazzo workflow (summary, inputs).</span></summary>
 <div class="body">
-<p class="desc-block">Describe a specific Arazzo workflow (summary, inputs).</p>
+
 <p>Tags: <code>workflows</code> </p>
 
 <table><thead><tr><th>Param</th><th>Type</th><th>Required</th><th>Description</th></tr></thead><tbody>
@@ -56091,11 +56091,11 @@ Part of the Equinix Notifications API family (unifiednotification). The notifica
 </div>
 </details>
 
-<details class="method" id="arazzo_list_workflows" data-search="arazzo_list_workflows arazzo list workflows">
+<details class="method" id="arazzo_list_workflows" data-search="arazzo_list_workflows list registered arazzo workflow ids.">
 <summary><span class="name">arazzo_list_workflows</span>
-<span class="sum">Arazzo List Workflows</span></summary>
+<span class="sum">List registered Arazzo workflow IDs.</span></summary>
 <div class="body">
-<p class="desc-block">List registered Arazzo workflow IDs.</p>
+
 <p>Tags: <code>workflows</code> </p>
 <p>No params.</p>
 <details><summary>Result: <code>object</code></summary>
@@ -56117,11 +56117,11 @@ Part of the Equinix Notifications API family (unifiednotification). The notifica
 </div>
 </details>
 
-<details class="method" id="workflow__list_ne_metros" data-search="workflow__list_ne_metros workflow  list ne metros">
+<details class="method" id="workflow__list_ne_metros" data-search="workflow__list_ne_metros retrieve network edge metros">
 <summary><span class="name">workflow__list_ne_metros</span>
-<span class="sum">Workflow  List Ne Metros</span></summary>
+<span class="sum">Retrieve Network Edge metros</span></summary>
 <div class="body">
-<p class="desc-block">Retrieve Network Edge metros</p>
+
 <p>Tags: <code>workflows</code> </p>
 
 <table><thead><tr><th>Param</th><th>Type</th><th>Required</th><th>Description</th></tr></thead><tbody>
