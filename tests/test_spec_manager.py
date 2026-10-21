@@ -75,9 +75,9 @@ def test_overlay_files_exist(config):
         for spec in api_config.specs:
             if spec.overlay:
                 overlay_path = config.resolve_path(spec.overlay)
-                assert (
-                    overlay_path.exists()
-                ), f"Overlay file missing for {api_name}: {overlay_path}"
+                assert overlay_path.exists(), (
+                    f"Overlay file missing for {api_name}: {overlay_path}"
+                )
 
 
 def test_apply_autogen_operation_ids(spec_manager):

@@ -474,8 +474,10 @@ def _schema_html(schema: Any) -> str:
     """Pretty-print a schema as escaped JSON with refs turned into links."""
     text = html.escape(json.dumps(schema, indent=2, ensure_ascii=False))
     return _REF_HTML.sub(
-        lambda m: f'{m.group(1)}<a href="#schema-{m.group(2)}">'
-        f"{html.escape(COMPONENT_PREFIX)}{m.group(2)}</a>{m.group(3)}",
+        lambda m: (
+            f'{m.group(1)}<a href="#schema-{m.group(2)}">'
+            f"{html.escape(COMPONENT_PREFIX)}{m.group(2)}</a>{m.group(3)}"
+        ),
         text,
     )
 

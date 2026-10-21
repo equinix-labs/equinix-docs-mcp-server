@@ -30,14 +30,17 @@ def test_auth_manager_init(auth_manager):
 @pytest.mark.asyncio
 async def test_client_credentials_auth_missing_vars(config):
     """Test client credentials authentication fails during token fetch when credentials present."""
-    with patch.dict(
-        os.environ,
-        {
-            "EQUINIX_CLIENT_ID": "test_client_id",
-            "EQUINIX_CLIENT_SECRET": "test_client_secret",
-        },
-        clear=True,
-    ), patch("equinix_docs_mcp_server.auth._load_equinix_yaml", return_value={}):
+    with (
+        patch.dict(
+            os.environ,
+            {
+                "EQUINIX_CLIENT_ID": "test_client_id",
+                "EQUINIX_CLIENT_SECRET": "test_client_secret",
+            },
+            clear=True,
+        ),
+        patch("equinix_docs_mcp_server.auth._load_equinix_yaml", return_value={}),
+    ):
         am = AuthManager(config)
         with pytest.raises(Exception):  # Will fail on actual HTTP request
             await am.get_auth_header("fabric")
@@ -46,8 +49,9 @@ async def test_client_credentials_auth_missing_vars(config):
 @pytest.mark.asyncio
 async def test_client_credentials_auth_missing_credentials(config):
     """Test client credentials authentication with missing credentials."""
-    with patch.dict(os.environ, {}, clear=True), patch(
-        "equinix_docs_mcp_server.auth._load_equinix_yaml", return_value={}
+    with (
+        patch.dict(os.environ, {}, clear=True),
+        patch("equinix_docs_mcp_server.auth._load_equinix_yaml", return_value={}),
     ):
         am = AuthManager(config)
         with pytest.raises(ValueError, match="Client credentials not found"):
@@ -83,12 +87,15 @@ def test_auth_manager_falls_back_to_equinix_yaml(config, tmp_path):
     (cfg_dir / "equinix.yaml").write_text(
         "equinix_client_id: file_id\nequinix_client_secret: file_secret\n"
     )
-    with patch.dict(os.environ, {}, clear=True), patch(
-        "equinix_docs_mcp_server.auth._load_equinix_yaml",
-        return_value={
-            "equinix_client_id": "file_id",
-            "equinix_client_secret": "file_secret",
-        },
+    with (
+        patch.dict(os.environ, {}, clear=True),
+        patch(
+            "equinix_docs_mcp_server.auth._load_equinix_yaml",
+            return_value={
+                "equinix_client_id": "file_id",
+                "equinix_client_secret": "file_secret",
+            },
+        ),
     ):
         am = AuthManager(config)
     assert am.client_id == "file_id"
@@ -97,19 +104,22 @@ def test_auth_manager_falls_back_to_equinix_yaml(config, tmp_path):
 
 def test_auth_manager_env_takes_priority_over_files(config):
     """Env vars take priority over file-based credentials."""
-    with patch.dict(
-        os.environ,
-        {
-            "EQUINIX_CLIENT_ID": "env_id",
-            "EQUINIX_CLIENT_SECRET": "env_secret",
-        },
-        clear=True,
-    ), patch(
-        "equinix_docs_mcp_server.auth._load_equinix_yaml",
-        return_value={
-            "equinix_client_id": "file_id",
-            "equinix_client_secret": "file_secret",
-        },
+    with (
+        patch.dict(
+            os.environ,
+            {
+                "EQUINIX_CLIENT_ID": "env_id",
+                "EQUINIX_CLIENT_SECRET": "env_secret",
+            },
+            clear=True,
+        ),
+        patch(
+            "equinix_docs_mcp_server.auth._load_equinix_yaml",
+            return_value={
+                "equinix_client_id": "file_id",
+                "equinix_client_secret": "file_secret",
+            },
+        ),
     ):
         am = AuthManager(config)
     assert am.client_id == "env_id"
