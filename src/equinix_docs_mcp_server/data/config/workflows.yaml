@@ -15,6 +15,10 @@ workflows:
     description: Retrieve Network Edge metros
     steps:
       - stepId: get_metros
-        operationId: ne.getMetros
+        operationId: getMetros
+        successCriteria:
+          - condition: $statusCode == 200
         outputs:
-          metros: "{{ steps.get_metros.outputs.data }}"
+          metros: $response.body#/data
+    outputs:
+      metros: $steps.get_metros.outputs.metros

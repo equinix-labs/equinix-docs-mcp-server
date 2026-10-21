@@ -22,6 +22,7 @@ Notes:
 from __future__ import annotations
 
 import asyncio
+import copy
 import json
 import logging
 from dataclasses import dataclass, field
@@ -297,6 +298,21 @@ class ArazzoManager:
                 f"Registered Arazzo workflow tool {tool_name} (params: {list(input_props.keys())})"
             )
 
+    async def _load_source_descriptions(
+        self, arazzo_doc: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Load each sourceDescription of an Arazzo document by name.
+
+        yaml.safe_load parses both YAML and JSON, so the response
+        Content-Type does not matter.
+        """
+        sources: Dict[str, Any] = {}
+        for source in arazzo_doc.get("sourceDescriptions") or []:
+            name, url = source.get("name"), source.get("url")
+            if name and url:
+                sources[name] = yaml.safe_load(await self._read_spec(url))
+        return sources
+
     async def _get_runner(self, spec_path: str):
         if spec_path in self._runners:
             return self._runners[spec_path]
@@ -338,7 +354,18 @@ class ArazzoManager:
                         "Failed to inject auth header into Arazzo session: %s", hdr_err
                     )
                 http_client = session
-            runner = ArazzoRunner.from_arazzo_path(spec_path, http_client=http_client)
+            # Build the runner from documents we load ourselves:
+            # from_arazzo_path() gets the unresolved packaged path, and it
+            # parses remote specs as JSON unless the Content-Type says YAML
+            # (docs.equinix.com serves YAML as application/octet-stream).
+            arazzo_doc = self._spec_docs.get(spec_path) or yaml.safe_load(
+                await self._read_spec(spec_path)
+            )
+            runner = ArazzoRunner(
+                arazzo_doc=copy.deepcopy(arazzo_doc),
+                source_descriptions=await self._load_source_descriptions(arazzo_doc),
+                http_client=http_client,
+            )
             # Normalize runner.arazzo_doc workflows if still mapping-form
             try:  # pragma: no cover - defensive
                 adoc = getattr(runner, "arazzo_doc", None)
@@ -406,7 +433,9 @@ class ArazzoManager:
             return runner
         except Exception as e:  # pragma: no cover
             logger.error(f"Failed to initialize ArazzoRunner for {spec_path}: {e}")
-            return None
+            raise RuntimeError(
+                f"Could not initialize the Arazzo runner for {spec_path}: {e}"
+            ) from e
 
     async def _execute_workflow_with_fallback(
         self, workflow_id: str, spec_path: str, inputs: Dict[str, Any]
