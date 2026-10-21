@@ -9,10 +9,12 @@ from fastmcp.tools.base import ToolResult
 
 from equinix_docs_mcp_server.config import APIConfig, AuthConfig, Config, DocsConfig
 from equinix_docs_mcp_server.main import (
+    API_BASE_URL,
     DOCS_TOOL_NAMES,
     EquinixAuth,
     EquinixMCPServer,
     ResponseFormattingMiddleware,
+    _api_base_url,
 )
 
 TINY_FABRIC_SPEC = {
@@ -52,6 +54,54 @@ def make_server(tool_catalog: str = "search") -> EquinixMCPServer:
     server.spec_manager.has_all_cached_specs = MagicMock(return_value=True)
     server.spec_manager.get_provider_spec = MagicMock(return_value=TINY_FABRIC_SPEC)
     return server
+
+
+class TestApiBaseUrl:
+    """Test per-family host selection from a spec's servers list."""
+
+    def test_uses_spec_host(self):
+        """Families on their own hosts (access, sts) are not sent to api."""
+        spec = {"servers": [{"url": "https://access.eqix.equinix.com"}]}
+        assert _api_base_url(spec) == "https://access.eqix.equinix.com"
+
+    def test_drops_base_path(self):
+        """Spec paths already carry the base path, so only the host is kept."""
+        spec = {"servers": [{"url": "https://api.equinix.com/fabric/v4"}]}
+        assert _api_base_url(spec) == "https://api.equinix.com"
+
+    def test_skips_non_equinix_servers(self):
+        """SwaggerHub mock servers listed first are ignored."""
+        spec = {
+            "servers": [
+                {"url": "https://virtserver.swaggerhub.com/equinix-api/x/1.0.0"},
+                {"url": "https://api.equinix.com"},
+            ]
+        }
+        assert _api_base_url(spec) == "https://api.equinix.com"
+
+    def test_first_equinix_server_wins(self):
+        """Production is listed before sandbox and is preferred."""
+        spec = {
+            "servers": [
+                {"url": "https://api.equinix.com"},
+                {"url": "https://sandboxapi.equinix.com"},
+            ]
+        }
+        assert _api_base_url(spec) == "https://api.equinix.com"
+
+    @pytest.mark.parametrize(
+        "spec",
+        [
+            {},
+            {"servers": []},
+            {"servers": [{"url": "/relative"}]},
+            {"servers": [{"url": "http://api.equinix.com"}]},
+            {"servers": [{"url": "https://equinix.com.example.org"}]},
+        ],
+    )
+    def test_falls_back_to_api_host(self, spec):
+        """Missing, relative, plain-http or look-alike hosts use api.equinix.com."""
+        assert _api_base_url(spec) == API_BASE_URL
 
 
 class TestEquinixAuth:
@@ -200,3 +250,19 @@ class TestEquinixMCPServer:
         hint = server.mcp._mcp_server.cache_hints["tools/list"]
         assert hint.ttl_ms == 3600000
         assert hint.scope == "public"
+
+    @pytest.mark.asyncio
+    async def test_provider_client_uses_spec_host(self):
+        """Each family's HTTP client targets the host from its own spec."""
+        server = make_server(tool_catalog="full")
+        server.spec_manager.get_provider_spec = MagicMock(
+            return_value={
+                **TINY_FABRIC_SPEC,
+                "servers": [{"url": "https://access.eqix.equinix.com"}],
+            }
+        )
+        await server.initialize()
+
+        assert [str(c.base_url) for c in server._api_clients] == [
+            "https://access.eqix.equinix.com"
+        ]
