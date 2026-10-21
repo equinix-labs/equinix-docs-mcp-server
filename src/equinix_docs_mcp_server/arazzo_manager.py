@@ -284,11 +284,10 @@ class ArazzoManager:
             dynamic_func.__globals__["__execute_workflow"] = __execute_workflow
 
             # A workflow's Arazzo summary is its title, like an OpenAPI
-            # operation's; meta.summary falls back to the description.
-            title = meta.summary if meta.summary != meta.description else None
+            # operation's summary.
             mcp.tool(
                 name=tool_name,
-                title=title,
+                title=meta.summary or None,
                 description=description,
                 tags={"workflows"},
             )(
@@ -692,7 +691,7 @@ class ArazzoManager:
             wf_id = wf.get("workflowId") or wf.get("id")
             if not wf_id:
                 continue
-            summary = wf.get("summary", "") or wf.get("description", "")
+            summary = wf.get("summary", "")
             description = wf.get("description", "")
             # Input schema may be nested under 'inputs' with JSON Schema structure
             input_schema = wf.get("inputs")

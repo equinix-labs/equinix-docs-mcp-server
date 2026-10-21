@@ -11,6 +11,7 @@ sourceDescriptions:
     type: openapi
 workflows:
   - workflowId: list_ne_metros
+    summary: Retrieve Network Edge metros
     description: Retrieve Network Edge metros
     steps:
       - stepId: get_metros
