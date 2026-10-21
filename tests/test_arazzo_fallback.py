@@ -117,3 +117,57 @@ async def test_workflow_summary_becomes_tool_title(tmp_path):
 
     assert tools["workflow__with_summary"].title == "Retrieve things"
     assert tools["workflow__description_only"].description == "Retrieve other things"
+
+
+def write_workflow(tmp_path, source_url):
+    spec = tmp_path / "workflows.yaml"
+    spec.write_text(
+        "arazzo: 1.0.1\n"
+        "info: {title: Test, version: 1.0.0}\n"
+        "sourceDescriptions:\n"
+        f"  - {{name: ne, url: '{source_url}', type: openapi}}\n"
+        "workflows:\n"
+        "  - workflowId: list_things\n"
+        "    steps:\n"
+        "      - {stepId: get, operationId: getThings}\n"
+    )
+    return spec
+
+
+@pytest.mark.asyncio
+async def test_runner_loads_yaml_source_regardless_of_content_type(tmp_path):
+    """Sources are parsed as YAML (which covers JSON), not chosen by Content-Type."""
+    spec = write_workflow(tmp_path, "https://docs.example.com/openapi.yaml")
+    mgr = ArazzoManager(SimpleNamespace(arazzo={"specs": [str(spec)]}))
+    await mgr.load()
+
+    openapi = "openapi: 3.0.3\npaths:\n  /things:\n    get: {operationId: getThings}\n"
+    real_read = mgr._read_spec
+
+    async def read(path_or_url):
+        if path_or_url.startswith("https://"):
+            return openapi  # what an octet-stream YAML response body looks like
+        return await real_read(path_or_url)
+
+    mgr._read_spec = read
+    runner = await mgr._get_runner(str(spec))
+
+    assert runner.source_descriptions["ne"]["paths"]["/things"]["get"] == {
+        "operationId": "getThings"
+    }
+    assert runner.arazzo_doc["workflows"][0]["workflowId"] == "list_things"
+
+
+@pytest.mark.asyncio
+async def test_runner_init_failure_is_reported(tmp_path):
+    """A source that can't be loaded surfaces its error, not 'not installed'."""
+    spec = write_workflow(tmp_path, str(tmp_path / "missing.yaml"))
+    mgr = ArazzoManager(
+        SimpleNamespace(
+            arazzo={"specs": [str(spec)]}, resolve_path=lambda p: tmp_path / p
+        )
+    )
+    await mgr.load()
+
+    with pytest.raises(RuntimeError, match="Could not initialize the Arazzo runner"):
+        await mgr._get_runner(str(spec))
