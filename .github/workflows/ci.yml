@@ -90,3 +90,15 @@ jobs:
 
         asyncio.run(test())
         "
+  lint-arazzo:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+
+    # Rules come from .spectral.yaml (spectral:arazzo). Only the workflows
+    # the server loads (apis.yaml arazzo.specs) are linted.
+    - name: Lint Arazzo workflows with Spectral
+      uses: stoplightio/spectral-action@v0.8.13
+      with:
+        file_glob: 'src/equinix_docs_mcp_server/data/config/workflows.yaml'

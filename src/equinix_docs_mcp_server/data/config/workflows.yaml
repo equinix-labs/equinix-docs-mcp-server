@@ -15,6 +15,7 @@ workflows:
     description: Retrieve Network Edge metros
     steps:
       - stepId: get_metros
+        description: Get the metros where the Network Edge platform is available
         operationId: getMetros
         successCriteria:
           - condition: $statusCode == 200
