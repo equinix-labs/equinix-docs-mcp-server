@@ -266,3 +266,20 @@ class TestEquinixMCPServer:
         assert [str(c.base_url) for c in server._api_clients] == [
             "https://access.eqix.equinix.com"
         ]
+
+    @pytest.mark.asyncio
+    async def test_docs_tools_have_explicit_titles(self):
+        """Docs tools set titles instead of fastmcp's name-derived default."""
+        server = make_server(tool_catalog="search")
+        await server.initialize()
+
+        async with Client(server.mcp) as client:
+            tools = await client.list_tools()
+            titles = {t.name: t.title for t in tools if t.name in DOCS_TOOL_NAMES}
+
+        assert titles == {
+            "search": "Search Equinix Docs",
+            "fetch": "Fetch Equinix Doc",
+            "list_docs": "List Equinix Docs",
+            "find_docs": "Find Equinix Docs by Filename",
+        }

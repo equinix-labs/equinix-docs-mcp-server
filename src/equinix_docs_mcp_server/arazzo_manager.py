@@ -147,6 +147,7 @@ class ArazzoManager:
         # Utility tools
         @mcp.tool(
             name="arazzo_list_workflows",
+            title="List Workflows",
             description="List registered Arazzo workflow IDs.",
             tags={"workflows"},
         )
@@ -155,6 +156,7 @@ class ArazzoManager:
 
         @mcp.tool(
             name="arazzo_describe_workflow",
+            title="Describe Workflow",
             description="Describe a specific Arazzo workflow (summary, inputs).",
             tags={"workflows"},
         )
@@ -281,7 +283,14 @@ class ArazzoManager:
 
             dynamic_func.__globals__["__execute_workflow"] = __execute_workflow
 
-            mcp.tool(name=tool_name, description=description, tags={"workflows"})(
+            # A workflow's Arazzo summary is its title, like an OpenAPI
+            # operation's summary.
+            mcp.tool(
+                name=tool_name,
+                title=meta.summary or None,
+                description=description,
+                tags={"workflows"},
+            )(
                 dynamic_func
             )  # type: ignore
             logger.info(
@@ -682,7 +691,7 @@ class ArazzoManager:
             wf_id = wf.get("workflowId") or wf.get("id")
             if not wf_id:
                 continue
-            summary = wf.get("summary", "") or wf.get("description", "")
+            summary = wf.get("summary", "")
             description = wf.get("description", "")
             # Input schema may be nested under 'inputs' with JSON Schema structure
             input_schema = wf.get("inputs")

@@ -134,9 +134,9 @@ td.desc { color:var(--muted); }
 <section class="group" id="group-docs">
 <h2>docs</h2>
 
-<details class="method" id="fetch" data-search="fetch fetch the full markdown content of an equinix documentation page by url.">
+<details class="method" id="fetch" data-search="fetch fetch equinix doc">
 <summary><span class="name">fetch</span>
-<span class="sum">Fetch the full markdown content of an Equinix documentation page by URL.</span></summary>
+<span class="sum">Fetch Equinix Doc</span></summary>
 <div class="body">
 <p class="desc-block">Fetch the full markdown content of an Equinix documentation page by URL. Use URLs returned from the &#39;search&#39; tool.</p>
 <p>Tags: <code>docs</code> </p>
@@ -174,11 +174,11 @@ td.desc { color:var(--muted); }
 </div>
 </details>
 
-<details class="method" id="find_docs" data-search="find_docs find equinix documentation by filename">
+<details class="method" id="find_docs" data-search="find_docs find equinix docs by filename">
 <summary><span class="name">find_docs</span>
-<span class="sum">Find Equinix documentation by filename</span></summary>
+<span class="sum">Find Equinix Docs by Filename</span></summary>
 <div class="body">
-
+<p class="desc-block">Find Equinix documentation by filename</p>
 <p>Tags: <code>docs</code> </p>
 
 <table><thead><tr><th>Param</th><th>Type</th><th>Required</th><th>Description</th></tr></thead><tbody>
@@ -213,9 +213,9 @@ td.desc { color:var(--muted); }
 </div>
 </details>
 
-<details class="method" id="list_docs" data-search="list_docs list and filter equinix documentation by topic, product, or keywords.">
+<details class="method" id="list_docs" data-search="list_docs list equinix docs">
 <summary><span class="name">list_docs</span>
-<span class="sum">List and filter Equinix documentation by topic, product, or keywords.</span></summary>
+<span class="sum">List Equinix Docs</span></summary>
 <div class="body">
 <p class="desc-block">List and filter Equinix documentation by topic, product, or keywords. Supports flexible word matching (e.g., &#39;Fabric providers&#39; will find &#39;Fabric Provider Guide&#39;, &#39;Provider Management&#39;, etc.)</p>
 <p>Tags: <code>docs</code> </p>
@@ -258,9 +258,9 @@ td.desc { color:var(--muted); }
 </div>
 </details>
 
-<details class="method" id="search" data-search="search search equinix documentation using full-text search.">
+<details class="method" id="search" data-search="search search equinix docs">
 <summary><span class="name">search</span>
-<span class="sum">Search Equinix documentation using full-text search.</span></summary>
+<span class="sum">Search Equinix Docs</span></summary>
 <div class="body">
 <p class="desc-block">Search Equinix documentation using full-text search. Returns URLs that can be fetched with the &#39;fetch&#39; tool to retrieve full content.</p>
 <p>Tags: <code>docs</code> </p>
@@ -5011,6 +5011,7 @@ Part of the Equinix Platform Billing Account API family (bas). Billing Account S
   &quot;properties&quot;: {
     &quot;accountId&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;C-12345&quot;,
       &quot;description&quot;: &quot;Billing Account Id&quot;
     }
   },
@@ -5044,6 +5045,7 @@ Part of the Equinix Platform Billing Account API family (bas). Billing Account S
   &quot;properties&quot;: {
     &quot;accountNumber&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: 12345,
       &quot;description&quot;: &quot;Billing account number&quot;
     }
   },
@@ -5292,11 +5294,13 @@ Part of the Equinix Equinix Billing API family (billing). The Billing API allows
     &quot;startDate&quot;: {
       &quot;type&quot;: &quot;string&quot;,
       &quot;format&quot;: &quot;date&quot;,
+      &quot;example&quot;: &quot;2021-09-17&quot;,
       &quot;description&quot;: &quot;Start date of invoice in `YYYY-MM-DD` format&quot;
     },
     &quot;endDate&quot;: {
       &quot;type&quot;: &quot;string&quot;,
       &quot;format&quot;: &quot;date&quot;,
+      &quot;example&quot;: &quot;2021-10-17&quot;,
       &quot;description&quot;: &quot;End date of invoice in `YYYY-MM-DD` format&quot;
     },
     &quot;accountNumbers&quot;: {
@@ -5743,11 +5747,13 @@ Part of the Equinix Equinix Billing API family (billing). The Billing API allows
     &quot;startDate&quot;: {
       &quot;type&quot;: &quot;string&quot;,
       &quot;format&quot;: &quot;date&quot;,
+      &quot;example&quot;: &quot;2021-09-17&quot;,
       &quot;description&quot;: &quot;Start date of invoice in `YYYY-MM-DD` format&quot;
     },
     &quot;endDate&quot;: {
       &quot;type&quot;: &quot;string&quot;,
       &quot;format&quot;: &quot;date&quot;,
+      &quot;example&quot;: &quot;2021-10-17&quot;,
       &quot;description&quot;: &quot;End date of invoice in `YYYY-MM-DD` format&quot;
     },
     &quot;accountNumbers&quot;: {
@@ -7272,6 +7278,7 @@ Part of the Equinix Digital LOA API family (diloa). Digital Letter of Authorizat
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;079dc798-05e8-11ed-b939-0242ac120002&quot;,
       &quot;description&quot;: &quot;Digital LOA document identifier.&quot;
     }
   },
@@ -7637,6 +7644,7 @@ Part of the Equinix Digital LOA API family (diloa). Digital Letter of Authorizat
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;079dc798-05e8-11ed-b939-0242ac120002&quot;,
       &quot;description&quot;: &quot;Digital LOA document identifier.&quot;
     }
   },
@@ -7672,10 +7680,12 @@ Part of the Equinix Digital LOA API family (diloa). Digital Letter of Authorizat
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;079dc798-05e8-11ed-b939-0242ac120002&quot;,
       &quot;description&quot;: &quot;Digital LOA unique identifier.&quot;
     },
     &quot;changeUuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;4c7d67e2-bbf2-4407-bcff-05a385ed0d4e&quot;,
       &quot;description&quot;: &quot;Digital LOA change unique identifier.&quot;
     }
   },
@@ -7781,6 +7791,7 @@ Part of the Equinix Digital LOA API family (diloa). Digital Letter of Authorizat
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;079dc798-05e8-11ed-b939-0242ac120002&quot;,
       &quot;description&quot;: &quot;Digital LOA unique identifier.&quot;
     }
   },
@@ -7900,6 +7911,7 @@ Part of the Equinix Digital LOA API family (diloa). Digital Letter of Authorizat
   &quot;properties&quot;: {
     &quot;location.ibx&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;AM11&quot;,
       &quot;description&quot;: &quot;IBX data center identifier.&quot;
     },
     &quot;product.type&quot;: {
@@ -8030,6 +8042,7 @@ Part of the Equinix Digital LOA API family (diloa). Digital Letter of Authorizat
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;079dc798-05e8-11ed-b939-0242ac120002&quot;,
       &quot;description&quot;: &quot;Digital LOA document identifier.&quot;
     },
     &quot;body&quot;: {
@@ -8116,6 +8129,7 @@ Part of the Equinix Digital LOA API family (diloa). Digital Letter of Authorizat
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;079dc798-05e8-11ed-b939-0242ac120002&quot;,
       &quot;description&quot;: &quot;Digital LOA document identifier.&quot;
     },
     &quot;type&quot;: {
@@ -8208,12 +8222,14 @@ Part of the Equinix Digital LOA API family (diloa). Digital Letter of Authorizat
       &quot;minimum&quot;: 0.0,
       &quot;type&quot;: &quot;integer&quot;,
       &quot;default&quot;: 0,
+      &quot;example&quot;: 0,
       &quot;description&quot;: &quot;Index of the first item returned in the response.&quot;
     },
     &quot;limit&quot;: {
       &quot;minimum&quot;: 1.0,
       &quot;type&quot;: &quot;integer&quot;,
       &quot;default&quot;: 20,
+      &quot;example&quot;: 20,
       &quot;description&quot;: &quot;Maximum number of items returned per page.&quot;
     },
     &quot;sort&quot;: {
@@ -13766,10 +13782,12 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 1,
       &quot;description&quot;: &quot;offset&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 10,
       &quot;description&quot;: &quot;number of records to fetch&quot;
     },
     &quot;attachmentStatus&quot;: {
@@ -13962,10 +13980,12 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 1,
       &quot;description&quot;: &quot;offset&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 10,
       &quot;description&quot;: &quot;number of records to fetch&quot;
     },
     &quot;state&quot;: {
@@ -14142,10 +14162,12 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 1,
       &quot;description&quot;: &quot;offset&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 10,
       &quot;description&quot;: &quot;number of records to fetch&quot;
     },
     &quot;state&quot;: {
@@ -14366,10 +14388,12 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 1,
       &quot;description&quot;: &quot;offset&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 10,
       &quot;description&quot;: &quot;number of records to fetch&quot;
     },
     &quot;attachmentStatus&quot;: {
@@ -14590,10 +14614,12 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 1,
       &quot;description&quot;: &quot;offset&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 10,
       &quot;description&quot;: &quot;number of records to fetch&quot;
     },
     &quot;state&quot;: {
@@ -15272,10 +15298,12 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
   &quot;properties&quot;: {
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 1,
       &quot;description&quot;: &quot;offset&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 10,
       &quot;description&quot;: &quot;number of records to fetch&quot;
     }
   },
@@ -15806,10 +15834,12 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 1,
       &quot;description&quot;: &quot;offset&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 10,
       &quot;description&quot;: &quot;number of records to fetch&quot;
     }
   },
@@ -15951,10 +15981,12 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 1,
       &quot;description&quot;: &quot;offset&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 10,
       &quot;description&quot;: &quot;number of records to fetch&quot;
     }
   },
@@ -16152,10 +16184,12 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 1,
       &quot;description&quot;: &quot;offset&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 10,
       &quot;description&quot;: &quot;number of records to fetch&quot;
     }
   },
@@ -16257,13 +16291,13 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
       &quot;type&quot;: &quot;string&quot;,
       &quot;description&quot;: &quot;Start date and time&quot;,
       &quot;format&quot;: &quot;date-time&quot;,
-      &quot;example&quot;: &quot;2024-07-11T18:06:21Z&quot;
+      &quot;example&quot;: &quot;2020-11-06T07:00:00Z&quot;
     },
     &quot;endDateTime&quot;: {
       &quot;type&quot;: &quot;string&quot;,
       &quot;description&quot;: &quot;End date and time&quot;,
       &quot;format&quot;: &quot;date-time&quot;,
-      &quot;example&quot;: &quot;2024-07-11T18:06:21Z&quot;
+      &quot;example&quot;: &quot;2020-11-10T07:00:00Z&quot;
     },
     &quot;viewPoint&quot;: {
       &quot;enum&quot;: [
@@ -16271,7 +16305,8 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
         &quot;zSide&quot;
       ],
       &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;viewPoint&quot;
+      &quot;description&quot;: &quot;viewPoint&quot;,
+      &quot;example&quot;: &quot;aSide&quot;
     }
   },
   &quot;required&quot;: [
@@ -17135,10 +17170,12 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 1,
       &quot;description&quot;: &quot;offset&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 10,
       &quot;description&quot;: &quot;number of records to fetch&quot;
     }
   },
@@ -17675,13 +17712,13 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
       &quot;type&quot;: &quot;string&quot;,
       &quot;description&quot;: &quot;Start date and time&quot;,
       &quot;format&quot;: &quot;date-time&quot;,
-      &quot;example&quot;: &quot;2024-07-11T18:06:21Z&quot;
+      &quot;example&quot;: &quot;2020-11-06T07:00:00Z&quot;
     },
     &quot;endDateTime&quot;: {
       &quot;type&quot;: &quot;string&quot;,
       &quot;description&quot;: &quot;End date and time&quot;,
       &quot;format&quot;: &quot;date-time&quot;,
-      &quot;example&quot;: &quot;2024-07-11T18:06:21Z&quot;
+      &quot;example&quot;: &quot;2020-11-10T07:00:00Z&quot;
     }
   },
   &quot;required&quot;: [
@@ -17876,10 +17913,12 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 1,
       &quot;description&quot;: &quot;offset&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 10,
       &quot;description&quot;: &quot;number of records to fetch&quot;
     }
   },
@@ -18203,10 +18242,12 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 1,
       &quot;description&quot;: &quot;offset&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 10,
       &quot;description&quot;: &quot;number of records to fetch&quot;
     }
   },
@@ -18301,10 +18342,12 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 1,
       &quot;description&quot;: &quot;offset&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 10,
       &quot;description&quot;: &quot;number of records to fetch&quot;
     }
   },
@@ -18467,10 +18510,12 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 1,
       &quot;description&quot;: &quot;offset&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 10,
       &quot;description&quot;: &quot;number of records to fetch&quot;
     }
   },
@@ -18794,10 +18839,12 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 1,
       &quot;description&quot;: &quot;offset&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 10,
       &quot;description&quot;: &quot;number of records to fetch&quot;
     }
   },
@@ -18892,10 +18939,12 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 1,
       &quot;description&quot;: &quot;offset&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 10,
       &quot;description&quot;: &quot;number of records to fetch&quot;
     }
   },
@@ -18983,10 +19032,12 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 1,
       &quot;description&quot;: &quot;offset&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 10,
       &quot;description&quot;: &quot;number of records to fetch&quot;
     }
   },
@@ -19042,10 +19093,12 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 1,
       &quot;description&quot;: &quot;offset&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 10,
       &quot;description&quot;: &quot;number of records to fetch&quot;
     }
   },
@@ -19096,10 +19149,12 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
   &quot;properties&quot;: {
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 1,
       &quot;description&quot;: &quot;offset&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 10,
       &quot;description&quot;: &quot;number of records to fetch&quot;
     },
     &quot;viewPoint&quot;: {
@@ -19319,10 +19374,12 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 1,
       &quot;description&quot;: &quot;offset&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 10,
       &quot;description&quot;: &quot;number of records to fetch&quot;
     }
   },
@@ -19583,10 +19640,12 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 1,
       &quot;description&quot;: &quot;offset&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 10,
       &quot;description&quot;: &quot;number of records to fetch&quot;
     }
   },
@@ -19631,10 +19690,12 @@ Part of the Equinix Equinix Fabric API family (fabric). Equinix Fabric is an adv
   &quot;properties&quot;: {
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 1,
       &quot;description&quot;: &quot;offset&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 10,
       &quot;description&quot;: &quot;number of records to fetch&quot;
     }
   },
@@ -28287,11 +28348,13 @@ Part of the Equinix Project API family (getprojects). Retrieve Equinix projects.
     &quot;includePermissions&quot;: {
       &quot;type&quot;: &quot;boolean&quot;,
       &quot;default&quot;: false,
+      &quot;example&quot;: false,
       &quot;description&quot;: &quot;whether to include the user permissions on the project resource&quot;
     },
     &quot;includeInbox&quot;: {
       &quot;type&quot;: &quot;boolean&quot;,
       &quot;default&quot;: false,
+      &quot;example&quot;: false,
       &quot;description&quot;: &quot;Whether to include the projects with inbox classification or not&quot;
     },
     &quot;limit&quot;: {
@@ -28468,11 +28531,13 @@ Part of the Equinix Equinix Internet Access API family (internetaccess). Equinix
     &quot;accountNumber&quot;: {
       &quot;pattern&quot;: &quot;^\\d+$&quot;,
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;100013200&quot;,
       &quot;description&quot;: &quot;Number of account to search by&quot;
     },
     &quot;ibx&quot;: {
       &quot;pattern&quot;: &quot;^[A-Z]{2,3}[1-9]?[0-9]{0,2}[a-zA-Z]?$&quot;,
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;WA1&quot;,
       &quot;description&quot;: &quot;Agreement IBX&quot;
     },
     &quot;offset&quot;: {
@@ -28990,14 +29055,17 @@ Part of the Equinix Equinix Internet Access API family (internetaccess). Equinix
   &quot;properties&quot;: {
     &quot;cage.spaceId&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;CH2:03:00603&quot;,
       &quot;description&quot;: &quot;Cage space ID&quot;
     },
     &quot;location.ibx&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;CH2&quot;,
       &quot;description&quot;: &quot;IBX code for given location&quot;
     },
     &quot;account.accountNumber&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;123111232&quot;,
       &quot;description&quot;: &quot;Account number&quot;
     },
     &quot;offset&quot;: {
@@ -29135,10 +29203,12 @@ Part of the Equinix Equinix Internet Access API family (internetaccess). Equinix
   &quot;properties&quot;: {
     &quot;location.ibx&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;CH2&quot;,
       &quot;description&quot;: &quot;IBX code for given location&quot;
     },
     &quot;account.accountNumber&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;123111232&quot;,
       &quot;description&quot;: &quot;Account number&quot;
     },
     &quot;offset&quot;: {
@@ -29264,6 +29334,7 @@ Part of the Equinix Equinix Internet Access API family (internetaccess). Equinix
   &quot;properties&quot;: {
     &quot;mediaTypes.connectorTypes.locations.ibx&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;SG1&quot;,
       &quot;description&quot;: &quot;IBX Code&quot;
     },
     &quot;offset&quot;: {
@@ -30822,6 +30893,7 @@ Part of the Equinix Equinix Internet Access API family (internetaccess). Equinix
     &quot;orderUUID&quot;: {
       &quot;type&quot;: &quot;string&quot;,
       &quot;format&quot;: &quot;uuid&quot;,
+      &quot;example&quot;: &quot;d27c0f84-f1da-498e-95c0-f3d3ae02d16d&quot;,
       &quot;description&quot;: &quot;UUID of the checked order&quot;
     }
   },
@@ -31036,22 +31108,27 @@ Part of the Equinix Equinix Internet Access API family (internetaccess). Equinix
   &quot;properties&quot;: {
     &quot;location.ibx&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;CH2&quot;,
       &quot;description&quot;: &quot;IBX code for given location&quot;
     },
     &quot;account.accountNumber&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;123111232&quot;,
       &quot;description&quot;: &quot;Account number&quot;
     },
     &quot;cage.spaceId&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;CH2:03:00603&quot;,
       &quot;description&quot;: &quot;Cage space ID&quot;
     },
     &quot;cabinet.spaceId&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;CH1:01:011201:0204&quot;,
       &quot;description&quot;: &quot;Cabinet space ID&quot;
     },
     &quot;mediaTypes.name&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;SINGLE_MODE_FIBER&quot;,
       &quot;description&quot;: &quot;Media Type&quot;
     },
     &quot;offset&quot;: {
@@ -31492,10 +31569,12 @@ Part of the Equinix Equinix Internet Access API family (internetaccess). Equinix
   &quot;properties&quot;: {
     &quot;accountNumber&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;100013200&quot;,
       &quot;description&quot;: &quot;Number of account to search by&quot;
     },
     &quot;number&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;PO-1234567&quot;,
       &quot;description&quot;: &quot;purchase order number&quot;
     }
   },
@@ -31644,10 +31723,12 @@ Part of the Equinix Equinix Internet Access API family (internetaccess). Equinix
   &quot;properties&quot;: {
     &quot;accountNumber&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;100013200&quot;,
       &quot;description&quot;: &quot;Number of account to search by&quot;
     },
     &quot;locations.ibx&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;WA1&quot;,
       &quot;description&quot;: &quot;IBX code&quot;
     },
     &quot;category&quot;: {
@@ -32077,10 +32158,12 @@ Part of the Equinix Equinix Internet Access API family (internetaccess). Equinix
   &quot;properties&quot;: {
     &quot;account.accountNumber&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;123111232&quot;,
       &quot;description&quot;: &quot;Account number&quot;
     },
     &quot;location.ibx&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;CH2&quot;,
       &quot;description&quot;: &quot;IBX code for given location&quot;
     },
     &quot;connectivitySource.type&quot;: {
@@ -32088,6 +32171,7 @@ Part of the Equinix Equinix Internet Access API family (internetaccess). Equinix
         &quot;COLO&quot;
       ],
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;COLO&quot;,
       &quot;description&quot;: &quot;Connectivity source type&quot;
     },
     &quot;product&quot;: {
@@ -32097,6 +32181,7 @@ Part of the Equinix Equinix Internet Access API family (internetaccess). Equinix
         &quot;MC_C&quot;
       ],
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;IA_C&quot;,
       &quot;description&quot;: &quot;Product&quot;
     },
     &quot;offset&quot;: {
@@ -32120,6 +32205,7 @@ Part of the Equinix Equinix Internet Access API family (internetaccess). Equinix
         &quot;PRICE_INCREASE_TERMS&quot;
       ],
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;TERMS_AND_CONDITIONS&quot;,
       &quot;description&quot;: &quot;Agreement type&quot;
     },
     &quot;language&quot;: {
@@ -32127,6 +32213,7 @@ Part of the Equinix Equinix Internet Access API family (internetaccess). Equinix
       &quot;minLength&quot;: 2,
       &quot;type&quot;: &quot;string&quot;,
       &quot;default&quot;: &quot;en&quot;,
+      &quot;example&quot;: &quot;en&quot;,
       &quot;description&quot;: &quot;2 letter ISO 639-1 language code&quot;
     }
   },
@@ -33167,6 +33254,7 @@ Part of the Equinix Equinix Internet Access API family (internetaccess). Equinix
     &quot;accountNumber&quot;: {
       &quot;pattern&quot;: &quot;^\\d+$&quot;,
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;100013200&quot;,
       &quot;description&quot;: &quot;Number of account to search by&quot;
     }
   },
@@ -34627,10 +34715,12 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;Unique ID of a device&quot;
     },
     &quot;backupUuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;4cfb5675-5c3f-4275-adba-0c9e3c26c96b&quot;,
       &quot;description&quot;: &quot;Unique ID of a backup&quot;
     }
   },
@@ -34809,6 +34899,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
     },
     &quot;accountUcmId&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;92D27009-EA33-4b60-B4FB-D3C4ED589649&quot;,
       &quot;description&quot;: &quot;A reseller creating an ACL template for a customer can pass the accountUcmId of the customer.&quot;
     },
     &quot;projectId&quot;: {
@@ -34991,6 +35082,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;virtualDeviceUuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;877a3aa2-c49a-4af1-98a6-007424e737ae&quot;,
       &quot;description&quot;: &quot;Unique ID of a device&quot;
     },
     &quot;version&quot;: {
@@ -35102,6 +35194,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;virtualDeviceUUID&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;Unique ID of a virtual device.&quot;
     }
   },
@@ -35139,6 +35232,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;virtualDeviceUuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;Unique Id of a virtual device.&quot;
     },
     &quot;aclDetails&quot;: {
@@ -35146,6 +35240,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
     },
     &quot;accountUcmId&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;92D27009-EA33-4b60-B4FB-D3C4ED589649&quot;,
       &quot;description&quot;: &quot;A reseller updating a device ACL template for a customer can pass the accountUcmId of the customer.&quot;
     }
   },
@@ -35327,10 +35422,12 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
     &quot;draft&quot;: {
       &quot;type&quot;: &quot;boolean&quot;,
       &quot;default&quot;: false,
+      &quot;example&quot;: false,
       &quot;description&quot;: &quot;Whether to save this as a draft.&quot;
     },
     &quot;draftUuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;The unique ID of the draft to be promoted to a device.&quot;
     },
     &quot;accountNumber&quot;: {
@@ -35632,10 +35729,12 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;draft&quot;: {
       &quot;type&quot;: &quot;boolean&quot;,
+      &quot;example&quot;: true,
       &quot;description&quot;: &quot;draft&quot;
     },
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;Unique Id of a Virtual Device&quot;
     },
     &quot;version&quot;: {
@@ -35902,10 +36001,12 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;be7ef79e-31e7-4769-be5b-e192496f48aa&quot;,
       &quot;description&quot;: &quot;Unique ID of an ACL template&quot;
     },
     &quot;accountUcmId&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;92D27009-EA33-4b60-B4FB-D3C4ED589649&quot;,
       &quot;description&quot;: &quot;A reseller deleting an ACL template for a customer must pass the accountUcmId of the customer.&quot;
     }
   },
@@ -35939,6 +36040,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;4cfb5675-5c3f-4275-adba-0c9e3c26c96b&quot;,
       &quot;description&quot;: &quot;Unique Id a backup&quot;
     }
   },
@@ -35972,6 +36074,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;6ea5a0e4-2bf7-45c2-9aa7-e846a8cd5567&quot;,
       &quot;description&quot;: &quot;Unique Id of a device link group.&quot;
     }
   },
@@ -36011,11 +36114,13 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;Unique Id of a Virtual Device&quot;
     },
     &quot;deleteRedundantDevice&quot;: {
       &quot;type&quot;: &quot;boolean&quot;,
       &quot;default&quot;: false,
+      &quot;example&quot;: false,
       &quot;description&quot;: &quot;Optional parameter in case you have a secondary device. As both the primary and secondary devices are deleted simultaneously, this field must be marked True so we delete both the devices simultaneously.&quot;
     },
     &quot;deactivationKey&quot;: {
@@ -36065,6 +36170,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;4cfb5675-5c3f-4275-adba-0c9e3c26c96b&quot;,
       &quot;description&quot;: &quot;Unique ID of a backup&quot;
     }
   },
@@ -36112,10 +36218,12 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;metro&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;SV&quot;,
       &quot;description&quot;: &quot;Metro region for which you want to check your account status&quot;
     },
     &quot;accountUcmId&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;92D27009-EA33-4b60-B4FB-D3C4ED589649&quot;,
       &quot;description&quot;: &quot;Unique ID of an account&quot;
     }
   },
@@ -36224,6 +36332,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;accountNumber&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;123456&quot;,
       &quot;description&quot;: &quot;Unique identifier of the customer account.&quot;
     }
   },
@@ -36273,7 +36382,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
 <p>Tags: <code>network-edge</code> <code>Availability-and-Metros</code> <code>network</code> <code>virtual-devices</code> </p>
 
 <table><thead><tr><th>Param</th><th>Type</th><th>Required</th><th>Description</th></tr></thead><tbody>
-<tr><td><code>deviceType</code></td><td><code>DeviceTypeCode</code></td>
+<tr><td><code>deviceType</code></td><td><code>&#34;C8000V&#34; | &#34;C8000V-SDWAN&#34; | &#34;PA-VM&#34; | &#34;ASAV&#34; | &#34;CGUARD&#34; | &#34;FG-VM&#34; | …</code></td>
 <td>yes</td><td class="desc">Device type code (e.g., C8000V)</td></tr>
 <tr><td><code>deviceManagementType</code></td><td><code>&#34;SELF-CONFIGURED&#34; | &#34;EQUINIX-CONFIGURED&#34;</code></td>
 <td>yes</td><td class="desc">Device management type. SELF-CONFIGURED</td></tr>
@@ -36302,7 +36411,34 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
     &quot;deviceType&quot;: {
-      &quot;$ref&quot;: &quot;<a href="#schema-DeviceTypeCode">#/components/schemas/DeviceTypeCode</a>&quot;
+      &quot;enum&quot;: [
+        &quot;C8000V&quot;,
+        &quot;C8000V-SDWAN&quot;,
+        &quot;PA-VM&quot;,
+        &quot;ASAV&quot;,
+        &quot;CGUARD&quot;,
+        &quot;FG-VM&quot;,
+        &quot;MERAKI-VMX&quot;,
+        &quot;PRISMA-SDWAN&quot;,
+        &quot;INFOBLOX&quot;,
+        &quot;AVIATRIX_EDGE&quot;,
+        &quot;VSRX&quot;,
+        &quot;ARISTA-ROUTER&quot;,
+        &quot;EDGECONNECT-SDWAN&quot;,
+        &quot;VERSA_SDWAN&quot;,
+        &quot;NGINX&quot;,
+        &quot;BLUECAT&quot;,
+        &quot;VYOS-ROUTER&quot;,
+        &quot;FG-SDWAN&quot;,
+        &quot;BLUECAT-EDGE-SERVICE-POINT&quot;,
+        &quot;F5XC&quot;,
+        &quot;6WIND-VSR&quot;,
+        &quot;VSRX-SDWAN&quot;,
+        &quot;FORTIGATE_VM&quot;
+      ],
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;Device type code (e.g., C8000V)&quot;,
+      &quot;example&quot;: &quot;PA-VM&quot;
     },
     &quot;deviceManagementType&quot;: {
       &quot;enum&quot;: [
@@ -36310,6 +36446,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
         &quot;EQUINIX-CONFIGURED&quot;
       ],
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;SELF-CONFIGURED&quot;,
       &quot;description&quot;: &quot;Device management type. SELF-CONFIGURED&quot;
     },
     &quot;mode&quot;: {
@@ -36318,14 +36455,17 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
         &quot;BYOL&quot;
       ],
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;Subscription&quot;,
       &quot;description&quot;: &quot;License mode, either Subscription or BYOL.&quot;
     },
     &quot;cluster&quot;: {
       &quot;type&quot;: &quot;boolean&quot;,
+      &quot;example&quot;: false,
       &quot;description&quot;: &quot;Whether you want a cluster device.&quot;
     },
     &quot;sdwan&quot;: {
       &quot;type&quot;: &quot;boolean&quot;,
+      &quot;example&quot;: false,
       &quot;description&quot;: &quot;Whether you want an SD-WAN device.&quot;
     },
     &quot;connectivity&quot;: {
@@ -36335,30 +36475,37 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
         &quot;INTERNET-ACCESS-WITH-PRVT-MGMT&quot;
       ],
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;INTERNET-ACCESS&quot;,
       &quot;description&quot;: &quot;Type of connectivity you want. INTERNET-ACCESS, PRIVATE, or INTERNET-ACCESS-WITH-PRVT-MGMT. PRIVATE devices do not have ACLs or bandwidth.&quot;
     },
     &quot;core&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 4,
       &quot;description&quot;: &quot;The desired number of cores.&quot;
     },
     &quot;memory&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 4,
       &quot;description&quot;: &quot;Desired memory.&quot;
     },
     &quot;unit&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;GB&quot;,
       &quot;description&quot;: &quot;Unit of memory. GB or MB.&quot;
     },
     &quot;flavor&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;small&quot;,
       &quot;description&quot;: &quot;Flavor of device.&quot;
     },
     &quot;version&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;17.06.01&quot;,
       &quot;description&quot;: &quot;Version.&quot;
     },
     &quot;softwarePkg&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;SEC&quot;,
       &quot;description&quot;: &quot;Software package.&quot;
     }
   },
@@ -36452,6 +36599,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;Unique ID of a backup&quot;
     }
   },
@@ -36558,20 +36706,24 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
       &quot;default&quot;: 0,
+      &quot;example&quot;: 0,
       &quot;description&quot;: &quot;Specifies where to start a page. It is the starting point of the collection returned from the server.&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
       &quot;default&quot;: 20,
+      &quot;example&quot;: 20,
       &quot;description&quot;: &quot;Specifies the page size.&quot;
     },
     &quot;accountUcmId&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;92D27009-EA33-4b60-B4FB-D3C4ED589649&quot;,
       &quot;description&quot;: &quot;Unique ID of the account. A reseller querying for the ACLs of a customer should input the accountUcmId of the customer.&quot;
     },
     &quot;projectIds&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;If projectIds are different from default projectIds, must pass a projectIds parameter&quot;
     }
   },
@@ -36628,10 +36780,12 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;projectIds&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;If projectIds are different from default projectIds, must pass a projectIds parameter&quot;
     },
     &quot;virtualDeviceUuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;Unique ID of a virtual device&quot;
     },
     &quot;status&quot;: {
@@ -36648,12 +36802,14 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
       &quot;default&quot;: 0,
+      &quot;example&quot;: 0,
       &quot;description&quot;: &quot;Specifies where to start a page. It is the starting point of the collection returned from the server.&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
       &quot;default&quot;: 20,
+      &quot;example&quot;: 20,
       &quot;description&quot;: &quot;Specifies the page size.&quot;
     }
   },
@@ -36766,6 +36922,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;6ea5a0e4-2bf7-45c2-9aa7-e846a8cd5567&quot;,
       &quot;description&quot;: &quot;Unique Id of a device link group.&quot;
     }
   },
@@ -36880,38 +37037,46 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;projectIds&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;If projectIds are different from default projectIds, must pass a projectIds parameter&quot;
     },
     &quot;metro&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;SV&quot;,
       &quot;description&quot;: &quot;Metro Code&quot;
     },
     &quot;virtualDeviceUuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;Unique Id of a virtual device.&quot;
     },
     &quot;accountUcmId&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;92D27009-EA33-4b60-B4FB-D3C4ED589649&quot;,
       &quot;description&quot;: &quot;Unique Id of the account. A reseller querying for a customer&#x27;s link groups can pass the accountUcmId of the customer&#x27;s account.&quot;
     },
     &quot;groupUuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;Unique Id of a link group&quot;
     },
     &quot;groupName&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;linkGroup&quot;,
       &quot;description&quot;: &quot;The name of a link group&quot;
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
       &quot;default&quot;: 0,
+      &quot;example&quot;: 0,
       &quot;description&quot;: &quot;Specifies where to start a page.&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
       &quot;default&quot;: 20,
+      &quot;example&quot;: 20,
       &quot;description&quot;: &quot;Specifies the page size.&quot;
     }
   },
@@ -37030,18 +37195,21 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;virtualDeviceUUID&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;Unique ID of a virtual device.&quot;
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
       &quot;default&quot;: 0,
+      &quot;example&quot;: 0,
       &quot;description&quot;: &quot;Specifies where to start a page. It is the starting point of the collection returned from the server.&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
       &quot;default&quot;: 20,
+      &quot;example&quot;: 20,
       &quot;description&quot;: &quot;Specifies the page size.&quot;
     }
   },
@@ -37126,6 +37294,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;be7ef79e-31e7-4769-be5b-e192496f48aa&quot;,
       &quot;description&quot;: &quot;Unique Id of an ACL template&quot;
     }
   },
@@ -37231,6 +37400,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;virtualDeviceUuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;Unique Id of a virtual device.&quot;
     }
   },
@@ -37277,18 +37447,21 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;virtualDeviceUuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;Unique ID of a virtual device.&quot;
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
       &quot;default&quot;: 0,
+      &quot;example&quot;: 0,
       &quot;description&quot;: &quot;Specifies where to start a page. It is the starting point of the collection returned from the server.&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
       &quot;default&quot;: 20,
+      &quot;example&quot;: 20,
       &quot;description&quot;: &quot;Specifies the page size.&quot;
     }
   },
@@ -37385,6 +37558,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
     },
     &quot;version&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;17.06.01&quot;,
       &quot;description&quot;: &quot;Version&quot;
     }
   },
@@ -37499,20 +37673,24 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;virtualDeviceUuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;Unique Id of a device&quot;
     },
     &quot;interfaceId&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;1&quot;,
       &quot;description&quot;: &quot;Interface Id&quot;
     },
     &quot;startDateTime&quot;: {
       &quot;type&quot;: &quot;string&quot;,
       &quot;format&quot;: &quot;date-time&quot;,
+      &quot;example&quot;: &quot;2023-11-10T19:06:06Z&quot;,
       &quot;description&quot;: &quot;Start time of the duration for which you want stats. (YYYY-MM-DDThh:mm:ssZ)&quot;
     },
     &quot;endDateTime&quot;: {
       &quot;type&quot;: &quot;string&quot;,
       &quot;format&quot;: &quot;date-time&quot;,
+      &quot;example&quot;: &quot;2023-11-17T19:06:06Z&quot;,
       &quot;description&quot;: &quot;End time of the duration for which you want stats. (YYYY-MM-DDThh:mm:ssZ)&quot;
     }
   },
@@ -37583,19 +37761,21 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;region&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;AMER&quot;,
       &quot;description&quot;: &quot;Name of the region for which you want metros (e.g., AMER)&quot;
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
       &quot;default&quot;: 0,
+      &quot;example&quot;: 0,
       &quot;description&quot;: &quot;Specifies where to start a page. It is the starting point of the collection returned from the server.&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
       &quot;default&quot;: 20,
-      &quot;example&quot;: 10,
+      &quot;example&quot;: 20,
       &quot;description&quot;: &quot;Specifies the page size.&quot;
     }
   },
@@ -37783,10 +37963,12 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
     &quot;accountNumber&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
+      &quot;example&quot;: 123456,
       &quot;description&quot;: &quot;Account number&quot;
     },
     &quot;metro&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;SV&quot;,
       &quot;description&quot;: &quot;Metro&quot;
     },
     &quot;vendorPackage&quot;: {
@@ -37796,6 +37978,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
         &quot;NETWORK-ESSENTIALS&quot;
       ],
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;NETWORK-ESSENTIALS&quot;,
       &quot;description&quot;: &quot;Vendor package&quot;
     },
     &quot;licenseType&quot;: {
@@ -37804,32 +37987,39 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
         &quot;BYOL&quot;
       ],
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;Subscription&quot;,
       &quot;description&quot;: &quot;License type&quot;
     },
     &quot;softwarePackage&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;AX&quot;,
       &quot;description&quot;: &quot;Software package&quot;
     },
     &quot;throughput&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
+      &quot;example&quot;: 100,
       &quot;description&quot;: &quot;Throughput&quot;
     },
     &quot;throughputUnit&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;Mbps&quot;,
       &quot;description&quot;: &quot;Throughput unit&quot;
     },
     &quot;termLength&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;12&quot;,
       &quot;description&quot;: &quot;Term length (in months)&quot;
     },
     &quot;additionalBandwidth&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
+      &quot;example&quot;: 100,
       &quot;description&quot;: &quot;Additional bandwidth (in Mbps)&quot;
     },
     &quot;virtualDeviceUuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;Virtual device unique Id (only required if existing device is being modified)&quot;
     },
     &quot;deviceManagementType&quot;: {
@@ -37838,33 +38028,40 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
         &quot;EQUINIX-CONFIGURED&quot;
       ],
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;SELF-CONFIGURED&quot;,
       &quot;description&quot;: &quot;The device management type&quot;
     },
     &quot;core&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
+      &quot;example&quot;: 4,
       &quot;description&quot;: &quot;The number of cores&quot;
     },
     &quot;secondaryAccountNumber&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
+      &quot;example&quot;: 123457,
       &quot;description&quot;: &quot;Secondary account number (in case you have a device pair)&quot;
     },
     &quot;secondaryMetro&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;SV&quot;,
       &quot;description&quot;: &quot;Secondary metro (in case you have a device pair)&quot;
     },
     &quot;secondaryAdditionalBandwidth&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
+      &quot;example&quot;: 100,
       &quot;description&quot;: &quot;Secondary additional bandwidth (in Mbps)&quot;
     },
     &quot;accountUcmId&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;92D27009-EA33-4b60-B4FB-D3C4ED589649&quot;,
       &quot;description&quot;: &quot;Account unique ID&quot;
     },
     &quot;orderingContact&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;cust0001&quot;,
       &quot;description&quot;: &quot;Reseller customer username&quot;
     }
   },
@@ -37936,10 +38133,12 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;accountUcmId&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;92D27009-EA33-4b60-B4FB-D3C4ED589649&quot;,
       &quot;description&quot;: &quot;This field is for resellers. Please pass the accountUcmId of your customer to get the public keys.&quot;
     },
     &quot;projectIds&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8,3da0a663-20d9-4b8f-8c5d-d5cf706840c9&quot;,
       &quot;description&quot;: &quot;If projectIds are different from default projectIds, must pass a projectIds parameter&quot;
     }
   },
@@ -38022,6 +38221,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
         &quot;NETWORK-ESSENTIALS&quot;
       ],
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;NETWORK-ESSENTIALS&quot;,
       &quot;description&quot;: &quot;The vendor package code.&quot;
     },
     &quot;licenseType&quot;: {
@@ -38030,6 +38230,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
         &quot;BYOL&quot;
       ],
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;Subscription&quot;,
       &quot;description&quot;: &quot;The type of license (e.g., Subscription, BYOL).&quot;
     }
   },
@@ -38070,6 +38271,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;uuid&quot;
     }
   },
@@ -38449,6 +38651,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;uuid&quot;
     }
   },
@@ -38506,22 +38709,26 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
     },
     &quot;category&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;ROUTER&quot;,
       &quot;description&quot;: &quot;Category. One of FIREWALL, ROUTER or SD-WAN&quot;
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
       &quot;default&quot;: 0,
+      &quot;example&quot;: 0,
       &quot;description&quot;: &quot;Specifies where to start a page. It is the starting point of the collection returned from the server.&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
       &quot;default&quot;: 20,
+      &quot;example&quot;: 20,
       &quot;description&quot;: &quot;Specifies the page size.&quot;
     },
     &quot;projectId&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;If projectId is different from default projectId, must pass a projectId parameter&quot;
     }
   },
@@ -38588,16 +38795,19 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
       &quot;default&quot;: 0,
+      &quot;example&quot;: 0,
       &quot;description&quot;: &quot;Specifies where to start a page. It is the starting point of the collection returned from the server.&quot;
     },
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
       &quot;default&quot;: 20,
+      &quot;example&quot;: 20,
       &quot;description&quot;: &quot;Specifies the page size.&quot;
     },
     &quot;metroCode&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;SV&quot;,
       &quot;description&quot;: &quot;Two-letter metro code.&quot;
     },
     &quot;status&quot;: {
@@ -38609,18 +38819,22 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
         &quot;FAILED&quot;
       ],
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;PROVISIONED&quot;,
       &quot;description&quot;: &quot;The status of the device.&quot;
     },
     &quot;showOnlySubCustomerDevices&quot;: {
       &quot;type&quot;: &quot;boolean&quot;,
+      &quot;example&quot;: false,
       &quot;description&quot;: &quot;Resellers may mark this Yes to see sub customer devices.&quot;
     },
     &quot;accountUcmId&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;123456&quot;,
       &quot;description&quot;: &quot;Unique ID of the account.&quot;
     },
     &quot;searchText&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;My-Device&quot;,
       &quot;description&quot;: &quot;Enter text to fetch only matching device names&quot;
     },
     &quot;sort&quot;: {
@@ -38628,10 +38842,14 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
       },
+      &quot;example&quot;: [
+        &quot;name&quot;
+      ],
       &quot;description&quot;: &quot;Sorts the output based on field names.&quot;
     },
     &quot;projectIds&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;If projectIds are different from default projectIds, must pass a projectIds parameter&quot;
     }
   },
@@ -39025,6 +39243,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;Virtual Device unique Id&quot;
     }
   },
@@ -39149,6 +39368,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;4cfb5675-5c3f-4275-adba-0c9e3c26c96b&quot;,
       &quot;description&quot;: &quot;Unique ID of a backup&quot;
     },
     &quot;name&quot;: {
@@ -39221,10 +39441,12 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
     &quot;accountNumber&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
+      &quot;example&quot;: 123456,
       &quot;description&quot;: &quot;Account number&quot;
     },
     &quot;metro&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;SV&quot;,
       &quot;description&quot;: &quot;Metro&quot;
     },
     &quot;vendorPackage&quot;: {
@@ -39234,6 +39456,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
         &quot;NETWORK-ESSENTIALS&quot;
       ],
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;NETWORK-ESSENTIALS&quot;,
       &quot;description&quot;: &quot;Vendor package&quot;
     },
     &quot;licenseType&quot;: {
@@ -39242,32 +39465,39 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
         &quot;BYOL&quot;
       ],
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;Subscription&quot;,
       &quot;description&quot;: &quot;License type&quot;
     },
     &quot;softwarePackage&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;AX&quot;,
       &quot;description&quot;: &quot;Software package&quot;
     },
     &quot;throughput&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
+      &quot;example&quot;: 100,
       &quot;description&quot;: &quot;Throughput&quot;
     },
     &quot;throughputUnit&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;Mbps&quot;,
       &quot;description&quot;: &quot;Throughput unit&quot;
     },
     &quot;termLength&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;12&quot;,
       &quot;description&quot;: &quot;Term length (in months)&quot;
     },
     &quot;additionalBandwidth&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
+      &quot;example&quot;: 100,
       &quot;description&quot;: &quot;Additional bandwidth (in Mbps)&quot;
     },
     &quot;virtualDeviceUuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;Virtual device unique Id (only required if existing device is being modified)&quot;
     },
     &quot;deviceManagementType&quot;: {
@@ -39276,33 +39506,40 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
         &quot;EQUINIX-CONFIGURED&quot;
       ],
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;SELF-CONFIGURED&quot;,
       &quot;description&quot;: &quot;The device management type&quot;
     },
     &quot;core&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
+      &quot;example&quot;: 4,
       &quot;description&quot;: &quot;The number of cores&quot;
     },
     &quot;secondaryAccountNumber&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
+      &quot;example&quot;: 123457,
       &quot;description&quot;: &quot;The secondary account number (for HA)&quot;
     },
     &quot;secondaryMetro&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;SV&quot;,
       &quot;description&quot;: &quot;Secondary metro (for HA)&quot;
     },
     &quot;secondaryAdditionalBandwidth&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;int32&quot;,
+      &quot;example&quot;: 100,
       &quot;description&quot;: &quot;Secondary additional bandwidth (in Mbps for HA)&quot;
     },
     &quot;accountUcmId&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;92D27009-EA33-4b60-B4FB-D3C4ED589649&quot;,
       &quot;description&quot;: &quot;Account unique ID&quot;
     },
     &quot;orderingContact&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;cust0001&quot;,
       &quot;description&quot;: &quot;Reseller customer username&quot;
     }
   },
@@ -39351,6 +39588,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;The unique Id of a virtual device&quot;
     },
     &quot;additionalBandwidth&quot;: {
@@ -39399,6 +39637,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;be7ef79e-31e7-4769-be5b-e192496f48aa&quot;,
       &quot;description&quot;: &quot;Unique ID of an ACL template&quot;
     },
     &quot;name&quot;: {
@@ -39416,6 +39655,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
     },
     &quot;accountUcmId&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;92D27009-EA33-4b60-B4FB-D3C4ED589649&quot;,
       &quot;description&quot;: &quot;A reseller updating an ACL template for a customer must pass the accountUcmId of the customer.&quot;
     },
     &quot;projectId&quot;: {
@@ -39457,6 +39697,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;4cfb5675-5c3f-4275-adba-0c9e3c26c96b&quot;,
       &quot;description&quot;: &quot;Unique ID of a backup&quot;
     },
     &quot;name&quot;: {
@@ -39506,6 +39747,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;6ea5a0e4-2bf7-45c2-9aa7-e846a8cd5567&quot;,
       &quot;description&quot;: &quot;Unique Id of a device link group.&quot;
     },
     &quot;groupName&quot;: {
@@ -39570,6 +39812,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;virtualDeviceUuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;Unique Id of a virtual device.&quot;
     },
     &quot;aclDetails&quot;: {
@@ -39577,6 +39820,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
     },
     &quot;accountUcmId&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;92D27009-EA33-4b60-B4FB-D3C4ED589649&quot;,
       &quot;description&quot;: &quot;A reseller updating a device ACL template for a customer can pass the accountUcmId of the customer.&quot;
     }
   },
@@ -39613,6 +39857,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;Unique Id of a virtual device&quot;
     },
     &quot;token&quot;: {
@@ -39676,6 +39921,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;Unique Id of a Virtual Device&quot;
     },
     &quot;core&quot;: {
@@ -39867,6 +40113,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;metroCode&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;SV&quot;,
       &quot;description&quot;: &quot;Two-letter metro code where the device will be created.&quot;
     },
     &quot;deviceTypeCode&quot;: {
@@ -39877,6 +40124,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
         &quot;BYOL&quot;
       ],
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;BYOL&quot;,
       &quot;description&quot;: &quot;Type of license (e.g., BYOL).&quot;
     },
     &quot;file&quot;: {
@@ -39887,6 +40135,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
     },
     &quot;projectId&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;If projectId is different from default projectId, must pass a projectId parameter&quot;
     }
   },
@@ -39935,6 +40184,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
   &quot;properties&quot;: {
     &quot;uuid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;Unique Id of a virtual device&quot;
     },
     &quot;file&quot;: {
@@ -39945,6 +40195,7 @@ Part of the Equinix Equinix Network Edge API family (network-edge). Network Edge
     },
     &quot;projectId&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;3da0a663-20d9-4b8f-8c5d-d5cf706840c8&quot;,
       &quot;description&quot;: &quot;If projectId is different from default projectId, must pass a projectId parameter&quot;
     }
   },
@@ -41049,6 +41300,7 @@ Part of the Equinix Orders API family (orders). Based on a user&#39;s permission
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
       },
+      &quot;example&quot;: &quot;SG1&quot;,
       &quot;description&quot;: &quot;List of IBXs to be filtered&quot;
     }
   },
@@ -41838,6 +42090,7 @@ Part of the Equinix Orders API family (orders). Based on a user&#39;s permission
       &quot;maxLength&quot;: 100,
       &quot;minLength&quot;: 1,
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;{orderId}&quot;,
       &quot;description&quot;: &quot;Identifier of the order&quot;
     }
   },
@@ -41939,6 +42192,7 @@ Part of the Equinix Quote API family (quotes). Quote API allow users to retrieve
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
       },
+      &quot;example&quot;: &quot;SG1&quot;,
       &quot;description&quot;: &quot;List of IBXs to be filtered&quot;
     }
   },
@@ -47272,6 +47526,7 @@ Part of the Equinix Equinix SmartView API family (smartview). Equinix Smart View
   &quot;properties&quot;: {
     &quot;alertConfigurationUid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;9756a585-c3c1-4648-b2e1-7d8804912098&quot;,
       &quot;description&quot;: &quot;Unique identifier (UUID) of the power alert configuration to delete&quot;
     }
   },
@@ -48429,10 +48684,12 @@ Part of the Equinix Equinix SmartView API family (smartview). Equinix Smart View
   &quot;properties&quot;: {
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 100,
       &quot;description&quot;: &quot;Number of records to retrieve per request&quot;
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 0,
       &quot;description&quot;: &quot;Record number to start retrieval from (0..N)&quot;
     },
     &quot;ibx&quot;: {
@@ -48440,6 +48697,10 @@ Part of the Equinix Equinix SmartView API family (smartview). Equinix Smart View
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
       },
+      &quot;example&quot;: [
+        &quot;SV5&quot;,
+        &quot;NY1&quot;
+      ],
       &quot;description&quot;: &quot;List of IBX codes to filter power events (comma-separated)&quot;
     },
     &quot;status&quot;: {
@@ -48451,10 +48712,14 @@ Part of the Equinix Equinix SmartView API family (smartview). Equinix Smart View
         ],
         &quot;type&quot;: &quot;string&quot;
       },
+      &quot;example&quot;: [
+        &quot;ACTIVE&quot;
+      ],
       &quot;description&quot;: &quot;List of statuses to filter power events (comma-separated). Possible values - ACTIVE, INACTIVE&quot;
     },
     &quot;edgeCollectedOn&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;2024-01-01T00:00:00.000Z&quot;,
       &quot;description&quot;: &quot;Date filter to retrieve power events collected after a specific date (ISO 8601 format)&quot;
     }
   },
@@ -50345,6 +50610,7 @@ Part of the Equinix Equinix SmartView API family (smartview). Equinix Smart View
   &quot;properties&quot;: {
     &quot;alertConfigurationUid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;9756a585-c3c1-4648-b2e1-7d8804912098&quot;,
       &quot;description&quot;: &quot;Unique identifier (UUID) of the power alert configuration to pause&quot;
     }
   },
@@ -50389,22 +50655,27 @@ Part of the Equinix Equinix SmartView API family (smartview). Equinix Smart View
   &quot;properties&quot;: {
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 100,
       &quot;description&quot;: &quot;Number of records to retrieve per request.&quot;
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 0,
       &quot;description&quot;: &quot;Record Number you want start to retrieve from (0..N)&quot;
     },
     &quot;status&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;ACTIVE&quot;,
       &quot;description&quot;: &quot;Alert status - ACTIVE or INACTIVE&quot;
     },
     &quot;assetClassification&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;Mechanical&quot;,
       &quot;description&quot;: &quot;The class of assets this asset belongs to - Mechanical/Electrical/Environmental&quot;
     },
     &quot;edgeCollectedOn&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;2023-11-30T05:08:39.345000Z&quot;,
       &quot;description&quot;: &quot;Returns the alarms after the passed time&quot;
     }
   },
@@ -50804,6 +51075,7 @@ Part of the Equinix Equinix SmartView API family (smartview). Equinix Smart View
   &quot;properties&quot;: {
     &quot;alertConfigurationUid&quot;: {
       &quot;type&quot;: &quot;string&quot;,
+      &quot;example&quot;: &quot;9756a585-c3c1-4648-b2e1-7d8804912098&quot;,
       &quot;description&quot;: &quot;Unique identifier (UUID) of the power alert configuration to resume&quot;
     }
   },
@@ -50844,10 +51116,12 @@ Part of the Equinix Equinix SmartView API family (smartview). Equinix Smart View
   &quot;properties&quot;: {
     &quot;limit&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 100,
       &quot;description&quot;: &quot;Number of records to retrieve per request&quot;
     },
     &quot;offset&quot;: {
       &quot;type&quot;: &quot;integer&quot;,
+      &quot;example&quot;: 0,
       &quot;description&quot;: &quot;Record number to start retrieval from (0..N)&quot;
     },
     &quot;ibx&quot;: {
@@ -50855,6 +51129,10 @@ Part of the Equinix Equinix SmartView API family (smartview). Equinix Smart View
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
       },
+      &quot;example&quot;: [
+        &quot;SV5&quot;,
+        &quot;NY1&quot;
+      ],
       &quot;description&quot;: &quot;List of IBX codes to filter configurations (comma-separated)&quot;
     },
     &quot;state&quot;: {
@@ -50867,6 +51145,9 @@ Part of the Equinix Equinix SmartView API family (smartview). Equinix Smart View
         ],
         &quot;type&quot;: &quot;string&quot;
       },
+      &quot;example&quot;: [
+        &quot;ACTIVE&quot;
+      ],
       &quot;description&quot;: &quot;List of states to filter configurations (comma-separated). Possible values - ACTIVE, PAUSED, DELETED&quot;
     }
   },
@@ -55779,11 +56060,11 @@ Part of the Equinix Notifications API family (unifiednotification). The notifica
 <section class="group" id="group-workflows">
 <h2>workflows</h2>
 
-<details class="method" id="arazzo_describe_workflow" data-search="arazzo_describe_workflow describe a specific arazzo workflow (summary, inputs).">
+<details class="method" id="arazzo_describe_workflow" data-search="arazzo_describe_workflow describe workflow">
 <summary><span class="name">arazzo_describe_workflow</span>
-<span class="sum">Describe a specific Arazzo workflow (summary, inputs).</span></summary>
+<span class="sum">Describe Workflow</span></summary>
 <div class="body">
-
+<p class="desc-block">Describe a specific Arazzo workflow (summary, inputs).</p>
 <p>Tags: <code>workflows</code> </p>
 
 <table><thead><tr><th>Param</th><th>Type</th><th>Required</th><th>Description</th></tr></thead><tbody>
@@ -55810,11 +56091,11 @@ Part of the Equinix Notifications API family (unifiednotification). The notifica
 </div>
 </details>
 
-<details class="method" id="arazzo_list_workflows" data-search="arazzo_list_workflows list registered arazzo workflow ids.">
+<details class="method" id="arazzo_list_workflows" data-search="arazzo_list_workflows list workflows">
 <summary><span class="name">arazzo_list_workflows</span>
-<span class="sum">List registered Arazzo workflow IDs.</span></summary>
+<span class="sum">List Workflows</span></summary>
 <div class="body">
-
+<p class="desc-block">List registered Arazzo workflow IDs.</p>
 <p>Tags: <code>workflows</code> </p>
 <p>No params.</p>
 <details><summary>Result: <code>object</code></summary>

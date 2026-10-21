@@ -4215,7 +4215,7 @@
     },
     {
       "name": "arazzo_describe_workflow",
-      "summary": "Describe a specific Arazzo workflow (summary, inputs).",
+      "summary": "Describe Workflow",
       "description": "Describe a specific Arazzo workflow (summary, inputs).",
       "tags": [
         {
@@ -4243,7 +4243,7 @@
     },
     {
       "name": "arazzo_list_workflows",
-      "summary": "List registered Arazzo workflow IDs.",
+      "summary": "List Workflows",
       "description": "List registered Arazzo workflow IDs.",
       "tags": [
         {
@@ -5356,6 +5356,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "C-12345",
             "description": "Billing Account Id"
           }
         }
@@ -5398,6 +5399,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": 12345,
             "description": "Billing account number"
           }
         }
@@ -5662,6 +5664,7 @@
           "schema": {
             "type": "string",
             "format": "date",
+            "example": "2021-09-17",
             "description": "Start date of invoice in `YYYY-MM-DD` format"
           }
         },
@@ -5672,6 +5675,7 @@
           "schema": {
             "type": "string",
             "format": "date",
+            "example": "2021-10-17",
             "description": "End date of invoice in `YYYY-MM-DD` format"
           }
         },
@@ -6136,6 +6140,7 @@
           "schema": {
             "type": "string",
             "format": "date",
+            "example": "2021-09-17",
             "description": "Start date of invoice in `YYYY-MM-DD` format"
           }
         },
@@ -6146,6 +6151,7 @@
           "schema": {
             "type": "string",
             "format": "date",
+            "example": "2021-10-17",
             "description": "End date of invoice in `YYYY-MM-DD` format"
           }
         },
@@ -7806,6 +7812,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "079dc798-05e8-11ed-b939-0242ac120002",
             "description": "Digital LOA document identifier."
           }
         }
@@ -8234,6 +8241,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "079dc798-05e8-11ed-b939-0242ac120002",
             "description": "Digital LOA document identifier."
           }
         }
@@ -8279,6 +8287,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "079dc798-05e8-11ed-b939-0242ac120002",
             "description": "Digital LOA unique identifier."
           }
         },
@@ -8288,6 +8297,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "4c7d67e2-bbf2-4407-bcff-05a385ed0d4e",
             "description": "Digital LOA change unique identifier."
           }
         }
@@ -8404,6 +8414,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "079dc798-05e8-11ed-b939-0242ac120002",
             "description": "Digital LOA unique identifier."
           }
         }
@@ -8533,6 +8544,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "AM11",
             "description": "IBX data center identifier."
           }
         },
@@ -8716,6 +8728,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "079dc798-05e8-11ed-b939-0242ac120002",
             "description": "Digital LOA document identifier."
           }
         },
@@ -8810,6 +8823,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "079dc798-05e8-11ed-b939-0242ac120002",
             "description": "Digital LOA document identifier."
           }
         },
@@ -8913,6 +8927,7 @@
             "minimum": 0.0,
             "type": "integer",
             "default": 0,
+            "example": 0,
             "description": "Index of the first item returned in the response."
           }
         },
@@ -8924,6 +8939,7 @@
             "minimum": 1.0,
             "type": "integer",
             "default": 20,
+            "example": 20,
             "description": "Maximum number of items returned per page."
           }
         },
@@ -15935,6 +15951,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 1,
             "description": "offset"
           }
         },
@@ -15944,6 +15961,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 10,
             "description": "number of records to fetch"
           }
         },
@@ -16158,6 +16176,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 1,
             "description": "offset"
           }
         },
@@ -16167,6 +16186,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 10,
             "description": "number of records to fetch"
           }
         },
@@ -16365,6 +16385,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 1,
             "description": "offset"
           }
         },
@@ -16374,6 +16395,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 10,
             "description": "number of records to fetch"
           }
         },
@@ -16630,6 +16652,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 1,
             "description": "offset"
           }
         },
@@ -16639,6 +16662,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 10,
             "description": "number of records to fetch"
           }
         },
@@ -16881,6 +16905,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 1,
             "description": "offset"
           }
         },
@@ -16890,6 +16915,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 10,
             "description": "number of records to fetch"
           }
         },
@@ -17701,6 +17727,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 1,
             "description": "offset"
           }
         },
@@ -17710,6 +17737,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 10,
             "description": "number of records to fetch"
           }
         }
@@ -18361,6 +18389,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 1,
             "description": "offset"
           }
         },
@@ -18370,6 +18399,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 10,
             "description": "number of records to fetch"
           }
         }
@@ -18537,6 +18567,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 1,
             "description": "offset"
           }
         },
@@ -18546,6 +18577,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 10,
             "description": "number of records to fetch"
           }
         }
@@ -18791,6 +18823,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 1,
             "description": "offset"
           }
         },
@@ -18800,6 +18833,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 10,
             "description": "number of records to fetch"
           }
         }
@@ -18911,7 +18945,7 @@
             "type": "string",
             "description": "Start date and time",
             "format": "date-time",
-            "example": "2024-07-11T18:06:21Z"
+            "example": "2020-11-06T07:00:00Z"
           }
         },
         {
@@ -18922,7 +18956,7 @@
             "type": "string",
             "description": "End date and time",
             "format": "date-time",
-            "example": "2024-07-11T18:06:21Z"
+            "example": "2020-11-10T07:00:00Z"
           }
         },
         {
@@ -18935,7 +18969,8 @@
               "zSide"
             ],
             "type": "string",
-            "description": "viewPoint"
+            "description": "viewPoint",
+            "example": "aSide"
           }
         }
       ],
@@ -19957,6 +19992,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 1,
             "description": "offset"
           }
         },
@@ -19966,6 +20002,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 10,
             "description": "number of records to fetch"
           }
         }
@@ -20598,7 +20635,7 @@
             "type": "string",
             "description": "Start date and time",
             "format": "date-time",
-            "example": "2024-07-11T18:06:21Z"
+            "example": "2020-11-06T07:00:00Z"
           }
         },
         {
@@ -20609,7 +20646,7 @@
             "type": "string",
             "description": "End date and time",
             "format": "date-time",
-            "example": "2024-07-11T18:06:21Z"
+            "example": "2020-11-10T07:00:00Z"
           }
         }
       ],
@@ -20855,6 +20892,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 1,
             "description": "offset"
           }
         },
@@ -20864,6 +20902,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 10,
             "description": "number of records to fetch"
           }
         }
@@ -21245,6 +21284,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 1,
             "description": "offset"
           }
         },
@@ -21254,6 +21294,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 10,
             "description": "number of records to fetch"
           }
         }
@@ -21360,6 +21401,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 1,
             "description": "offset"
           }
         },
@@ -21369,6 +21411,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 10,
             "description": "number of records to fetch"
           }
         }
@@ -21570,6 +21613,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 1,
             "description": "offset"
           }
         },
@@ -21579,6 +21623,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 10,
             "description": "number of records to fetch"
           }
         }
@@ -21960,6 +22005,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 1,
             "description": "offset"
           }
         },
@@ -21969,6 +22015,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 10,
             "description": "number of records to fetch"
           }
         }
@@ -22075,6 +22122,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 1,
             "description": "offset"
           }
         },
@@ -22084,6 +22132,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 10,
             "description": "number of records to fetch"
           }
         }
@@ -22199,6 +22248,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 1,
             "description": "offset"
           }
         },
@@ -22208,6 +22258,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 10,
             "description": "number of records to fetch"
           }
         }
@@ -22276,6 +22327,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 1,
             "description": "offset"
           }
         },
@@ -22285,6 +22337,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 10,
             "description": "number of records to fetch"
           }
         }
@@ -22343,6 +22396,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 1,
             "description": "offset"
           }
         },
@@ -22352,6 +22406,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 10,
             "description": "number of records to fetch"
           }
         },
@@ -22653,6 +22708,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 1,
             "description": "offset"
           }
         },
@@ -22662,6 +22718,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 10,
             "description": "number of records to fetch"
           }
         }
@@ -22977,6 +23034,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 1,
             "description": "offset"
           }
         },
@@ -22986,6 +23044,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 10,
             "description": "number of records to fetch"
           }
         }
@@ -23040,6 +23099,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 1,
             "description": "offset"
           }
         },
@@ -23049,6 +23109,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 10,
             "description": "number of records to fetch"
           }
         }
@@ -33041,7 +33102,7 @@
     },
     {
       "name": "fetch",
-      "summary": "Fetch the full markdown content of an Equinix documentation page by URL.",
+      "summary": "Fetch Equinix Doc",
       "description": "Fetch the full markdown content of an Equinix documentation page by URL. Use URLs returned from the 'search' tool.",
       "tags": [
         {
@@ -33079,7 +33140,7 @@
     },
     {
       "name": "find_docs",
-      "summary": "Find Equinix documentation by filename",
+      "summary": "Find Equinix Docs by Filename",
       "description": "Find Equinix documentation by filename",
       "tags": [
         {
@@ -33137,6 +33198,7 @@
           "schema": {
             "type": "boolean",
             "default": false,
+            "example": false,
             "description": "whether to include the user permissions on the project resource"
           }
         },
@@ -33147,6 +33209,7 @@
           "schema": {
             "type": "boolean",
             "default": false,
+            "example": false,
             "description": "Whether to include the projects with inbox classification or not"
           }
         },
@@ -33336,6 +33399,7 @@
           "schema": {
             "pattern": "^\\d+$",
             "type": "string",
+            "example": "100013200",
             "description": "Number of account to search by"
           }
         },
@@ -33346,6 +33410,7 @@
           "schema": {
             "pattern": "^[A-Z]{2,3}[1-9]?[0-9]{0,2}[a-zA-Z]?$",
             "type": "string",
+            "example": "WA1",
             "description": "Agreement IBX"
           }
         },
@@ -33919,6 +33984,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "CH2:03:00603",
             "description": "Cage space ID"
           }
         },
@@ -33928,6 +33994,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "CH2",
             "description": "IBX code for given location"
           }
         },
@@ -33937,6 +34004,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "123111232",
             "description": "Account number"
           }
         },
@@ -34092,6 +34160,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "CH2",
             "description": "IBX code for given location"
           }
         },
@@ -34101,6 +34170,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "123111232",
             "description": "Account number"
           }
         },
@@ -34243,6 +34313,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "SG1",
             "description": "IBX Code"
           }
         },
@@ -35979,6 +36050,7 @@
           "schema": {
             "type": "string",
             "format": "uuid",
+            "example": "d27c0f84-f1da-498e-95c0-f3d3ae02d16d",
             "description": "UUID of the checked order"
           }
         }
@@ -36193,6 +36265,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "CH2",
             "description": "IBX code for given location"
           }
         },
@@ -36202,6 +36275,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "123111232",
             "description": "Account number"
           }
         },
@@ -36211,6 +36285,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "CH2:03:00603",
             "description": "Cage space ID"
           }
         },
@@ -36220,6 +36295,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "CH1:01:011201:0204",
             "description": "Cabinet space ID"
           }
         },
@@ -36229,6 +36305,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "SINGLE_MODE_FIBER",
             "description": "Media Type"
           }
         },
@@ -36706,6 +36783,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "100013200",
             "description": "Number of account to search by"
           }
         },
@@ -36715,6 +36793,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "PO-1234567",
             "description": "purchase order number"
           }
         }
@@ -36866,6 +36945,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "100013200",
             "description": "Number of account to search by"
           }
         },
@@ -36875,6 +36955,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "WA1",
             "description": "IBX code"
           }
         },
@@ -37358,6 +37439,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "123111232",
             "description": "Account number"
           }
         },
@@ -37367,6 +37449,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "CH2",
             "description": "IBX code for given location"
           }
         },
@@ -37379,6 +37462,7 @@
               "COLO"
             ],
             "type": "string",
+            "example": "COLO",
             "description": "Connectivity source type"
           }
         },
@@ -37393,6 +37477,7 @@
               "MC_C"
             ],
             "type": "string",
+            "example": "IA_C",
             "description": "Product"
           }
         },
@@ -37431,6 +37516,7 @@
               "PRICE_INCREASE_TERMS"
             ],
             "type": "string",
+            "example": "TERMS_AND_CONDITIONS",
             "description": "Agreement type"
           }
         },
@@ -37443,6 +37529,7 @@
             "minLength": 2,
             "type": "string",
             "default": "en",
+            "example": "en",
             "description": "2 letter ISO 639-1 language code"
           }
         }
@@ -38571,6 +38658,7 @@
           "schema": {
             "pattern": "^\\d+$",
             "type": "string",
+            "example": "100013200",
             "description": "Number of account to search by"
           }
         }
@@ -39555,7 +39643,7 @@
     },
     {
       "name": "list_docs",
-      "summary": "List and filter Equinix documentation by topic, product, or keywords.",
+      "summary": "List Equinix Docs",
       "description": "List and filter Equinix documentation by topic, product, or keywords. Supports flexible word matching (e.g., 'Fabric providers' will find 'Fabric Provider Guide', 'Provider Management', etc.)",
       "tags": [
         {
@@ -40256,6 +40344,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "Unique ID of a device"
           }
         },
@@ -40265,6 +40354,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "4cfb5675-5c3f-4275-adba-0c9e3c26c96b",
             "description": "Unique ID of a backup"
           }
         }
@@ -40478,6 +40568,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "92D27009-EA33-4b60-B4FB-D3C4ED589649",
             "description": "A reseller creating an ACL template for a customer can pass the accountUcmId of the customer."
           }
         },
@@ -40697,6 +40788,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "877a3aa2-c49a-4af1-98a6-007424e737ae",
             "description": "Unique ID of a device"
           }
         },
@@ -40847,6 +40939,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "Unique ID of a virtual device."
           }
         }
@@ -40890,6 +40983,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "Unique Id of a virtual device."
           }
         },
@@ -40907,6 +41001,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "92D27009-EA33-4b60-B4FB-D3C4ED589649",
             "description": "A reseller updating a device ACL template for a customer can pass the accountUcmId of the customer."
           }
         }
@@ -41054,6 +41149,7 @@
           "schema": {
             "type": "boolean",
             "default": false,
+            "example": false,
             "description": "Whether to save this as a draft."
           }
         },
@@ -41063,6 +41159,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "The unique ID of the draft to be promoted to a device."
           }
         },
@@ -41449,6 +41546,7 @@
           "required": true,
           "schema": {
             "type": "boolean",
+            "example": true,
             "description": "draft"
           }
         },
@@ -41458,6 +41556,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "Unique Id of a Virtual Device"
           }
         },
@@ -41938,6 +42037,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "be7ef79e-31e7-4769-be5b-e192496f48aa",
             "description": "Unique ID of an ACL template"
           }
         },
@@ -41947,6 +42047,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "92D27009-EA33-4b60-B4FB-D3C4ED589649",
             "description": "A reseller deleting an ACL template for a customer must pass the accountUcmId of the customer."
           }
         }
@@ -41991,6 +42092,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "4cfb5675-5c3f-4275-adba-0c9e3c26c96b",
             "description": "Unique Id a backup"
           }
         }
@@ -42035,6 +42137,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "6ea5a0e4-2bf7-45c2-9aa7-e846a8cd5567",
             "description": "Unique Id of a device link group."
           }
         }
@@ -42079,6 +42182,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "Unique Id of a Virtual Device"
           }
         },
@@ -42089,6 +42193,7 @@
           "schema": {
             "type": "boolean",
             "default": false,
+            "example": false,
             "description": "Optional parameter in case you have a secondary device. As both the primary and secondary devices are deleted simultaneously, this field must be marked True so we delete both the devices simultaneously."
           }
         },
@@ -42159,6 +42264,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "4cfb5675-5c3f-4275-adba-0c9e3c26c96b",
             "description": "Unique ID of a backup"
           }
         }
@@ -42216,6 +42322,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "SV",
             "description": "Metro region for which you want to check your account status"
           }
         },
@@ -42225,6 +42332,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "92D27009-EA33-4b60-B4FB-D3C4ED589649",
             "description": "Unique ID of an account"
           }
         }
@@ -42345,6 +42453,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "123456",
             "description": "Unique identifier of the customer account."
           }
         }
@@ -42415,7 +42524,34 @@
           "description": "Device type code (e.g., C8000V)",
           "required": true,
           "schema": {
-            "$ref": "#/components/schemas/DeviceTypeCode"
+            "enum": [
+              "C8000V",
+              "C8000V-SDWAN",
+              "PA-VM",
+              "ASAV",
+              "CGUARD",
+              "FG-VM",
+              "MERAKI-VMX",
+              "PRISMA-SDWAN",
+              "INFOBLOX",
+              "AVIATRIX_EDGE",
+              "VSRX",
+              "ARISTA-ROUTER",
+              "EDGECONNECT-SDWAN",
+              "VERSA_SDWAN",
+              "NGINX",
+              "BLUECAT",
+              "VYOS-ROUTER",
+              "FG-SDWAN",
+              "BLUECAT-EDGE-SERVICE-POINT",
+              "F5XC",
+              "6WIND-VSR",
+              "VSRX-SDWAN",
+              "FORTIGATE_VM"
+            ],
+            "type": "string",
+            "description": "Device type code (e.g., C8000V)",
+            "example": "PA-VM"
           }
         },
         {
@@ -42428,6 +42564,7 @@
               "EQUINIX-CONFIGURED"
             ],
             "type": "string",
+            "example": "SELF-CONFIGURED",
             "description": "Device management type. SELF-CONFIGURED"
           }
         },
@@ -42441,6 +42578,7 @@
               "BYOL"
             ],
             "type": "string",
+            "example": "Subscription",
             "description": "License mode, either Subscription or BYOL."
           }
         },
@@ -42450,6 +42588,7 @@
           "required": false,
           "schema": {
             "type": "boolean",
+            "example": false,
             "description": "Whether you want a cluster device."
           }
         },
@@ -42459,6 +42598,7 @@
           "required": false,
           "schema": {
             "type": "boolean",
+            "example": false,
             "description": "Whether you want an SD-WAN device."
           }
         },
@@ -42473,6 +42613,7 @@
               "INTERNET-ACCESS-WITH-PRVT-MGMT"
             ],
             "type": "string",
+            "example": "INTERNET-ACCESS",
             "description": "Type of connectivity you want. INTERNET-ACCESS, PRIVATE, or INTERNET-ACCESS-WITH-PRVT-MGMT. PRIVATE devices do not have ACLs or bandwidth."
           }
         },
@@ -42482,6 +42623,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 4,
             "description": "The desired number of cores."
           }
         },
@@ -42491,6 +42633,7 @@
           "required": false,
           "schema": {
             "type": "integer",
+            "example": 4,
             "description": "Desired memory."
           }
         },
@@ -42500,6 +42643,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "GB",
             "description": "Unit of memory. GB or MB."
           }
         },
@@ -42509,6 +42653,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "small",
             "description": "Flavor of device."
           }
         },
@@ -42518,6 +42663,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "17.06.01",
             "description": "Version."
           }
         },
@@ -42527,6 +42673,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "SEC",
             "description": "Software package."
           }
         }
@@ -42631,6 +42778,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "Unique ID of a backup"
           }
         }
@@ -42743,6 +42891,7 @@
             "type": "integer",
             "format": "int32",
             "default": 0,
+            "example": 0,
             "description": "Specifies where to start a page. It is the starting point of the collection returned from the server."
           }
         },
@@ -42754,6 +42903,7 @@
             "type": "integer",
             "format": "int32",
             "default": 20,
+            "example": 20,
             "description": "Specifies the page size."
           }
         },
@@ -42763,6 +42913,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "92D27009-EA33-4b60-B4FB-D3C4ED589649",
             "description": "Unique ID of the account. A reseller querying for the ACLs of a customer should input the accountUcmId of the customer."
           }
         },
@@ -42772,6 +42923,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "If projectIds are different from default projectIds, must pass a projectIds parameter"
           }
         }
@@ -42834,6 +42986,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "If projectIds are different from default projectIds, must pass a projectIds parameter"
           }
         },
@@ -42843,6 +42996,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "Unique ID of a virtual device"
           }
         },
@@ -42869,6 +43023,7 @@
             "type": "integer",
             "format": "int32",
             "default": 0,
+            "example": 0,
             "description": "Specifies where to start a page. It is the starting point of the collection returned from the server."
           }
         },
@@ -42880,6 +43035,7 @@
             "type": "integer",
             "format": "int32",
             "default": 20,
+            "example": 20,
             "description": "Specifies the page size."
           }
         }
@@ -43006,6 +43162,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "6ea5a0e4-2bf7-45c2-9aa7-e846a8cd5567",
             "description": "Unique Id of a device link group."
           }
         }
@@ -43118,6 +43275,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "If projectIds are different from default projectIds, must pass a projectIds parameter"
           }
         },
@@ -43127,6 +43285,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "SV",
             "description": "Metro Code"
           }
         },
@@ -43136,6 +43295,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "Unique Id of a virtual device."
           }
         },
@@ -43145,6 +43305,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "92D27009-EA33-4b60-B4FB-D3C4ED589649",
             "description": "Unique Id of the account. A reseller querying for a customer's link groups can pass the accountUcmId of the customer's account."
           }
         },
@@ -43154,6 +43315,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "Unique Id of a link group"
           }
         },
@@ -43163,6 +43325,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "linkGroup",
             "description": "The name of a link group"
           }
         },
@@ -43174,6 +43337,7 @@
             "type": "integer",
             "format": "int32",
             "default": 0,
+            "example": 0,
             "description": "Specifies where to start a page."
           }
         },
@@ -43185,6 +43349,7 @@
             "type": "integer",
             "format": "int32",
             "default": 20,
+            "example": 20,
             "description": "Specifies the page size."
           }
         }
@@ -43313,6 +43478,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "Unique ID of a virtual device."
           }
         },
@@ -43324,6 +43490,7 @@
             "type": "integer",
             "format": "int32",
             "default": 0,
+            "example": 0,
             "description": "Specifies where to start a page. It is the starting point of the collection returned from the server."
           }
         },
@@ -43335,6 +43502,7 @@
             "type": "integer",
             "format": "int32",
             "default": 20,
+            "example": 20,
             "description": "Specifies the page size."
           }
         }
@@ -43431,6 +43599,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "be7ef79e-31e7-4769-be5b-e192496f48aa",
             "description": "Unique Id of an ACL template"
           }
         }
@@ -43548,6 +43717,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "Unique Id of a virtual device."
           }
         }
@@ -43602,6 +43772,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "Unique ID of a virtual device."
           }
         },
@@ -43613,6 +43784,7 @@
             "type": "integer",
             "format": "int32",
             "default": 0,
+            "example": 0,
             "description": "Specifies where to start a page. It is the starting point of the collection returned from the server."
           }
         },
@@ -43624,6 +43796,7 @@
             "type": "integer",
             "format": "int32",
             "default": 20,
+            "example": 20,
             "description": "Specifies the page size."
           }
         }
@@ -43735,6 +43908,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "17.06.01",
             "description": "Version"
           }
         }
@@ -43865,6 +44039,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "Unique Id of a device"
           }
         },
@@ -43874,6 +44049,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "1",
             "description": "Interface Id"
           }
         },
@@ -43884,6 +44060,7 @@
           "schema": {
             "type": "string",
             "format": "date-time",
+            "example": "2023-11-10T19:06:06Z",
             "description": "Start time of the duration for which you want stats. (YYYY-MM-DDThh:mm:ssZ)"
           }
         },
@@ -43894,6 +44071,7 @@
           "schema": {
             "type": "string",
             "format": "date-time",
+            "example": "2023-11-17T19:06:06Z",
             "description": "End time of the duration for which you want stats. (YYYY-MM-DDThh:mm:ssZ)"
           }
         }
@@ -43971,6 +44149,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "AMER",
             "description": "Name of the region for which you want metros (e.g., AMER)"
           }
         },
@@ -43982,6 +44161,7 @@
             "type": "integer",
             "format": "int32",
             "default": 0,
+            "example": 0,
             "description": "Specifies where to start a page. It is the starting point of the collection returned from the server."
           }
         },
@@ -43993,7 +44173,7 @@
             "type": "integer",
             "format": "int32",
             "default": 20,
-            "example": 10,
+            "example": 20,
             "description": "Specifies the page size."
           }
         }
@@ -44182,6 +44362,7 @@
           "schema": {
             "type": "integer",
             "format": "int32",
+            "example": 123456,
             "description": "Account number"
           }
         },
@@ -44191,6 +44372,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "SV",
             "description": "Metro"
           }
         },
@@ -44205,6 +44387,7 @@
               "NETWORK-ESSENTIALS"
             ],
             "type": "string",
+            "example": "NETWORK-ESSENTIALS",
             "description": "Vendor package"
           }
         },
@@ -44218,6 +44401,7 @@
               "BYOL"
             ],
             "type": "string",
+            "example": "Subscription",
             "description": "License type"
           }
         },
@@ -44227,6 +44411,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "AX",
             "description": "Software package"
           }
         },
@@ -44237,6 +44422,7 @@
           "schema": {
             "type": "integer",
             "format": "int32",
+            "example": 100,
             "description": "Throughput"
           }
         },
@@ -44246,6 +44432,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "Mbps",
             "description": "Throughput unit"
           }
         },
@@ -44255,6 +44442,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "12",
             "description": "Term length (in months)"
           }
         },
@@ -44265,6 +44453,7 @@
           "schema": {
             "type": "integer",
             "format": "int32",
+            "example": 100,
             "description": "Additional bandwidth (in Mbps)"
           }
         },
@@ -44274,6 +44463,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "Virtual device unique Id (only required if existing device is being modified)"
           }
         },
@@ -44287,6 +44477,7 @@
               "EQUINIX-CONFIGURED"
             ],
             "type": "string",
+            "example": "SELF-CONFIGURED",
             "description": "The device management type"
           }
         },
@@ -44297,6 +44488,7 @@
           "schema": {
             "type": "integer",
             "format": "int32",
+            "example": 4,
             "description": "The number of cores"
           }
         },
@@ -44307,6 +44499,7 @@
           "schema": {
             "type": "integer",
             "format": "int32",
+            "example": 123457,
             "description": "Secondary account number (in case you have a device pair)"
           }
         },
@@ -44316,6 +44509,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "SV",
             "description": "Secondary metro (in case you have a device pair)"
           }
         },
@@ -44326,6 +44520,7 @@
           "schema": {
             "type": "integer",
             "format": "int32",
+            "example": 100,
             "description": "Secondary additional bandwidth (in Mbps)"
           }
         },
@@ -44335,6 +44530,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "92D27009-EA33-4b60-B4FB-D3C4ED589649",
             "description": "Account unique ID"
           }
         },
@@ -44344,6 +44540,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "cust0001",
             "description": "Reseller customer username"
           }
         }
@@ -44446,6 +44643,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "92D27009-EA33-4b60-B4FB-D3C4ED589649",
             "description": "This field is for resellers. Please pass the accountUcmId of your customer to get the public keys."
           }
         },
@@ -44455,6 +44653,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8,3da0a663-20d9-4b8f-8c5d-d5cf706840c9",
             "description": "If projectIds are different from default projectIds, must pass a projectIds parameter"
           }
         }
@@ -44549,6 +44748,7 @@
               "NETWORK-ESSENTIALS"
             ],
             "type": "string",
+            "example": "NETWORK-ESSENTIALS",
             "description": "The vendor package code."
           }
         },
@@ -44562,6 +44762,7 @@
               "BYOL"
             ],
             "type": "string",
+            "example": "Subscription",
             "description": "The type of license (e.g., Subscription, BYOL)."
           }
         }
@@ -44616,6 +44817,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "uuid"
           }
         }
@@ -45007,6 +45209,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "uuid"
           }
         }
@@ -45073,6 +45276,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "ROUTER",
             "description": "Category. One of FIREWALL, ROUTER or SD-WAN"
           }
         },
@@ -45084,6 +45288,7 @@
             "type": "integer",
             "format": "int32",
             "default": 0,
+            "example": 0,
             "description": "Specifies where to start a page. It is the starting point of the collection returned from the server."
           }
         },
@@ -45095,6 +45300,7 @@
             "type": "integer",
             "format": "int32",
             "default": 20,
+            "example": 20,
             "description": "Specifies the page size."
           }
         },
@@ -45104,6 +45310,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "If projectId is different from default projectId, must pass a projectId parameter"
           }
         }
@@ -45168,6 +45375,7 @@
             "type": "integer",
             "format": "int32",
             "default": 0,
+            "example": 0,
             "description": "Specifies where to start a page. It is the starting point of the collection returned from the server."
           }
         },
@@ -45179,6 +45387,7 @@
             "type": "integer",
             "format": "int32",
             "default": 20,
+            "example": 20,
             "description": "Specifies the page size."
           }
         },
@@ -45188,6 +45397,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "SV",
             "description": "Two-letter metro code."
           }
         },
@@ -45204,6 +45414,7 @@
               "FAILED"
             ],
             "type": "string",
+            "example": "PROVISIONED",
             "description": "The status of the device."
           }
         },
@@ -45213,6 +45424,7 @@
           "required": false,
           "schema": {
             "type": "boolean",
+            "example": false,
             "description": "Resellers may mark this Yes to see sub customer devices."
           }
         },
@@ -45222,6 +45434,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "123456",
             "description": "Unique ID of the account."
           }
         },
@@ -45231,6 +45444,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "My-Device",
             "description": "Enter text to fetch only matching device names"
           }
         },
@@ -45243,6 +45457,9 @@
             "items": {
               "type": "string"
             },
+            "example": [
+              "name"
+            ],
             "description": "Sorts the output based on field names."
           }
         },
@@ -45252,6 +45469,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "If projectIds are different from default projectIds, must pass a projectIds parameter"
           }
         }
@@ -45659,6 +45877,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "Virtual Device unique Id"
           }
         }
@@ -45809,6 +46028,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "4cfb5675-5c3f-4275-adba-0c9e3c26c96b",
             "description": "Unique ID of a backup"
           }
         },
@@ -45863,6 +46083,7 @@
           "schema": {
             "type": "integer",
             "format": "int32",
+            "example": 123456,
             "description": "Account number"
           }
         },
@@ -45872,6 +46093,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "SV",
             "description": "Metro"
           }
         },
@@ -45886,6 +46108,7 @@
               "NETWORK-ESSENTIALS"
             ],
             "type": "string",
+            "example": "NETWORK-ESSENTIALS",
             "description": "Vendor package"
           }
         },
@@ -45899,6 +46122,7 @@
               "BYOL"
             ],
             "type": "string",
+            "example": "Subscription",
             "description": "License type"
           }
         },
@@ -45908,6 +46132,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "AX",
             "description": "Software package"
           }
         },
@@ -45918,6 +46143,7 @@
           "schema": {
             "type": "integer",
             "format": "int32",
+            "example": 100,
             "description": "Throughput"
           }
         },
@@ -45927,6 +46153,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "Mbps",
             "description": "Throughput unit"
           }
         },
@@ -45936,6 +46163,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "12",
             "description": "Term length (in months)"
           }
         },
@@ -45946,6 +46174,7 @@
           "schema": {
             "type": "integer",
             "format": "int32",
+            "example": 100,
             "description": "Additional bandwidth (in Mbps)"
           }
         },
@@ -45955,6 +46184,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "Virtual device unique Id (only required if existing device is being modified)"
           }
         },
@@ -45968,6 +46198,7 @@
               "EQUINIX-CONFIGURED"
             ],
             "type": "string",
+            "example": "SELF-CONFIGURED",
             "description": "The device management type"
           }
         },
@@ -45978,6 +46209,7 @@
           "schema": {
             "type": "integer",
             "format": "int32",
+            "example": 4,
             "description": "The number of cores"
           }
         },
@@ -45988,6 +46220,7 @@
           "schema": {
             "type": "integer",
             "format": "int32",
+            "example": 123457,
             "description": "The secondary account number (for HA)"
           }
         },
@@ -45997,6 +46230,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "SV",
             "description": "Secondary metro (for HA)"
           }
         },
@@ -46007,6 +46241,7 @@
           "schema": {
             "type": "integer",
             "format": "int32",
+            "example": 100,
             "description": "Secondary additional bandwidth (in Mbps for HA)"
           }
         },
@@ -46016,6 +46251,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "92D27009-EA33-4b60-B4FB-D3C4ED589649",
             "description": "Account unique ID"
           }
         },
@@ -46025,6 +46261,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "cust0001",
             "description": "Reseller customer username"
           }
         }
@@ -46085,6 +46322,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "The unique Id of a virtual device"
           }
         },
@@ -46139,6 +46377,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "be7ef79e-31e7-4769-be5b-e192496f48aa",
             "description": "Unique ID of an ACL template"
           }
         },
@@ -46176,6 +46415,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "92D27009-EA33-4b60-B4FB-D3C4ED589649",
             "description": "A reseller updating an ACL template for a customer must pass the accountUcmId of the customer."
           }
         },
@@ -46228,6 +46468,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "4cfb5675-5c3f-4275-adba-0c9e3c26c96b",
             "description": "Unique ID of a backup"
           }
         },
@@ -46281,6 +46522,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "6ea5a0e4-2bf7-45c2-9aa7-e846a8cd5567",
             "description": "Unique Id of a device link group."
           }
         },
@@ -46374,6 +46616,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "Unique Id of a virtual device."
           }
         },
@@ -46391,6 +46634,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "92D27009-EA33-4b60-B4FB-D3C4ED589649",
             "description": "A reseller updating a device ACL template for a customer can pass the accountUcmId of the customer."
           }
         }
@@ -46434,6 +46678,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "Unique Id of a virtual device"
           }
         },
@@ -46495,6 +46740,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "Unique Id of a Virtual Device"
           }
         },
@@ -46755,6 +47001,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "SV",
             "description": "Two-letter metro code where the device will be created."
           }
         },
@@ -46775,6 +47022,7 @@
               "BYOL"
             ],
             "type": "string",
+            "example": "BYOL",
             "description": "Type of license (e.g., BYOL)."
           }
         },
@@ -46795,6 +47043,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "If projectId is different from default projectId, must pass a projectId parameter"
           }
         }
@@ -46847,6 +47096,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "Unique Id of a virtual device"
           }
         },
@@ -46867,6 +47117,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "3da0a663-20d9-4b8f-8c5d-d5cf706840c8",
             "description": "If projectId is different from default projectId, must pass a projectId parameter"
           }
         }
@@ -48074,6 +48325,7 @@
             "items": {
               "type": "string"
             },
+            "example": "SG1",
             "description": "List of IBXs to be filtered"
           }
         }
@@ -48888,6 +49140,7 @@
             "maxLength": 100,
             "minLength": 1,
             "type": "string",
+            "example": "{orderId}",
             "description": "Identifier of the order"
           }
         }
@@ -48996,6 +49249,7 @@
             "items": {
               "type": "string"
             },
+            "example": "SG1",
             "description": "List of IBXs to be filtered"
           }
         }
@@ -51141,7 +51395,7 @@
     },
     {
       "name": "search",
-      "summary": "Search Equinix documentation using full-text search.",
+      "summary": "Search Equinix Docs",
       "description": "Search Equinix documentation using full-text search. Returns URLs that can be fetched with the 'fetch' tool to retrieve full content.",
       "tags": [
         {
@@ -55125,6 +55379,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "9756a585-c3c1-4648-b2e1-7d8804912098",
             "description": "Unique identifier (UUID) of the power alert configuration to delete"
           }
         }
@@ -56418,6 +56673,7 @@
           "required": true,
           "schema": {
             "type": "integer",
+            "example": 100,
             "description": "Number of records to retrieve per request"
           }
         },
@@ -56427,6 +56683,7 @@
           "required": true,
           "schema": {
             "type": "integer",
+            "example": 0,
             "description": "Record number to start retrieval from (0..N)"
           }
         },
@@ -56439,6 +56696,10 @@
             "items": {
               "type": "string"
             },
+            "example": [
+              "SV5",
+              "NY1"
+            ],
             "description": "List of IBX codes to filter power events (comma-separated)"
           }
         },
@@ -56455,6 +56716,9 @@
               ],
               "type": "string"
             },
+            "example": [
+              "ACTIVE"
+            ],
             "description": "List of statuses to filter power events (comma-separated). Possible values - ACTIVE, INACTIVE"
           }
         },
@@ -56464,6 +56728,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "2024-01-01T00:00:00.000Z",
             "description": "Date filter to retrieve power events collected after a specific date (ISO 8601 format)"
           }
         }
@@ -58547,6 +58812,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "9756a585-c3c1-4648-b2e1-7d8804912098",
             "description": "Unique identifier (UUID) of the power alert configuration to pause"
           }
         }
@@ -58594,6 +58860,7 @@
           "required": true,
           "schema": {
             "type": "integer",
+            "example": 100,
             "description": "Number of records to retrieve per request."
           }
         },
@@ -58603,6 +58870,7 @@
           "required": true,
           "schema": {
             "type": "integer",
+            "example": 0,
             "description": "Record Number you want start to retrieve from (0..N)"
           }
         },
@@ -58612,6 +58880,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "ACTIVE",
             "description": "Alert status - ACTIVE or INACTIVE"
           }
         },
@@ -58621,6 +58890,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "Mechanical",
             "description": "The class of assets this asset belongs to - Mechanical/Electrical/Environmental"
           }
         },
@@ -58630,6 +58900,7 @@
           "required": false,
           "schema": {
             "type": "string",
+            "example": "2023-11-30T05:08:39.345000Z",
             "description": "Returns the alarms after the passed time"
           }
         }
@@ -59108,6 +59379,7 @@
           "required": true,
           "schema": {
             "type": "string",
+            "example": "9756a585-c3c1-4648-b2e1-7d8804912098",
             "description": "Unique identifier (UUID) of the power alert configuration to resume"
           }
         }
@@ -59155,6 +59427,7 @@
           "required": true,
           "schema": {
             "type": "integer",
+            "example": 100,
             "description": "Number of records to retrieve per request"
           }
         },
@@ -59164,6 +59437,7 @@
           "required": true,
           "schema": {
             "type": "integer",
+            "example": 0,
             "description": "Record number to start retrieval from (0..N)"
           }
         },
@@ -59176,6 +59450,10 @@
             "items": {
               "type": "string"
             },
+            "example": [
+              "SV5",
+              "NY1"
+            ],
             "description": "List of IBX codes to filter configurations (comma-separated)"
           }
         },
@@ -59193,6 +59471,9 @@
               ],
               "type": "string"
             },
+            "example": [
+              "ACTIVE"
+            ],
             "description": "List of states to filter configurations (comma-separated). Possible values - ACTIVE, PAUSED, DELETED"
           }
         }

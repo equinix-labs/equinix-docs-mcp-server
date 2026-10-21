@@ -84,3 +84,36 @@ async def test_foreach_fallback_aggregation():
     # Ensure step_outputs captured aggregated list
     assert "loop" in result.step_outputs
     assert result.step_outputs["loop"]["valPlusOne"] == [2, 3, 6]
+
+
+@pytest.mark.asyncio
+async def test_workflow_summary_becomes_tool_title(tmp_path):
+    """A workflow's Arazzo summary is its tool title; without one, none is set."""
+    from fastmcp import Client, FastMCP
+
+    spec = tmp_path / "workflows.yaml"
+    spec.write_text(
+        "arazzo: 1.0.1\n"
+        "info: {title: Test, version: 1.0.0}\n"
+        "workflows:\n"
+        "  - workflowId: with_summary\n"
+        "    summary: Retrieve things\n"
+        "    description: Retrieve every thing, one page at a time.\n"
+        "    steps: []\n"
+        "  - workflowId: description_only\n"
+        "    description: Retrieve other things\n"
+        "    steps: []\n"
+    )
+    mgr = ArazzoManager(SimpleNamespace(arazzo={"specs": [str(spec)]}))
+    await mgr.load()
+
+    assert mgr.workflows["with_summary"].summary == "Retrieve things"
+    assert mgr.workflows["description_only"].summary == ""
+
+    mcp = FastMCP("test")
+    await mgr.register_with_fastmcp(mcp)
+    async with Client(mcp) as client:
+        tools = {t.name: t for t in await client.list_tools()}
+
+    assert tools["workflow__with_summary"].title == "Retrieve things"
+    assert tools["workflow__description_only"].description == "Retrieve other things"

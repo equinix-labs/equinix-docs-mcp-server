@@ -9,11 +9,7 @@ readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.13"
 dependencies = [
-    "fastmcp==4.0.0b1",
-    # Direct pin of fastmcp's own core package: uv only honors pre-release
-    # specifiers on first-party requirements, so without this line
-    # `uvx --from git+...` fails to resolve the transitive ==4.0.0b1.
-    "fastmcp-slim==4.0.0b1",
+    "fastmcp==4.1.1",
     "mcp-types",
     "httpx2>=2.5.0",
     "pydantic>=2.0.0",

@@ -289,6 +289,16 @@ def _summary(description: str, limit: int = 120) -> str:
     return sentence
 
 
+def _is_derived_title(title: str, name: str) -> bool:
+    """Whether a tool title is only its name reformatted.
+
+    fastmcp fills in ``title`` from the name (``workflow__list_ne_metros``
+    becomes "Workflow  List Ne Metros") when a tool sets none, which reads
+    worse than the description's first sentence.
+    """
+    return title == name.replace("_", " ").replace("-", " ").title()
+
+
 GROUP_TAGS = ("docs", "workflows")
 
 
@@ -364,7 +374,10 @@ def build_openrpc_document(
             }
 
         method: Dict[str, Any] = {"name": name}
-        summary = tool.get("title") or _summary(description)
+        tool_title = tool.get("title")
+        if tool_title and _is_derived_title(tool_title, name):
+            tool_title = None
+        summary = tool_title or _summary(description)
         if summary:
             method["summary"] = summary
         if description:
