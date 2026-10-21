@@ -374,10 +374,10 @@ def build_openrpc_document(
             }
 
         method: Dict[str, Any] = {"name": name}
-        title = tool.get("title")
-        if title and _is_derived_title(title, name):
-            title = None
-        summary = title or _summary(description)
+        tool_title = tool.get("title")
+        if tool_title and _is_derived_title(tool_title, name):
+            tool_title = None
+        summary = tool_title or _summary(description)
         if summary:
             method["summary"] = summary
         if description:

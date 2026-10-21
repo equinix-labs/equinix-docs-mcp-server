@@ -93,6 +93,8 @@ def test_summary_skips_titles_derived_from_the_name(title, expected):
     )
 
     assert doc["methods"][0]["summary"] == expected
+    # A tool's title must not leak into the document title
+    assert doc["info"]["title"] == "Equinix Docs MCP Server"
 
 
 def test_methods_group_by_family_namespace_not_shared_tags():
