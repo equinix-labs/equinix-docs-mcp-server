@@ -1,0 +1,35 @@
+version: 2
+
+updates:
+  # Runtime and dev dependencies in pyproject.toml
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # Only propose releases that are at least 3 days old
+    cooldown:
+      default-days: 3
+    # Raise a lower bound only when the new release falls outside it, so
+    # ">=" ranges don't churn; exact pins (fastmcp, ruff) are still bumped
+    versioning-strategy: increase-if-necessary
+    groups:
+      python-minor-and-patch:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 3
+    groups:
+      github-actions:
+        patterns: ["*"]
+
+  # The python base image in Dockerfile
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 3
