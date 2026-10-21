@@ -291,9 +291,7 @@ class ArazzoManager:
                 title=meta.summary or None,
                 description=description,
                 tags={"workflows"},
-            )(
-                dynamic_func
-            )  # type: ignore
+            )(dynamic_func)  # type: ignore
             logger.info(
                 f"Registered Arazzo workflow tool {tool_name} (params: {list(input_props.keys())})"
             )
