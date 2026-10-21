@@ -147,6 +147,7 @@ class ArazzoManager:
         # Utility tools
         @mcp.tool(
             name="arazzo_list_workflows",
+            title="List Workflows",
             description="List registered Arazzo workflow IDs.",
             tags={"workflows"},
         )
@@ -155,6 +156,7 @@ class ArazzoManager:
 
         @mcp.tool(
             name="arazzo_describe_workflow",
+            title="Describe Workflow",
             description="Describe a specific Arazzo workflow (summary, inputs).",
             tags={"workflows"},
         )
@@ -281,7 +283,15 @@ class ArazzoManager:
 
             dynamic_func.__globals__["__execute_workflow"] = __execute_workflow
 
-            mcp.tool(name=tool_name, description=description, tags={"workflows"})(
+            # A workflow's Arazzo summary is its title, like an OpenAPI
+            # operation's; meta.summary falls back to the description.
+            title = meta.summary if meta.summary != meta.description else None
+            mcp.tool(
+                name=tool_name,
+                title=title,
+                description=description,
+                tags={"workflows"},
+            )(
                 dynamic_func
             )  # type: ignore
             logger.info(

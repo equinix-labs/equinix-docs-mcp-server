@@ -310,6 +310,7 @@ class EquinixMCPServer:
 
         @self.mcp.tool(
             name="search",
+            title="Search Equinix Docs",
             description="Search Equinix documentation using full-text search. Returns URLs that can be fetched with the 'fetch' tool to retrieve full content.",
             tags={"docs"},
         )
@@ -327,6 +328,7 @@ class EquinixMCPServer:
 
         @self.mcp.tool(
             name="fetch",
+            title="Fetch Equinix Doc",
             description="Fetch the full markdown content of an Equinix documentation page by URL. Use URLs returned from the 'search' tool.",
             tags={"docs"},
         )
@@ -343,6 +345,7 @@ class EquinixMCPServer:
 
         @self.mcp.tool(
             name="list_docs",
+            title="List Equinix Docs",
             description="List and filter Equinix documentation by topic, product, or keywords. Supports flexible word matching (e.g., 'Fabric providers' will find 'Fabric Provider Guide', 'Provider Management', etc.)",
             tags={"docs"},
         )
@@ -359,6 +362,7 @@ class EquinixMCPServer:
 
         @self.mcp.tool(
             name="find_docs",
+            title="Find Equinix Docs by Filename",
             description="Find Equinix documentation by filename",
             tags={"docs"},
         )

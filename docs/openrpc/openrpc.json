@@ -4215,7 +4215,7 @@
     },
     {
       "name": "arazzo_describe_workflow",
-      "summary": "Describe a specific Arazzo workflow (summary, inputs).",
+      "summary": "Describe Workflow",
       "description": "Describe a specific Arazzo workflow (summary, inputs).",
       "tags": [
         {
@@ -4243,7 +4243,7 @@
     },
     {
       "name": "arazzo_list_workflows",
-      "summary": "List registered Arazzo workflow IDs.",
+      "summary": "List Workflows",
       "description": "List registered Arazzo workflow IDs.",
       "tags": [
         {
@@ -33102,7 +33102,7 @@
     },
     {
       "name": "fetch",
-      "summary": "Fetch the full markdown content of an Equinix documentation page by URL.",
+      "summary": "Fetch Equinix Doc",
       "description": "Fetch the full markdown content of an Equinix documentation page by URL. Use URLs returned from the 'search' tool.",
       "tags": [
         {
@@ -33140,7 +33140,7 @@
     },
     {
       "name": "find_docs",
-      "summary": "Find Equinix documentation by filename",
+      "summary": "Find Equinix Docs by Filename",
       "description": "Find Equinix documentation by filename",
       "tags": [
         {
@@ -39643,7 +39643,7 @@
     },
     {
       "name": "list_docs",
-      "summary": "List and filter Equinix documentation by topic, product, or keywords.",
+      "summary": "List Equinix Docs",
       "description": "List and filter Equinix documentation by topic, product, or keywords. Supports flexible word matching (e.g., 'Fabric providers' will find 'Fabric Provider Guide', 'Provider Management', etc.)",
       "tags": [
         {
@@ -51395,7 +51395,7 @@
     },
     {
       "name": "search",
-      "summary": "Search Equinix documentation using full-text search.",
+      "summary": "Search Equinix Docs",
       "description": "Search Equinix documentation using full-text search. Returns URLs that can be fetched with the 'fetch' tool to retrieve full content.",
       "tags": [
         {
