@@ -3,6 +3,7 @@
 import asyncio
 import logging
 from typing import Any, AsyncGenerator, List, Literal, Optional
+from urllib.parse import urlparse
 
 import click
 import httpx2
@@ -36,6 +37,22 @@ CATALOG_CACHE_SCOPE: Literal["public", "private"] = "public"
 DOCS_TOOL_NAMES = ["search", "fetch", "list_docs", "find_docs"]
 
 API_BASE_URL = "https://api.equinix.com"
+
+
+def _api_base_url(spec: dict[str, Any]) -> str:
+    """Pick the host an API family's requests should go to.
+
+    Most families live behind api.equinix.com, but some (access, sts) are
+    served from their own hosts. Only the scheme and host are used: spec
+    paths already carry the base path. Non-Equinix servers such as
+    SwaggerHub mocks are skipped.
+    """
+    for server in spec.get("servers") or []:
+        parsed = urlparse(server.get("url", ""))
+        host = parsed.hostname or ""
+        if parsed.scheme == "https" and host.endswith(".equinix.com"):
+            return f"https://{parsed.netloc}"
+    return API_BASE_URL
 
 
 def _configure_logging(log_level: str):
@@ -217,7 +234,7 @@ class EquinixMCPServer:
             try:
                 provider = OpenAPIProvider(
                     openapi_spec=spec,
-                    client=self._build_api_client(api_config),
+                    client=self._build_api_client(api_config, spec),
                     tags={"equinix", api_name, *api_config.tags},
                     mcp_component_fn=annotate_openapi_component,
                 )
@@ -231,7 +248,9 @@ class EquinixMCPServer:
             self.mcp.add_provider(provider, namespace=api_name)
             logger.info(f"Registered OpenAPI provider for '{api_name}'")
 
-    def _build_api_client(self, api_config: APIConfig) -> httpx2.AsyncClient:
+    def _build_api_client(
+        self, api_config: APIConfig, spec: dict[str, Any]
+    ) -> httpx2.AsyncClient:
         """Build the HTTP client for one API family.
 
         The client's base URL is host-only: spec paths already carry each
@@ -243,7 +262,7 @@ class EquinixMCPServer:
             auth = EquinixAuth(self.auth_manager, api_config.name)
 
         client = httpx2.AsyncClient(
-            base_url=API_BASE_URL,
+            base_url=_api_base_url(spec),
             timeout=30.0,
             auth=auth,
             headers={"User-Agent": "Equinix-MCP-Server/1.0.0"},
