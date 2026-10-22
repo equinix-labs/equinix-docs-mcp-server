@@ -4050,19 +4050,21 @@ Examples:
 
 <table><thead><tr><th>Param</th><th>Type</th><th>Required</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>name</code></td><td><code>string</code></td>
-<td>yes</td><td class="desc"></td></tr>
+<td>yes</td><td class="desc">Name of the API tool to call, as returned by search_tools, e.g. &#34;fabric_getMetros&#34;</td></tr>
 <tr><td><code>query</code></td><td><code>string</code></td>
-<td>yes</td><td class="desc"></td></tr>
+<td>yes</td><td class="desc">JMESPath query applied to the API response body, e.g. &#34;data[].{code: code, name: name}&#34;</td></tr>
 <tr><td><code>arguments</code></td><td><code>object | null</code></td>
-<td></td><td class="desc"></td></tr>
+<td></td><td class="desc">Arguments for the API tool, as for call_tool</td></tr>
 </tbody></table>
 <details><summary>Params schema</summary><pre>{
   &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
     &quot;name&quot;: {
+      &quot;description&quot;: &quot;Name of the API tool to call, as returned by search_tools, e.g. \&quot;fabric_getMetros\&quot;&quot;,
       &quot;type&quot;: &quot;string&quot;
     },
     &quot;query&quot;: {
+      &quot;description&quot;: &quot;JMESPath query applied to the API response body, e.g. \&quot;data[].{code: code, name: name}\&quot;&quot;,
       &quot;type&quot;: &quot;string&quot;
     },
     &quot;arguments&quot;: {
@@ -4075,7 +4077,8 @@ Examples:
           &quot;type&quot;: &quot;null&quot;
         }
       ],
-      &quot;default&quot;: null
+      &quot;default&quot;: null,
+      &quot;description&quot;: &quot;Arguments for the API tool, as for call_tool&quot;
     }
   },
   &quot;required&quot;: [

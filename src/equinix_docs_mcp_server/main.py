@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from typing import Any, AsyncGenerator, List, Literal, Optional
+from typing import Annotated, Any, AsyncGenerator, List, Literal, Optional
 from urllib.parse import urlparse
 
 import click
@@ -17,6 +17,7 @@ from fastmcp.server.transforms.search import BM25SearchTransform
 from fastmcp.tools.base import ToolResult
 from jmespath.exceptions import JMESPathError
 from mcp_types import TextContent
+from pydantic import Field
 
 from .arazzo_manager import ArazzoManager
 from .auth import AuthManager
@@ -294,7 +295,28 @@ class EquinixMCPServer:
             tags={"api"},
         )
         async def call_api_filtered(
-            name: str, query: str, arguments: Optional[dict[str, Any]] = None
+            name: Annotated[
+                str,
+                Field(
+                    description=(
+                        "Name of the API tool to call, as returned by "
+                        'search_tools, e.g. "fabric_getMetros"'
+                    )
+                ),
+            ],
+            query: Annotated[
+                str,
+                Field(
+                    description=(
+                        "JMESPath query applied to the API response body, "
+                        'e.g. "data[].{code: code, name: name}"'
+                    )
+                ),
+            ],
+            arguments: Annotated[
+                Optional[dict[str, Any]],
+                Field(description="Arguments for the API tool, as for call_tool"),
+            ] = None,
         ) -> ToolResult:
             # JMESPath rather than jq: model-written queries must not reach the
             # environment or files, loop, or run unbounded
