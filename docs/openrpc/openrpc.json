@@ -7178,6 +7178,55 @@
       }
     },
     {
+      "name": "call_api_filtered",
+      "summary": "Call API Tool with JMESPath Query",
+      "description": "Call an Equinix API tool and return only what a JMESPath query selects from its response. Use this instead of call_tool when a response would be large and only some fields are needed. The query runs on the API response body, whose shape is the tool's output schema. Query syntax: https://jmespath.org/specification.html\n\nExamples:\n- name \"fabric_getMetros\", arguments {\"limit\": 200}, query \"data[].{code: code, name: name, region: region}\"\n- name \"fabric_searchConnections\", query \"data[].{uuid: uuid, name: name, state: operation.equinixStatus}\"\n- query \"data[?region=='EMEA'].code\" to filter\n- query \"pagination.total\" to count results",
+      "tags": [
+        {
+          "name": "api"
+        }
+      ],
+      "paramStructure": "by-name",
+      "params": [
+        {
+          "name": "name",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "query",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "arguments",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        }
+      ],
+      "result": {
+        "name": "call_api_filteredResult",
+        "schema": {
+          "$ref": "#/components/schemas/CallToolResult"
+        }
+      }
+    },
+    {
       "name": "crossconnects_Order_cross_connects",
       "summary": "Order cross connects",
       "description": "This method creates an order for single or multiple standard cross connects at locations where a user has cross connects ordering permission.\n\nPart of the Equinix Cross Connect API family (crossconnects). Order and manage physical cross connects between colocation deployments.",

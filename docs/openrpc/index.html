@@ -50,7 +50,7 @@ td.desc { color:var(--muted); }
 <body>
 <div class="layout">
 <nav>
-  <input id="filter" type="search" placeholder="Filter 528 tools…" aria-label="Filter tools">
+  <input id="filter" type="search" placeholder="Filter 529 tools…" aria-label="Filter tools">
   <ul>
   
     <li><a href="#group-docs">docs <span>4</span></a></li>
@@ -58,6 +58,8 @@ td.desc { color:var(--muted); }
     <li><a href="#group-access">access <span>39</span></a></li>
   
     <li><a href="#group-accesstoken">accesstoken <span>2</span></a></li>
+  
+    <li><a href="#group-api">api <span>1</span></a></li>
   
     <li><a href="#group-assets">assets <span>2</span></a></li>
   
@@ -4024,6 +4026,67 @@ Part of the Equinix Equinix API Authentication API family (accesstoken). Obtain 
 <details><summary>Result: <code>Accesstoken_GetOAuth2AccessTokenResult</code></summary>
 <pre>{
   &quot;$ref&quot;: &quot;<a href="#schema-Accesstoken_GetOAuth2AccessTokenResult">#/components/schemas/Accesstoken_GetOAuth2AccessTokenResult</a>&quot;
+}</pre></details>
+</div>
+</details>
+
+</section>
+
+<section class="group" id="group-api">
+<h2>api</h2>
+
+<details class="method" id="call_api_filtered" data-search="call_api_filtered call api tool with jmespath query">
+<summary><span class="name">call_api_filtered</span>
+<span class="sum">Call API Tool with JMESPath Query</span></summary>
+<div class="body">
+<p class="desc-block">Call an Equinix API tool and return only what a JMESPath query selects from its response. Use this instead of call_tool when a response would be large and only some fields are needed. The query runs on the API response body, whose shape is the tool&#39;s output schema. Query syntax: https://jmespath.org/specification.html
+
+Examples:
+- name &#34;fabric_getMetros&#34;, arguments {&#34;limit&#34;: 200}, query &#34;data[].{code: code, name: name, region: region}&#34;
+- name &#34;fabric_searchConnections&#34;, query &#34;data[].{uuid: uuid, name: name, state: operation.equinixStatus}&#34;
+- query &#34;data[?region==&#39;EMEA&#39;].code&#34; to filter
+- query &#34;pagination.total&#34; to count results</p>
+<p>Tags: <code>api</code> </p>
+
+<table><thead><tr><th>Param</th><th>Type</th><th>Required</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>name</code></td><td><code>string</code></td>
+<td>yes</td><td class="desc"></td></tr>
+<tr><td><code>query</code></td><td><code>string</code></td>
+<td>yes</td><td class="desc"></td></tr>
+<tr><td><code>arguments</code></td><td><code>object | null</code></td>
+<td></td><td class="desc"></td></tr>
+</tbody></table>
+<details><summary>Params schema</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;name&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;query&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;arguments&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;additionalProperties&quot;: true,
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null
+    }
+  },
+  &quot;required&quot;: [
+    &quot;name&quot;,
+    &quot;query&quot;
+  ]
+}</pre></details>
+
+<details><summary>Result: <code>CallToolResult</code></summary>
+<pre>{
+  &quot;$ref&quot;: &quot;<a href="#schema-CallToolResult">#/components/schemas/CallToolResult</a>&quot;
 }</pre></details>
 </div>
 </details>
