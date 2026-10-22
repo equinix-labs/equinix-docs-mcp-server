@@ -25,7 +25,7 @@ from .config import APIConfig, Config
 from .docs import DocsManager
 from .openapi_annotations import annotate_openapi_component
 from .response_formatter import ResponseFormatter
-from .spec_manager import SpecManager
+from .spec_manager import SpecManager, equinix_server_url
 
 logger = logging.getLogger(__name__)
 
@@ -55,11 +55,9 @@ def _api_base_url(spec: dict[str, Any]) -> str:
     paths already carry the base path. Non-Equinix servers such as
     SwaggerHub mocks are skipped.
     """
-    for server in spec.get("servers") or []:
-        parsed = urlparse(server.get("url", ""))
-        host = parsed.hostname or ""
-        if parsed.scheme == "https" and host.endswith(".equinix.com"):
-            return f"https://{parsed.netloc}"
+    url = equinix_server_url(spec)
+    if url:
+        return f"https://{urlparse(url).netloc}"
     return API_BASE_URL
 
 
