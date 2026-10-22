@@ -366,11 +366,11 @@ class TestCallApiFiltered:
             )
 
     @pytest.mark.asyncio
-    async def test_filter_selects_fields(self):
-        """Multiple jq outputs come back as a YAML list, without the full response."""
+    async def test_query_selects_fields(self):
+        """The query result comes back as YAML, without the full response."""
         server = await self._server()
         result = await self._call(
-            server, name="fabric_getMetros", jq=".data[] | {code, name}"
+            server, name="fabric_getMetros", query="data[].{code: code, name: name}"
         )
 
         assert not result.is_error
@@ -382,34 +382,51 @@ class TestCallApiFiltered:
         assert result.structured_content is None
 
     @pytest.mark.asyncio
-    async def test_single_output_is_not_wrapped_in_a_list(self):
+    async def test_scalar_result(self):
         server = await self._server()
         result = await self._call(
-            server, name="fabric_getMetros", jq=".pagination.total"
+            server, name="fabric_getMetros", query="pagination.total"
         )
 
         assert yaml.safe_load(result.content[0].text) == 2
 
     @pytest.mark.asyncio
     async def test_wrapped_non_object_response_is_unwrapped(self):
-        """Array responses are filtered as arrays, not as {"result": [...]}."""
+        """Array responses are queried as arrays, not as {"result": [...]}."""
         server = await self._server()
-        result = await self._call(server, name="fabric_listCodes", jq="map(.code)")
+        result = await self._call(server, name="fabric_listCodes", query="[].code")
 
         assert yaml.safe_load(result.content[0].text) == ["SV", "DC"]
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        "name, jq, message",
+        "name, query, message",
         [
-            ("search", ".", "not an Equinix API tool"),
-            ("fabric_getMetros", ".data[", "Invalid jq filter"),
-            ("fabric_getMetros", '.data | error("boom")', "jq filter failed"),
+            ("search", "@", "not an Equinix API tool"),
+            ("fabric_getMetros", "data[", "Invalid JMESPath query"),
+            ("fabric_getMetros", "length(pagination.total)", "JMESPath query failed"),
         ],
     )
-    async def test_errors_are_reported(self, name, jq, message):
+    async def test_errors_are_reported(self, name, query, message):
         server = await self._server()
-        result = await self._call(server, name=name, jq=jq)
+        result = await self._call(server, name=name, query=query)
 
         assert result.is_error
         assert message in result.content[0].text
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "query",
+        [
+            # jq syntax that reads the environment or files is not JMESPath
+            "$ENV.EQUINIX_CLIENT_SECRET",
+            "env.EQUINIX_CLIENT_SECRET",
+            'import "data" as $d; $d',
+        ],
+    )
+    async def test_environment_and_files_are_unreachable(self, query, monkeypatch):
+        monkeypatch.setenv("EQUINIX_CLIENT_SECRET", "s3cr3t")
+        server = await self._server()
+        result = await self._call(server, name="fabric_getMetros", query=query)
+
+        assert "s3cr3t" not in result.content[0].text

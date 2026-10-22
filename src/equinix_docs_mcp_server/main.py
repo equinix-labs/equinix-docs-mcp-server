@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 
 import click
 import httpx2
-import jq as jq_module
+import jmespath
 import yaml
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
@@ -15,6 +15,7 @@ from fastmcp.server.middleware import CallNext, Middleware, MiddlewareContext
 from fastmcp.server.providers.openapi import OpenAPIProvider
 from fastmcp.server.transforms.search import BM25SearchTransform
 from fastmcp.tools.base import ToolResult
+from jmespath.exceptions import JMESPathError
 from mcp_types import TextContent
 
 from .arazzo_manager import ArazzoManager
@@ -38,7 +39,7 @@ CATALOG_CACHE_SCOPE: Literal["public", "private"] = "public"
 # "search" and "fetch" are required by the OpenAI MCP connector contract.
 DOCS_TOOL_NAMES = ["search", "fetch", "list_docs", "find_docs"]
 
-# Runs an API tool and applies a jq filter to its response. Listed next to
+# Runs an API tool and applies a JMESPath query to its response. Listed next to
 # search_tools/call_tool so models can trim large responses.
 FILTER_TOOL_NAME = "call_api_filtered"
 
@@ -273,33 +274,35 @@ class EquinixMCPServer:
 
         @mcp.tool(
             name=FILTER_TOOL_NAME,
-            title="Call API Tool with jq Filter",
+            title="Call API Tool with JMESPath Query",
             description=(
-                "Call an Equinix API tool and return only what a jq filter "
+                "Call an Equinix API tool and return only what a JMESPath query "
                 "selects from its response. Use this instead of call_tool when "
                 "a response would be large and only some fields are needed. "
-                "The filter runs on the API response body, whose shape is the "
-                "tool's output schema; multiple outputs are returned as a "
-                "list.\n\n"
+                "The query runs on the API response body, whose shape is the "
+                "tool's output schema.\n\n"
                 "Examples:\n"
                 '- name "fabric_getMetros", arguments {"limit": 200}, '
-                'jq ".data[] | {code, name, region}"\n'
-                '- name "fabric_searchConnections", jq '
-                '".data[] | {uuid, name, state: .operation.equinixStatus}"\n'
-                '- jq ".pagination.total" to count results'
+                'query "data[].{code: code, name: name, region: region}"\n'
+                '- name "fabric_searchConnections", query '
+                '"data[].{uuid: uuid, name: name, state: operation.equinixStatus}"\n'
+                "- query \"data[?region=='EMEA'].code\" to filter\n"
+                '- query "pagination.total" to count results'
             ),
             output_schema=None,
             tags={"api"},
         )
         async def call_api_filtered(
-            name: str, jq: str, arguments: Optional[dict[str, Any]] = None
+            name: str, query: str, arguments: Optional[dict[str, Any]] = None
         ) -> ToolResult:
+            # JMESPath rather than jq: model-written queries must not reach the
+            # environment or files, loop, or run unbounded
             if not name.startswith(api_prefixes):
                 raise ToolError(f"'{name}' is not an Equinix API tool")
             try:
-                program = jq_module.compile(jq)
-            except ValueError as e:
-                raise ToolError(f"Invalid jq filter: {e}") from e
+                expression = jmespath.compile(query)
+            except JMESPathError as e:
+                raise ToolError(f"Invalid JMESPath query: {e}") from e
 
             result = await mcp.call_tool(name, arguments or {})
             if result.is_error or result.structured_content is None:
@@ -311,10 +314,9 @@ class EquinixMCPServer:
             if tool and (tool.output_schema or {}).get("x-fastmcp-wrap-result"):
                 data = data.get("result", data)
             try:
-                outputs = program.input_value(data).all()
-            except ValueError as e:
-                raise ToolError(f"jq filter failed: {e}") from e
-            filtered = outputs[0] if len(outputs) == 1 else outputs
+                filtered = expression.search(data)
+            except JMESPathError as e:
+                raise ToolError(f"JMESPath query failed: {e}") from e
             text = (
                 filtered
                 if isinstance(filtered, str)
