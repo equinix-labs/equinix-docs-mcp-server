@@ -128,7 +128,7 @@ def test_auth_manager_env_takes_priority_over_files(config):
 
 def test_clear_token_cache(auth_manager):
     """Test clearing token cache."""
-    auth_manager._token_cache["test"] = "token"
+    auth_manager._token_cache["test"] = ("token", None)
     assert len(auth_manager._token_cache) == 1
 
     auth_manager.clear_token_cache()
@@ -140,3 +140,73 @@ async def test_unknown_service(auth_manager):
     """Test handling unknown service."""
     with pytest.raises(ValueError, match="Unknown service"):
         await auth_manager.get_auth_header("unknown_service")
+
+
+def credentialed_manager(config):
+    """An AuthManager with test credentials and no real token endpoint."""
+    with (
+        patch.dict(
+            os.environ,
+            {"EQUINIX_CLIENT_ID": "id", "EQUINIX_CLIENT_SECRET": "secret"},
+            clear=True,
+        ),
+        patch("equinix_docs_mcp_server.auth._load_equinix_yaml", return_value={}),
+    ):
+        return AuthManager(config)
+
+
+@pytest.mark.asyncio
+async def test_token_reused_until_near_expiry(config):
+    """A cached token is refreshed shortly before its expires_in runs out."""
+    am = credentialed_manager(config)
+    am._get_access_token = AsyncMock(
+        side_effect=[("first", 3600.0), ("second", 3600.0)]
+    )
+
+    with patch("equinix_docs_mcp_server.auth.time.monotonic", return_value=1000.0):
+        assert await am.get_auth_header("fabric") == {"Authorization": "Bearer first"}
+    # Still inside the lifetime minus the safety margin
+    with patch("equinix_docs_mcp_server.auth.time.monotonic", return_value=4500.0):
+        assert await am.get_auth_header("fabric") == {"Authorization": "Bearer first"}
+    # Within TOKEN_EXPIRY_MARGIN of expiry
+    with patch("equinix_docs_mcp_server.auth.time.monotonic", return_value=4560.0):
+        assert await am.get_auth_header("fabric") == {"Authorization": "Bearer second"}
+    assert am._get_access_token.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_token_without_lifetime_is_cached(config):
+    """Without expires_in the token is kept; a 401 retry replaces it."""
+    am = credentialed_manager(config)
+    am._get_access_token = AsyncMock(return_value=("tok", None))
+
+    await am.get_auth_header("fabric")
+    await am.get_auth_header("fabric")
+
+    am._get_access_token.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "body, expires_in",
+    [
+        ({"access_token": "t", "token_timeout": "3599"}, 3599.0),
+        ({"access_token": "t", "expires_in": "3599"}, 3599.0),
+        ({"access_token": "t", "expires_in": 3599}, 3599.0),
+        ({"access_token": "t"}, None),
+        ({"access_token": "t", "expires_in": "soon"}, None),
+    ],
+)
+async def test_access_token_lifetime_parsed(config, body, expires_in):
+    """The lifetime is read from token_timeout (Equinix) or expires_in."""
+    import httpx2
+
+    am = credentialed_manager(config)
+    response = httpx2.Response(
+        200, json=body, request=httpx2.Request("POST", "https://example.com")
+    )
+    with patch(
+        "equinix_docs_mcp_server.auth.httpx2.AsyncClient.post",
+        AsyncMock(return_value=response),
+    ):
+        assert await am._get_access_token() == ("t", expires_in)
