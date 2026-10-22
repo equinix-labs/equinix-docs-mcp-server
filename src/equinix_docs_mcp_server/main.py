@@ -2,18 +2,22 @@
 
 import asyncio
 import logging
-from typing import Any, AsyncGenerator, List, Literal, Optional
+from typing import Annotated, Any, AsyncGenerator, List, Literal, Optional
 from urllib.parse import urlparse
 
 import click
 import httpx2
+import jmespath
 import yaml
 from fastmcp import FastMCP
+from fastmcp.exceptions import ToolError
 from fastmcp.server.middleware import CallNext, Middleware, MiddlewareContext
 from fastmcp.server.providers.openapi import OpenAPIProvider
 from fastmcp.server.transforms.search import BM25SearchTransform
 from fastmcp.tools.base import ToolResult
+from jmespath.exceptions import JMESPathError
 from mcp_types import TextContent
+from pydantic import Field
 
 from .arazzo_manager import ArazzoManager
 from .auth import AuthManager
@@ -35,6 +39,10 @@ CATALOG_CACHE_SCOPE: Literal["public", "private"] = "public"
 # catalog is collapsed behind the search transform. The literal names
 # "search" and "fetch" are required by the OpenAI MCP connector contract.
 DOCS_TOOL_NAMES = ["search", "fetch", "list_docs", "find_docs"]
+
+# Runs an API tool and applies a JMESPath query to its response. Listed next to
+# search_tools/call_tool so models can trim large responses.
+FILTER_TOOL_NAME = "call_api_filtered"
 
 API_BASE_URL = "https://api.equinix.com"
 
@@ -209,6 +217,7 @@ class EquinixMCPServer:
         )
 
         self._register_api_providers()
+        self._register_filter_tool()
         await self._register_docs_tools()
 
         # Load and register Arazzo workflows (after API tools exist)
@@ -257,6 +266,91 @@ class EquinixMCPServer:
             # API families.
             self.mcp.add_provider(provider, namespace=api_name)
             logger.info(f"Registered OpenAPI provider for '{api_name}'")
+
+    def _register_filter_tool(self) -> None:
+        """Register the tool that runs an API tool and filters its response."""
+        assert self.mcp is not None
+        mcp = self.mcp
+        api_prefixes = tuple(f"{name}_" for name in self.config.apis)
+
+        @mcp.tool(
+            name=FILTER_TOOL_NAME,
+            title="Call API Tool with JMESPath Query",
+            description=(
+                "Call an Equinix API tool and return only what a JMESPath query "
+                "selects from its response. Use this instead of call_tool when "
+                "a response would be large and only some fields are needed. "
+                "The query runs on the API response body, whose shape is the "
+                "tool's output schema. Query syntax: "
+                "https://jmespath.org/specification.html\n\n"
+                "Examples:\n"
+                '- name "fabric_getMetros", arguments {"limit": 200}, '
+                'query "data[].{code: code, name: name, region: region}"\n'
+                '- name "fabric_searchConnections", query '
+                '"data[].{uuid: uuid, name: name, state: operation.equinixStatus}"\n'
+                "- query \"data[?region=='EMEA'].code\" to filter\n"
+                '- query "pagination.total" to count results'
+            ),
+            output_schema=None,
+            tags={"api"},
+        )
+        async def call_api_filtered(
+            name: Annotated[
+                str,
+                Field(
+                    description=(
+                        "Name of the API tool to call, as returned by "
+                        'search_tools, e.g. "fabric_getMetros"'
+                    )
+                ),
+            ],
+            query: Annotated[
+                str,
+                Field(
+                    description=(
+                        "JMESPath query applied to the API response body, "
+                        'e.g. "data[].{code: code, name: name}"'
+                    )
+                ),
+            ],
+            arguments: Annotated[
+                Optional[dict[str, Any]],
+                Field(description="Arguments for the API tool, as for call_tool"),
+            ] = None,
+        ) -> ToolResult:
+            # JMESPath rather than jq: model-written queries must not reach the
+            # environment or files, loop, or run unbounded
+            if not name.startswith(api_prefixes):
+                raise ToolError(f"'{name}' is not an Equinix API tool")
+            try:
+                expression = jmespath.compile(query)
+            except JMESPathError as e:
+                raise ToolError(f"Invalid JMESPath query: {e}") from e
+
+            result = await mcp.call_tool(name, arguments or {})
+            if result.is_error or result.structured_content is None:
+                return result
+
+            data: Any = result.structured_content
+            # Responses that aren't objects are wrapped as {"result": ...}
+            tool = await mcp.get_tool(name)
+            if tool and (tool.output_schema or {}).get("x-fastmcp-wrap-result"):
+                data = data.get("result", data)
+            try:
+                filtered = expression.search(data)
+            except JMESPathError as e:
+                raise ToolError(f"JMESPath query failed: {e}") from e
+            text = (
+                filtered
+                if isinstance(filtered, str)
+                else yaml.dump(
+                    filtered,
+                    sort_keys=False,
+                    default_flow_style=False,
+                    allow_unicode=True,
+                )
+            )
+            return ToolResult(content=[TextContent(type="text", text=text)])
 
     def _build_api_client(
         self, api_config: APIConfig, spec: dict[str, Any]
@@ -309,7 +403,7 @@ class EquinixMCPServer:
         self.mcp.add_transform(
             BM25SearchTransform(
                 max_results=15,
-                always_visible=DOCS_TOOL_NAMES,
+                always_visible=[*DOCS_TOOL_NAMES, FILTER_TOOL_NAME],
             )
         )
         logger.info("Tool catalog exposed via BM25 search transform")
