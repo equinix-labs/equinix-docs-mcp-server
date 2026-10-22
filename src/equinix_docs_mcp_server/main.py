@@ -280,7 +280,8 @@ class EquinixMCPServer:
                 "selects from its response. Use this instead of call_tool when "
                 "a response would be large and only some fields are needed. "
                 "The query runs on the API response body, whose shape is the "
-                "tool's output schema.\n\n"
+                "tool's output schema. Query syntax: "
+                "https://jmespath.org/specification.html\n\n"
                 "Examples:\n"
                 '- name "fabric_getMetros", arguments {"limit": 200}, '
                 'query "data[].{code: code, name: name, region: region}"\n'
