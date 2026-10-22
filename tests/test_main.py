@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx2
 import pytest
+import yaml
 from fastmcp import Client
 from fastmcp.tools.base import ToolResult
 
@@ -11,6 +12,7 @@ from equinix_docs_mcp_server.config import APIConfig, AuthConfig, Config, DocsCo
 from equinix_docs_mcp_server.main import (
     API_BASE_URL,
     DOCS_TOOL_NAMES,
+    FILTER_TOOL_NAME,
     EquinixAuth,
     EquinixMCPServer,
     ResponseFormattingMiddleware,
@@ -256,7 +258,12 @@ class TestEquinixMCPServer:
             tools = await client.list_tools()
             names = {tool.name for tool in tools}
 
-        assert names == {"search_tools", "call_tool", *DOCS_TOOL_NAMES}
+        assert names == {
+            "search_tools",
+            "call_tool",
+            FILTER_TOOL_NAME,
+            *DOCS_TOOL_NAMES,
+        }
 
     @pytest.mark.asyncio
     async def test_search_tools_finds_api_operations(self):
@@ -324,3 +331,85 @@ class TestEquinixMCPServer:
             "list_docs": "List Equinix Docs",
             "find_docs": "Find Equinix Docs by Filename",
         }
+
+
+class TestCallApiFiltered:
+    """Test the tool that applies a jq filter to an API tool's response."""
+
+    METROS = {
+        "pagination": {"total": 2},
+        "data": [
+            {"code": "SV", "name": "Silicon Valley", "connectedMetros": [{}] * 60},
+            {"code": "DC", "name": "Ashburn", "connectedMetros": [{}] * 60},
+        ],
+    }
+
+    async def _server(self) -> EquinixMCPServer:
+        server = make_server(tool_catalog="search")
+        await server.initialize()
+        assert server.mcp is not None
+
+        @server.mcp.tool(name="fabric_getMetros")
+        def get_metros() -> dict:
+            return self.METROS
+
+        @server.mcp.tool(name="fabric_listCodes")
+        def list_codes() -> list[dict]:
+            return self.METROS["data"]
+
+        return server
+
+    async def _call(self, server, **arguments):
+        async with Client(server.mcp) as client:
+            return await client.call_tool(
+                FILTER_TOOL_NAME, arguments, raise_on_error=False
+            )
+
+    @pytest.mark.asyncio
+    async def test_filter_selects_fields(self):
+        """Multiple jq outputs come back as a YAML list, without the full response."""
+        server = await self._server()
+        result = await self._call(
+            server, name="fabric_getMetros", jq=".data[] | {code, name}"
+        )
+
+        assert not result.is_error
+        assert yaml.safe_load(result.content[0].text) == [
+            {"code": "SV", "name": "Silicon Valley"},
+            {"code": "DC", "name": "Ashburn"},
+        ]
+        assert "connectedMetros" not in result.content[0].text
+        assert result.structured_content is None
+
+    @pytest.mark.asyncio
+    async def test_single_output_is_not_wrapped_in_a_list(self):
+        server = await self._server()
+        result = await self._call(
+            server, name="fabric_getMetros", jq=".pagination.total"
+        )
+
+        assert yaml.safe_load(result.content[0].text) == 2
+
+    @pytest.mark.asyncio
+    async def test_wrapped_non_object_response_is_unwrapped(self):
+        """Array responses are filtered as arrays, not as {"result": [...]}."""
+        server = await self._server()
+        result = await self._call(server, name="fabric_listCodes", jq="map(.code)")
+
+        assert yaml.safe_load(result.content[0].text) == ["SV", "DC"]
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "name, jq, message",
+        [
+            ("search", ".", "not an Equinix API tool"),
+            ("fabric_getMetros", ".data[", "Invalid jq filter"),
+            ("fabric_getMetros", '.data | error("boom")', "jq filter failed"),
+        ],
+    )
+    async def test_errors_are_reported(self, name, jq, message):
+        server = await self._server()
+        result = await self._call(server, name=name, jq=jq)
+
+        assert result.is_error
+        assert message in result.content[0].text
