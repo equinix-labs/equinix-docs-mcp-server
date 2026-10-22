@@ -84,6 +84,17 @@ class EquinixAuth(httpx2.Auth):
     async def async_auth_flow(
         self, request: httpx2.Request
     ) -> AsyncGenerator[httpx2.Request, httpx2.Response]:
+        await self._add_auth_headers(request)
+        response = yield request
+        if response.status_code == 401 and "Authorization" in request.headers:
+            # The token may have been revoked or expired early: fetch a new
+            # one and retry once
+            logger.info(f"401 from {self._service_name}; retrying with a new token")
+            self._auth_manager.clear_token_cache()
+            await self._add_auth_headers(request)
+            yield request
+
+    async def _add_auth_headers(self, request: httpx2.Request) -> None:
         try:
             headers = await self._auth_manager.get_auth_header(self._service_name)
         except Exception as e:
@@ -91,7 +102,6 @@ class EquinixAuth(httpx2.Auth):
             headers = {}
         for key, value in headers.items():
             request.headers[key] = value
-        yield request
 
 
 class ResponseFormattingMiddleware(Middleware):

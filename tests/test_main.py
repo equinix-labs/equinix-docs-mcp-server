@@ -133,6 +133,47 @@ class TestEquinixAuth:
 
         assert "Authorization" not in sent.headers
 
+    @pytest.mark.asyncio
+    async def test_401_retries_once_with_new_token(self):
+        """A rejected token is dropped and the request resent with a new one."""
+        auth_manager = MagicMock()
+        auth_manager.get_auth_header = AsyncMock(
+            side_effect=[
+                {"Authorization": "Bearer stale"},
+                {"Authorization": "Bearer fresh"},
+            ]
+        )
+        auth = EquinixAuth(auth_manager, "fabric")
+
+        request = httpx2.Request("GET", "https://api.equinix.com/fabric/v4/ports")
+        flow = auth.async_auth_flow(request)
+        sent = await anext(flow)
+        assert sent.headers["Authorization"] == "Bearer stale"
+
+        retried = await flow.asend(httpx2.Response(401, request=sent))
+        assert retried.headers["Authorization"] == "Bearer fresh"
+        auth_manager.clear_token_cache.assert_called_once()
+
+        # A second 401 is returned to the caller, not retried again
+        with pytest.raises(StopAsyncIteration):
+            await flow.asend(httpx2.Response(401, request=retried))
+
+    @pytest.mark.parametrize("status", [200, 403])
+    @pytest.mark.asyncio
+    async def test_other_statuses_are_not_retried(self, status):
+        auth_manager = MagicMock()
+        auth_manager.get_auth_header = AsyncMock(
+            return_value={"Authorization": "Bearer token123"}
+        )
+        auth = EquinixAuth(auth_manager, "fabric")
+
+        request = httpx2.Request("GET", "https://api.equinix.com/fabric/v4/ports")
+        flow = auth.async_auth_flow(request)
+        sent = await anext(flow)
+        with pytest.raises(StopAsyncIteration):
+            await flow.asend(httpx2.Response(status, request=sent))
+        auth_manager.clear_token_cache.assert_not_called()
+
 
 class TestResponseFormattingMiddleware:
     """Test JQ/YAML formatting of API tool results."""

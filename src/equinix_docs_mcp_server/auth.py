@@ -3,8 +3,9 @@
 import base64
 import logging
 import os
+import time
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 import httpx2
 import yaml
@@ -17,6 +18,10 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
+
+# Refresh tokens this many seconds before they expire, so a token isn't
+# sent just as it lapses
+TOKEN_EXPIRY_MARGIN = 60
 
 
 def _load_equinix_yaml() -> dict:
@@ -37,7 +42,9 @@ class AuthManager:
     def __init__(self, config: Config):
         """Initialize with configuration."""
         self.config = config
-        self._token_cache: Dict[str, str] = {}
+        # Token and its expiry (time.monotonic()), or None if the token
+        # response gave no lifetime
+        self._token_cache: Dict[str, Tuple[str, Optional[float]]] = {}
 
         # Resolve credentials: env vars take priority, then equinix.yaml —
         # matching equinix-cli/cmd/root.go
@@ -93,18 +100,26 @@ class AuthManager:
 
         # Check cache first
         cache_key = f"{self.client_id}:{self.client_secret}"
-        if cache_key in self._token_cache:
-            logger.debug("Using cached access token")
-            token = self._token_cache[cache_key]
-            # Log token info without exposing the full token
-            logger.debug(f"Cached token length: {len(token)}")
-            logger.debug(f"Cached token starts with: {token[:10]}...")
-            return {"Authorization": f"Bearer {token}"}
+        cached = self._token_cache.get(cache_key)
+        if cached:
+            token, expires_at = cached
+            if expires_at is None or time.monotonic() < expires_at:
+                logger.debug("Using cached access token")
+                # Log token info without exposing the full token
+                logger.debug(f"Cached token length: {len(token)}")
+                logger.debug(f"Cached token starts with: {token[:10]}...")
+                return {"Authorization": f"Bearer {token}"}
+            logger.info("Cached access token is about to expire; refreshing")
 
         # Get new token
         logger.debug("Fetching new access token")
-        token = await self._get_access_token()
-        self._token_cache[cache_key] = token
+        token, expires_in = await self._get_access_token()
+        expires_at = (
+            time.monotonic() + max(expires_in - TOKEN_EXPIRY_MARGIN, 0)
+            if expires_in is not None
+            else None
+        )
+        self._token_cache[cache_key] = (token, expires_at)
 
         # Log token info without exposing the full token
         logger.debug(f"New token length: {len(token)}")
@@ -113,8 +128,9 @@ class AuthManager:
 
         return {"Authorization": f"Bearer {token}"}
 
-    async def _get_access_token(self) -> str:
-        """Get access token using client credentials flow."""
+    async def _get_access_token(self) -> Tuple[str, Optional[float]]:
+        """Get an access token and its lifetime in seconds (None if not given)
+        using the client credentials flow."""
         token_url = self.config.auth.client_credentials.get(
             "token_url", "https://api.equinix.com/oauth2/v1/token"
         )
@@ -161,8 +177,15 @@ class AuthManager:
                     raise ValueError("No access_token in response")
 
                 access_token = token_data["access_token"]
+                # Equinix returns the lifetime as token_timeout, a string such
+                # as "3599", rather than the standard expires_in
+                lifetime = token_data.get("token_timeout", token_data.get("expires_in"))
+                try:
+                    expires_in: Optional[float] = float(lifetime)
+                except (TypeError, ValueError):
+                    expires_in = None
                 logger.info("Successfully obtained access token from Equinix")
-                return access_token
+                return access_token, expires_in
 
             except Exception as e:
                 logger.error(f"Error getting access token: {e}")
