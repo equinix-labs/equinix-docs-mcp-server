@@ -1,7 +1,7 @@
 """Test spec manager functionality."""
 
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -234,6 +234,51 @@ def test_inject_family_context_config_override(spec_manager):
     desc = spec["paths"]["/orgs"]["get"]["description"]
     assert "Digital Letter of Authorization (LOA) for cross connects." in desc
     assert desc.startswith("List organizations")
+
+
+@pytest.mark.parametrize(
+    "title, label",
+    [
+        ("Equinix Fabric API v4", "Fabric"),
+        ("Equinix Work Visit API", "Work Visit"),
+        ("Network Edge APIs", "Network Edge"),
+        ("Digital LOA API", "Digital LOA"),
+    ],
+)
+def test_inject_family_context_label(spec_manager, title, label):
+    """The family label drops a leading "Equinix" and trailing "API vN"."""
+    spec = {"info": {"title": title}, "paths": {"/x": {"get": {}}}}
+
+    spec_manager._inject_family_context(spec, "fam", APIConfig(name="fam"))
+
+    assert spec["paths"]["/x"]["get"]["description"].startswith(
+        f"Part of the Equinix {label} API family (fam)."
+    )
+
+
+@pytest.mark.asyncio
+async def test_base_path_comes_from_equinix_server(spec_manager):
+    """A SwaggerHub server listed first doesn't prefix the spec's paths."""
+    spec = {
+        "servers": [
+            {"url": "https://virtserver.swaggerhub.com/equinix-api/x/1.0.0"},
+            {"url": "https://api.equinix.com/colocations/v2"},
+        ],
+        "paths": {"/cabinets": {"get": {"operationId": "getCabinets"}}},
+    }
+    api_config = APIConfig(name="securecabinet", specs=[{"url": "https://x"}])
+    spec_manager._fetch_and_cache_spec = AsyncMock(return_value=spec)
+    spec_manager.save_merged_spec = MagicMock()
+
+    await spec_manager._process_api_group("securecabinet", api_config)
+
+    merged = spec_manager.save_merged_spec.call_args.args[1]
+    assert list(merged["paths"]) == ["/colocations/v2/cabinets"]
+
+
+def test_smartview_uses_client_credentials(config):
+    """Every Smart View operation needs an OAuth token."""
+    assert config.apis["smartview"].auth_type == "client_credentials"
 
 
 def test_summarize_info_description():
