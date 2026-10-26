@@ -146,6 +146,7 @@ class SpecManager:
         # description, parameters), so family-level context from info.title
         # would otherwise be invisible to search.
         self._inject_family_context(merged_spec, api_name, api_config)
+        self._mark_deprecated_operations(merged_spec)
 
         # Ensure configured security scheme exists BEFORE normalization,
         # so operations can reference the right scheme.
@@ -237,6 +238,37 @@ class SpecManager:
                 operation["description"] = (
                     f"{existing}\n\n{context}" if existing else context
                 )
+
+    DEPRECATED_NOTE = (
+        "Deprecated: this operation may be removed. Prefer a non-deprecated "
+        "alternative where one exists."
+    )
+
+    def _mark_deprecated_operations(self, spec: Dict[str, Any]) -> None:
+        """Carry an operation's ``deprecated: true`` into its tool.
+
+        FastMCP drops the flag, so without this a deprecated operation and
+        its replacement look the same to the agent and to catalog search.
+        """
+        for path_item in (spec.get("paths") or {}).values():
+            if not isinstance(path_item, dict):
+                continue
+            for method in self._HTTP_METHODS:
+                operation = path_item.get(method)
+                if not isinstance(operation, dict) or not operation.get("deprecated"):
+                    continue
+                existing = str(
+                    operation.get("description") or operation.get("summary") or ""
+                ).strip()
+                if not existing.startswith(self.DEPRECATED_NOTE):
+                    operation["description"] = (
+                        f"{self.DEPRECATED_NOTE}\n\n{existing}"
+                        if existing
+                        else self.DEPRECATED_NOTE
+                    )
+                tags = operation.setdefault("tags", [])
+                if isinstance(tags, list) and "deprecated" not in tags:
+                    tags.append("deprecated")
 
     @staticmethod
     def _summarize_info_description(text: str, max_len: int = 300) -> str:

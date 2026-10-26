@@ -142,6 +142,17 @@ The server uses cached API specifications by default for faster startup. Use `--
 equinix-docs-mcp-server --update-specs # --config path/to/custom/config.yaml
 ```
 
+#### Rate Limits, Deprecations and Sunsets
+
+API requests that get HTTP 429 (or 408) are sent again after the wait the `Retry-After` header asks for, or a short backoff without one. A 502, 503 or 504 is retried only for `GET`, `HEAD`, `OPTIONS`, `PUT` and `DELETE`, since a `POST` or `PATCH` may already have been applied. All waits for one request share a small budget, so a tool call doesn't hold up the agent for long. When the budget runs out, the tool error says whether the request was applied and when to retry.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `EQUINIX_MCP_RETRY_MAX` | `5` | Retries per request; `0` turns retrying off |
+| `EQUINIX_MCP_RETRY_WAIT` | `15` | Seconds all waits for one request may add up to |
+
+When an API response carries `Deprecation` or `Sunset` headers, the tool result gets a notice with the dates and any successor `Link`. The notice is given in full once per API family, and in one line on later calls. An error from an endpoint past its sunset says it appears to be retired. Operations marked `deprecated` in their OpenAPI spec say so in their tool description and have a `deprecated` tag.
+
 ## Server Configuration
 
 The server is configured via the packaged `apis.yaml` (or a file passed with `--config`). This file defines:
