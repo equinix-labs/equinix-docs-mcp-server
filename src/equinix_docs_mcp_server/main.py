@@ -19,11 +19,13 @@ from jmespath.exceptions import JMESPathError
 from mcp_types import TextContent
 from pydantic import Field
 
+from .api_notices import ApiNoticeMiddleware, record_response
 from .arazzo_manager import ArazzoManager
 from .auth import AuthManager
 from .config import APIConfig, Config
 from .docs import DocsManager
 from .openapi_annotations import annotate_openapi_component
+from .rate_limits import RetryTransport
 from .response_formatter import ResponseFormatter
 from .spec_manager import SpecManager, equinix_server_url
 
@@ -186,6 +188,7 @@ class EquinixMCPServer:
         self.tool_catalog = tool_catalog
         self.mcp: Optional[FastMCP] = None
         self._api_clients: List[httpx2.AsyncClient] = []
+        self.api_notices = ApiNoticeMiddleware(list(self.config.apis))
 
     async def initialize(self, force_update_specs: bool = False) -> None:
         """Initialize the server components."""
@@ -222,6 +225,9 @@ class EquinixMCPServer:
         await self.arazzo_manager.load()
         await self.arazzo_manager.register_with_fastmcp(self.mcp)
 
+        # Added first so it runs outside the formatter and its notices are
+        # kept
+        self.mcp.add_middleware(self.api_notices)
         self.mcp.add_middleware(
             ResponseFormattingMiddleware(
                 self.response_formatter, list(self.config.apis)
@@ -248,12 +254,18 @@ class EquinixMCPServer:
                 self.failed_providers[api_name] = "no cached spec"
                 continue
 
+            index_tool = self.api_notices.component_hook(api_name)
+
+            def component_fn(route, component, index_tool=index_tool):
+                annotate_openapi_component(route, component)
+                index_tool(route, component)
+
             try:
                 provider = OpenAPIProvider(
                     openapi_spec=spec,
                     client=self._build_api_client(api_config, spec),
                     tags={"equinix", api_name, *api_config.tags},
-                    mcp_component_fn=annotate_openapi_component,
+                    mcp_component_fn=component_fn,
                 )
             except Exception as e:
                 logger.error(f"Failed to build provider for '{api_name}': {e}")
@@ -357,7 +369,8 @@ class EquinixMCPServer:
 
         The client's base URL is host-only: spec paths already carry each
         API's base path (prepended by SpecManager from the spec's servers
-        entry).
+        entry). Rate-limited requests are retried briefly, and deprecation
+        headers are recorded for ApiNoticeMiddleware.
         """
         auth: Optional[httpx2.Auth] = None
         if api_config.auth_type and api_config.name:
@@ -368,6 +381,8 @@ class EquinixMCPServer:
             timeout=30.0,
             auth=auth,
             headers={"User-Agent": "Equinix-MCP-Server/1.0.0"},
+            transport=RetryTransport(),
+            event_hooks={"response": [record_response]},
         )
         self._api_clients.append(client)
         return client

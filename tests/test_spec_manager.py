@@ -304,3 +304,23 @@ def test_config_family_search_metadata(config):
     # Every family carries at least one grouping tag
     for api_name in config.get_api_names():
         assert config.get_api_config(api_name).tags, f"{api_name} has no tags"
+
+
+def test_mark_deprecated_operations(spec_manager):
+    """deprecated: true reaches the tool's description and tags."""
+    spec = {
+        "paths": {
+            "/v1/orders": {
+                "post": {"deprecated": True, "description": "Create an order."},
+                "get": {"description": "List orders."},
+            }
+        }
+    }
+
+    spec_manager._mark_deprecated_operations(spec)
+    spec_manager._mark_deprecated_operations(spec)
+
+    post = spec["paths"]["/v1/orders"]["post"]
+    assert post["description"] == (f"{SpecManager.DEPRECATED_NOTE}\n\nCreate an order.")
+    assert post["tags"] == ["deprecated"]
+    assert spec["paths"]["/v1/orders"]["get"] == {"description": "List orders."}
