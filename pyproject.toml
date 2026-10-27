@@ -9,7 +9,7 @@ readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.13"
 dependencies = [
-    "fastmcp==4.1.1",
+    "fastmcp==4.1.3",
     "mcp-types",
     "httpx2>=2.5.0",
     "pydantic>=2.0.0",
@@ -33,7 +33,7 @@ dev = [
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.0.0",
     # Pinned: ruff's formatter output can change between releases
-    "ruff==0.17.1",
+    "ruff==0.17.2",
     "mypy>=1.0.0",
     "pre-commit>=3.0.0",
     "types-PyYAML>=6.0.0",
