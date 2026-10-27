@@ -12,6 +12,7 @@ import logging
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
 
 import httpx2
 import yaml
@@ -38,6 +39,22 @@ def deep_merge(d: Dict[str, Any], u: collections.abc.Mapping) -> Dict[str, Any]:
         else:
             d[k] = v
     return d
+
+
+def equinix_server_url(spec: Dict[str, Any]) -> Optional[str]:
+    """Return the first https server URL on an equinix.com host, if any.
+
+    Some specs list a SwaggerHub mock or docs URL ahead of the real API
+    server, so servers[0] can't be trusted.
+    """
+    for server in spec.get("servers") or []:
+        url = server.get("url", "")
+        parsed = urlparse(url)
+        if parsed.scheme == "https" and (parsed.hostname or "").endswith(
+            ".equinix.com"
+        ):
+            return url
+    return None
 
 
 def _update_references(obj: Any) -> Any:
@@ -90,18 +107,9 @@ class SpecManager:
             if not spec:
                 continue
 
-            # Extract base path from server URL
-            base_path = ""
-            if "servers" in spec and spec["servers"]:
-                server_url = spec["servers"][0].get("url", "")
-                if server_url:
-                    from urllib.parse import urlparse
-
-                    parsed_url = urlparse(server_url)
-                    base_path = parsed_url.path
-                    # remove trailing slash if present
-                    if base_path.endswith("/"):
-                        base_path = base_path[:-1]
+            # Spec paths carry the Equinix server's base path; servers such
+            # as SwaggerHub mocks listed ahead of it are skipped.
+            base_path = urlparse(equinix_server_url(spec) or "").path.rstrip("/")
 
             # Prepend base_path to all paths
             if base_path and "paths" in spec:
@@ -217,7 +225,10 @@ class SpecManager:
                 str(info.get("description") or "")
             )
 
-        label = re.sub(r"\s+APIs?$", "", title) or api_name
+        # "Equinix Fabric API v4" -> "Fabric", so the sentence below doesn't
+        # read "Equinix Equinix Fabric API v4 API family".
+        label = re.sub(r"^Equinix\s+", "", title)
+        label = re.sub(r"\s+APIs?(\s+v\d+)?$", "", label) or api_name
         parts = [f"Part of the Equinix {label} API family ({api_name})."]
         if family_desc and family_desc.rstrip(".") != title.rstrip("."):
             parts.append(family_desc.rstrip(".") + ".")

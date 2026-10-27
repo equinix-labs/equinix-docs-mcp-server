@@ -122,6 +122,7 @@ apis:
   # SmartView APIs
   smartview:
     tags: [colocation, monitoring, power]
+    auth_type: "client_credentials"
     service_name: "smartview"
     specs:
       # The former per-domain Smart View specs (environmentalv1/v2,
