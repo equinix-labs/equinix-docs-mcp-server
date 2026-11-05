@@ -13,7 +13,6 @@ from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
 from fastmcp.server.middleware import CallNext, Middleware, MiddlewareContext
 from fastmcp.server.providers.openapi import OpenAPIProvider
-from fastmcp.server.transforms.search import BM25SearchTransform
 from fastmcp.tools.base import ToolResult
 from jmespath.exceptions import JMESPathError
 from mcp_types import TextContent
@@ -28,6 +27,7 @@ from .openapi_annotations import annotate_openapi_component
 from .rate_limits import RetryTransport
 from .response_formatter import ResponseFormatter
 from .spec_manager import SpecManager, equinix_server_url
+from .tool_search import EquinixSearchTransform
 
 logger = logging.getLogger(__name__)
 
@@ -175,8 +175,8 @@ class EquinixMCPServer:
         Args:
             config_path: Path to the apis.yaml configuration file; defaults
                 to the configuration bundled with the package.
-            tool_catalog: How to expose the tool catalog — "search" (BM25
-                search transform, default), "code-mode" (experimental
+            tool_catalog: How to expose the tool catalog — "search"
+                (search_tools/get_tool_schema/call_tool, default), "code-mode" (experimental
                 sandboxed code execution), or "full" (every tool listed).
         """
         self.config = Config.load(config_path)
@@ -210,7 +210,9 @@ class EquinixMCPServer:
                 "including Fabric, Network Edge, and Billing services, "
                 "plus full-text search over docs.equinix.com. Use 'search' and "
                 "'fetch' for documentation. API operations are grouped per "
-                "service and named '<service>_<operationId>'. API responses "
+                "service and named '<service>_<operationId>'. Find them with "
+                "'search_tools', read one's parameters with 'get_tool_schema', "
+                "and run it with 'call_tool'. API responses "
                 "are formatted as YAML for better readability."
             ),
             cache_ttl=CATALOG_CACHE_TTL_SECONDS,
@@ -291,7 +293,8 @@ class EquinixMCPServer:
                 "selects from its response. Use this instead of call_tool when "
                 "a response would be large and only some fields are needed. "
                 "The query runs on the API response body, whose shape is the "
-                "tool's output schema. Query syntax: "
+                "tool's output schema (get_tool_schema with output_schema "
+                "true). Query syntax: "
                 "https://jmespath.org/specification.html\n\n"
                 "Examples:\n"
                 '- name "fabric_getMetros", arguments {"limit": 200}, '
@@ -414,12 +417,12 @@ class EquinixMCPServer:
             return
 
         self.mcp.add_transform(
-            BM25SearchTransform(
+            EquinixSearchTransform(
                 max_results=15,
                 always_visible=[*DOCS_TOOL_NAMES, FILTER_TOOL_NAME],
             )
         )
-        logger.info("Tool catalog exposed via BM25 search transform")
+        logger.info("Tool catalog exposed via search_tools and get_tool_schema")
 
     async def _register_docs_tools(self) -> None:
         """Register documentation tools on the FastMCP server."""
@@ -541,7 +544,7 @@ class EquinixMCPServer:
     default="search",
     help=(
         "How to expose the tool catalog: 'search' lists only docs tools plus "
-        "search_tools/call_tool (default), 'code-mode' uses experimental "
+        "search_tools/get_tool_schema/call_tool (default), 'code-mode' uses experimental "
         "sandboxed code execution, 'full' lists every generated tool"
     ),
 )

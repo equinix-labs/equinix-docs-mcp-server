@@ -3,7 +3,7 @@
 This project is an experimental Model Context Protocol (MCP) server, for local use and learning, that provides access to Equinix APIs and documentation. This project is not expected to offer high quality (production-ready) results. This is offered for developers learning about MCP, Equinix APIs and documentation, and their potential integration. 
 
 > [!NOTE]
-> By default the API tool catalog is collapsed behind a `search_tools`/`call_tool` discovery pair (FastMCP's BM25 search transform), so large API catalogs no longer overwhelm the model's context window. Use `--tool-catalog full` to list every generated tool directly.
+> By default the API tool catalog is collapsed behind `search_tools`, `get_tool_schema` and `call_tool`, so large API catalogs no longer overwhelm the model's context window. Use `--tool-catalog full` to list every generated tool directly.
 
 ## Features
 
@@ -191,7 +191,8 @@ Overlay files in the `overlays/` directory normalize API specifications before p
 The server exposes MCP tools for:
 
 1. **API Operations**: Dynamic tools generated per API family from its OpenAPI specification, named `<family>_<operationId>` (e.g. `fabric_searchConnections`, `network-edge_getMetros`). With the default `--tool-catalog search`, these are hidden from `tools/list` and reached through:
-   - `search_tools` - Find API tools by natural-language query (returns full schemas)
+   - `search_tools` - Find API tools by natural-language query. Each match is a short entry: name, title, access (read-only, write or destructive), a one-paragraph summary, required parameters with types, and optional parameter names. Results run about 4-6K characters for 15 matches.
+   - `get_tool_schema` - Return one tool's full definition, with every parameter's description and examples. Pass `output_schema: true` to include the response schema, for example to write a `call_api_filtered` query.
    - `call_tool` - Execute a discovered tool by name
 2. **Documentation**: 
    - `search` - Full-text search documentation using indexed content (OpenAI MCP compatible)
