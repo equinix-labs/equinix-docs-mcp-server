@@ -22,6 +22,8 @@ from fastmcp.utilities.versions import VersionSpec
 from mcp_types import TextContent, ToolAnnotations
 from pydantic import Field
 
+from .tool_ranking import ToolIndex
+
 SEARCH_TOOL_NAME = "search_tools"
 SCHEMA_TOOL_NAME = "get_tool_schema"
 CALL_TOOL_NAME = "call_tool"
@@ -176,7 +178,9 @@ def tool_definition(tool: Tool, *, output_schema: bool) -> dict[str, Any]:
 
 
 class EquinixSearchTransform(BM25SearchTransform):
-    """BM25 tool search that returns compact entries, plus a schema lookup.
+    """Tool search that returns compact entries, plus a schema lookup.
+
+    Ranking comes from ``tool_ranking.ToolIndex`` rather than FastMCP's index.
 
     ``tools/list`` shows the pinned tools, ``search_tools``,
     ``get_tool_schema`` and ``call_tool``.
@@ -195,6 +199,14 @@ class EquinixSearchTransform(BM25SearchTransform):
             call_tool_name=CALL_TOOL_NAME,
             search_result_serializer=summarize_tools,
         )
+        self._tool_index: ToolIndex | None = None
+
+    async def _search(self, tools: Sequence[Tool], query: str) -> Sequence[Tool]:
+        names = tuple(tool.name for tool in tools)
+        if self._tool_index is None or self._tool_index.names != names:
+            self._tool_index = ToolIndex(tools)
+        indices = self._tool_index.query(query, self._max_results)
+        return [tools[i] for i in indices]
 
     async def transform_tools(self, tools: Sequence[Tool]) -> Sequence[Tool]:
         pinned = [t for t in tools if t.name in self._always_visible]
