@@ -651,8 +651,16 @@ class SpecManager:
         - Swagger 2.0 `collectionFormat` left inside OpenAPI 3 array schemas
           (assets) is not a JSON Schema keyword and would leak into tool
           input schemas; OpenAPI 3 expresses it with parameter `style`.
+        - A property indented under its neighbour's `$ref` (fabric
+          `SimplifiedNetwork.type.name`): the sibling is not a keyword, so it
+          is moved back into `properties`, or dropped when that property
+          already exists.
         """
         if isinstance(node, dict):
+            properties = node.get("properties")
+            if isinstance(properties, dict):
+                self._hoist_misindented_properties(properties)
+
             if node.get("type") == "file":
                 node["type"] = "string"
                 node["format"] = "binary"
@@ -673,6 +681,43 @@ class SpecManager:
         elif isinstance(node, list):
             for item in node:
                 self._sanitize_schema_quirks(item)
+
+    # Keywords whose value is a schema; a `$ref` sibling with any other name
+    # and a schema value is a misindented property
+    _SUBSCHEMA_KEYWORDS = frozenset(
+        {
+            "items",
+            "additionalProperties",
+            "not",
+            "properties",
+            "patternProperties",
+            "contains",
+            "propertyNames",
+            "if",
+            "then",
+            "else",
+            "discriminator",
+            "xml",
+            "externalDocs",
+        }
+    )
+
+    @classmethod
+    def _hoist_misindented_properties(cls, properties: Dict[str, Any]) -> None:
+        for prop in list(properties.values()):
+            if not isinstance(prop, dict) or "$ref" not in prop:
+                continue
+            for key in list(prop):
+                value = prop[key]
+                if (
+                    key in cls._SUBSCHEMA_KEYWORDS
+                    or key.startswith("x-")
+                    or not isinstance(value, dict)
+                    or not ("type" in value or "$ref" in value)
+                ):
+                    continue
+                prop.pop(key)
+                properties.setdefault(key, value)
 
     def get_provider_spec(self, api_name: str) -> Optional[Dict[str, Any]]:
         """Load one API family's spec, ready for provider registration.
