@@ -10,6 +10,7 @@ import os
 from importlib import resources
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
+from urllib.parse import urlparse
 
 import platformdirs
 import yaml
@@ -34,6 +35,44 @@ def cache_root() -> Path:
     if env:
         return Path(env)
     return Path(platformdirs.user_cache_dir("equinix-docs-mcp-server", appauthor=False))
+
+
+# Production API host, which EQUINIX_API_ENDPOINT replaces
+DEFAULT_API_ENDPOINT = "https://api.equinix.com"
+API_ENDPOINT_ENV = "EQUINIX_API_ENDPOINT"
+
+
+def api_endpoint() -> str:
+    """Base URL for requests to the Equinix API host.
+
+    Override with EQUINIX_API_ENDPOINT, as in the Equinix Terraform provider,
+    for example to use a test environment or a mock server.
+    """
+    value = (os.getenv(API_ENDPOINT_ENV) or "").strip().rstrip("/")
+    if not value:
+        return DEFAULT_API_ENDPOINT
+    parsed = urlparse(value)
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        raise ValueError(
+            f"{API_ENDPOINT_ENV} must be an http(s) URL, such as "
+            f"https://mockapi.example.com; got {value!r}"
+        )
+    return value
+
+
+def rebase_api_url(url: str) -> str:
+    """Move a URL on the default API host onto the configured endpoint.
+
+    URLs on other hosts, such as the access and sts APIs, are returned
+    unchanged.
+    """
+    endpoint = api_endpoint()
+    default = urlparse(DEFAULT_API_ENDPOINT)
+    parsed = urlparse(url)
+    if endpoint == DEFAULT_API_ENDPOINT or parsed.netloc != default.netloc:
+        return url
+    rest = parsed._replace(scheme="", netloc="").geturl()
+    return f"{endpoint}{rest}"
 
 
 class SpecSource(BaseModel):

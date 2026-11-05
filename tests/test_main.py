@@ -106,6 +106,35 @@ class TestApiBaseUrl:
         assert _api_base_url(spec) == API_BASE_URL
 
 
+class TestApiEndpointOverride:
+    """EQUINIX_API_ENDPOINT replaces the api.equinix.com host."""
+
+    def test_replaces_api_host(self, monkeypatch):
+        monkeypatch.setenv("EQUINIX_API_ENDPOINT", "https://mockapi.example.com/")
+        spec = {"servers": [{"url": "https://api.equinix.com/fabric/v4"}]}
+        assert _api_base_url(spec) == "https://mockapi.example.com"
+        assert _api_base_url({}) == "https://mockapi.example.com"
+
+    def test_keeps_other_hosts(self, monkeypatch):
+        """Families served from their own hosts (access, sts) keep them."""
+        monkeypatch.setenv("EQUINIX_API_ENDPOINT", "https://mockapi.example.com")
+        spec = {"servers": [{"url": "https://access.eqix.equinix.com"}]}
+        assert _api_base_url(spec) == "https://access.eqix.equinix.com"
+
+    def test_allows_plain_http_and_path(self, monkeypatch):
+        """A local mock server may use http and a path prefix."""
+        monkeypatch.setenv("EQUINIX_API_ENDPOINT", "http://localhost:8080/mock")
+        assert _api_base_url({}) == "http://localhost:8080/mock"
+
+    @pytest.mark.parametrize(
+        "value", ["mockapi.example.com", "ftp://mockapi.example.com"]
+    )
+    def test_rejects_non_url(self, monkeypatch, value):
+        monkeypatch.setenv("EQUINIX_API_ENDPOINT", value)
+        with pytest.raises(ValueError, match="EQUINIX_API_ENDPOINT"):
+            _api_base_url({})
+
+
 class TestEquinixAuth:
     """Test the per-family httpx auth hook."""
 

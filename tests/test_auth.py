@@ -34,8 +34,8 @@ async def test_client_credentials_auth_missing_vars(config):
         patch.dict(
             os.environ,
             {
-                "EQUINIX_CLIENT_ID": "test_client_id",
-                "EQUINIX_CLIENT_SECRET": "test_client_secret",
+                "EQUINIX_API_CLIENTID": "test_client_id",
+                "EQUINIX_API_CLIENTSECRET": "test_client_secret",
             },
             clear=True,
         ),
@@ -108,8 +108,8 @@ def test_auth_manager_env_takes_priority_over_files(config):
         patch.dict(
             os.environ,
             {
-                "EQUINIX_CLIENT_ID": "env_id",
-                "EQUINIX_CLIENT_SECRET": "env_secret",
+                "EQUINIX_API_CLIENTID": "env_id",
+                "EQUINIX_API_CLIENTSECRET": "env_secret",
             },
             clear=True,
         ),
@@ -147,7 +147,7 @@ def credentialed_manager(config):
     with (
         patch.dict(
             os.environ,
-            {"EQUINIX_CLIENT_ID": "id", "EQUINIX_CLIENT_SECRET": "secret"},
+            {"EQUINIX_API_CLIENTID": "id", "EQUINIX_API_CLIENTSECRET": "secret"},
             clear=True,
         ),
         patch("equinix_docs_mcp_server.auth._load_equinix_yaml", return_value={}),
@@ -210,3 +210,77 @@ async def test_access_token_lifetime_parsed(config, body, expires_in):
         AsyncMock(return_value=response),
     ):
         assert await am._get_access_token() == ("t", expires_in)
+
+
+def test_deprecated_credential_names_still_work(config, caplog):
+    """EQUINIX_CLIENT_ID / _SECRET are read with a deprecation warning."""
+    with (
+        patch.dict(
+            os.environ,
+            {"EQUINIX_CLIENT_ID": "old_id", "EQUINIX_CLIENT_SECRET": "old_secret"},
+            clear=True,
+        ),
+        patch("equinix_docs_mcp_server.auth._load_equinix_yaml", return_value={}),
+        caplog.at_level("WARNING", logger="equinix_docs_mcp_server.auth"),
+    ):
+        am = AuthManager(config)
+    assert (am.client_id, am.client_secret) == ("old_id", "old_secret")
+    assert "EQUINIX_CLIENT_ID is deprecated; set EQUINIX_API_CLIENTID" in caplog.text
+    assert "old_secret" not in caplog.text
+
+
+def test_new_credential_names_win(config, caplog):
+    """The Terraform-style names take priority over the deprecated ones."""
+    with (
+        patch.dict(
+            os.environ,
+            {
+                "EQUINIX_API_CLIENTID": "new_id",
+                "EQUINIX_API_CLIENTSECRET": "new_secret",
+                "EQUINIX_CLIENT_ID": "old_id",
+                "EQUINIX_CLIENT_SECRET": "old_secret",
+            },
+            clear=True,
+        ),
+        patch("equinix_docs_mcp_server.auth._load_equinix_yaml", return_value={}),
+        caplog.at_level("WARNING", logger="equinix_docs_mcp_server.auth"),
+    ):
+        am = AuthManager(config)
+    assert (am.client_id, am.client_secret) == ("new_id", "new_secret")
+    assert "deprecated" not in caplog.text
+
+
+class _TokenResponse:
+    status_code = 200
+    text = ""
+    headers: dict = {}
+
+    def raise_for_status(self):
+        return None
+
+    def json(self):
+        return {"access_token": "tok", "expires_in": 3600}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "endpoint, expected",
+    [
+        (None, "https://api.equinix.com/oauth2/v1/token"),
+        (
+            "https://mockapi.example.com/",
+            "https://mockapi.example.com/oauth2/v1/token",
+        ),
+    ],
+)
+async def test_token_url_follows_endpoint(config, monkeypatch, endpoint, expected):
+    """EQUINIX_API_ENDPOINT moves the token request too."""
+    am = credentialed_manager(config)
+    if endpoint:
+        monkeypatch.setenv("EQUINIX_API_ENDPOINT", endpoint)
+    else:
+        monkeypatch.delenv("EQUINIX_API_ENDPOINT", raising=False)
+    post = AsyncMock(return_value=_TokenResponse())
+    with patch("equinix_docs_mcp_server.auth.httpx2.AsyncClient.post", post):
+        assert await am._get_access_token() == ("tok", 3600)
+    assert post.await_args.args[0] == expected

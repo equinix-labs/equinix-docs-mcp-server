@@ -11,7 +11,7 @@ import httpx2
 import yaml
 from pydantic import BaseModel
 
-from .config import Config
+from .config import DEFAULT_API_ENDPOINT, Config, rebase_api_url
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -22,6 +22,30 @@ logging.basicConfig(
 # Refresh tokens this many seconds before they expire, so a token isn't
 # sent just as it lapses
 TOKEN_EXPIRY_MARGIN = 60
+
+# Credential variables, named as in the Equinix Terraform provider and SDKs
+CLIENT_ID_ENV = "EQUINIX_API_CLIENTID"
+CLIENT_SECRET_ENV = "EQUINIX_API_CLIENTSECRET"
+# Earlier names, still read when the new ones are unset
+DEPRECATED_CLIENT_ID_ENV = "EQUINIX_CLIENT_ID"
+DEPRECATED_CLIENT_SECRET_ENV = "EQUINIX_CLIENT_SECRET"
+
+_MISSING_CREDENTIALS = (
+    f"Client credentials not found. Set {CLIENT_ID_ENV} / {CLIENT_SECRET_ENV}, "
+    "or add equinix_client_id / equinix_client_secret to "
+    "~/.config/equinix/equinix.yaml"
+)
+
+
+def _env_credential(name: str, deprecated: str) -> Optional[str]:
+    """Read a credential variable, falling back to its deprecated name."""
+    value = os.getenv(name)
+    if value:
+        return value
+    value = os.getenv(deprecated)
+    if value:
+        logger.warning(f"{deprecated} is deprecated; set {name} instead")
+    return value or None
 
 
 def _load_equinix_yaml() -> dict:
@@ -50,12 +74,12 @@ class AuthManager:
         # matching equinix-cli/cmd/root.go
         equinix_cfg = _load_equinix_yaml()
 
-        self.client_id = os.getenv("EQUINIX_CLIENT_ID") or equinix_cfg.get(
-            "equinix_client_id"
-        )
-        self.client_secret = os.getenv("EQUINIX_CLIENT_SECRET") or equinix_cfg.get(
-            "equinix_client_secret"
-        )
+        self.client_id = _env_credential(
+            CLIENT_ID_ENV, DEPRECATED_CLIENT_ID_ENV
+        ) or equinix_cfg.get("equinix_client_id")
+        self.client_secret = _env_credential(
+            CLIENT_SECRET_ENV, DEPRECATED_CLIENT_SECRET_ENV
+        ) or equinix_cfg.get("equinix_client_secret")
 
         # Log credential availability (without exposing values)
         logger.info(f"AuthManager initialized:")
@@ -89,14 +113,8 @@ class AuthManager:
         logger.debug("Getting client credentials auth header")
 
         if not self.client_id or not self.client_secret:
-            logger.error(
-                "Client credentials not found. Set EQUINIX_CLIENT_ID / EQUINIX_CLIENT_SECRET, "
-                "or add equinix_client_id / equinix_client_secret to ~/.config/equinix/equinix.yaml"
-            )
-            raise ValueError(
-                "Client credentials not found. Set EQUINIX_CLIENT_ID / EQUINIX_CLIENT_SECRET, "
-                "or add equinix_client_id / equinix_client_secret to ~/.config/equinix/equinix.yaml"
-            )
+            logger.error(_MISSING_CREDENTIALS)
+            raise ValueError(_MISSING_CREDENTIALS)
 
         # Check cache first
         cache_key = f"{self.client_id}:{self.client_secret}"
@@ -131,8 +149,10 @@ class AuthManager:
     async def _get_access_token(self) -> Tuple[str, Optional[float]]:
         """Get an access token and its lifetime in seconds (None if not given)
         using the client credentials flow."""
-        token_url = self.config.auth.client_credentials.get(
-            "token_url", "https://api.equinix.com/oauth2/v1/token"
+        token_url = rebase_api_url(
+            self.config.auth.client_credentials.get(
+                "token_url", f"{DEFAULT_API_ENDPOINT}/oauth2/v1/token"
+            )
         )
 
         logger.info(f"Requesting access token from: {token_url}")

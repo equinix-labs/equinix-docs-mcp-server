@@ -26,6 +26,12 @@ def test_environment():
     os.chdir(original_cwd)
 
 
+@pytest.fixture(autouse=True)
+def production_endpoint(monkeypatch):
+    """Tests expect api.equinix.com, whatever the developer's shell sets."""
+    monkeypatch.delenv("EQUINIX_API_ENDPOINT", raising=False)
+
+
 @pytest.fixture
 def temp_dir():
     """Create a temporary directory for tests."""
@@ -37,6 +43,6 @@ def temp_dir():
 def mock_env_vars():
     """Mock environment variables for testing."""
     return {
-        "EQUINIX_CLIENT_ID": "test_client_id",
-        "EQUINIX_CLIENT_SECRET": "test_client_secret",
+        "EQUINIX_API_CLIENTID": "test_client_id",
+        "EQUINIX_API_CLIENTSECRET": "test_client_secret",
     }

@@ -22,7 +22,7 @@ from pydantic import Field
 from .api_notices import ApiNoticeMiddleware, record_response
 from .arazzo_manager import ArazzoManager
 from .auth import AuthManager
-from .config import APIConfig, Config
+from .config import DEFAULT_API_ENDPOINT, APIConfig, Config, rebase_api_url
 from .docs import DocsManager
 from .openapi_annotations import annotate_openapi_component
 from .rate_limits import RetryTransport
@@ -46,7 +46,7 @@ DOCS_TOOL_NAMES = ["search", "fetch", "list_docs", "find_docs"]
 # search_tools/call_tool so models can trim large responses.
 FILTER_TOOL_NAME = "call_api_filtered"
 
-API_BASE_URL = "https://api.equinix.com"
+API_BASE_URL = DEFAULT_API_ENDPOINT
 
 
 def _api_base_url(spec: dict[str, Any]) -> str:
@@ -55,12 +55,12 @@ def _api_base_url(spec: dict[str, Any]) -> str:
     Most families live behind api.equinix.com, but some (access, sts) are
     served from their own hosts. Only the scheme and host are used: spec
     paths already carry the base path. Non-Equinix servers such as
-    SwaggerHub mocks are skipped.
+    SwaggerHub mocks are skipped. EQUINIX_API_ENDPOINT, when set, replaces
+    api.equinix.com; families on other hosts keep them.
     """
     url = equinix_server_url(spec)
-    if url:
-        return f"https://{urlparse(url).netloc}"
-    return API_BASE_URL
+    host = f"https://{urlparse(url).netloc}" if url else API_BASE_URL
+    return rebase_api_url(host)
 
 
 def _configure_logging(log_level: str):
