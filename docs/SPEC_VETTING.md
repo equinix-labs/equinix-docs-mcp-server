@@ -44,9 +44,8 @@ of aborting startup.
   went away with the Metal API; candidate for an upstream FastMCP issue if
   another spec declares a bare primitive body.
 - Exact-tool-name search misses (6 tools in the 2026-08-05 sweep, e.g.
-  `smartview_getAlerts`): these are precisely the largest-schema tools. The
-  BM25 index includes all parameter descriptions, so doc-length
-  normalization outranks them for short queries that also match many small
-  tools. Searching the bare operation name ranks them #1.
-  An upstream tuning question for FastMCP's search transform, not a spec
-  defect.
+  `smartview_getAlerts`) came from FastMCP's BM25 index, which included all
+  parameter descriptions, so length normalization ranked the largest-schema
+  tools below small ones. `tool_ranking.py` now ranks on the tool name
+  (split into words), title, first description paragraph and family name;
+  a 2026-11-05 check found every one of 549 tools by its exact name.

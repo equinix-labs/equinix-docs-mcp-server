@@ -324,3 +324,40 @@ def test_mark_deprecated_operations(spec_manager):
     assert post["description"] == (f"{SpecManager.DEPRECATED_NOTE}\n\nCreate an order.")
     assert post["tags"] == ["deprecated"]
     assert spec["paths"]["/v1/orders"]["get"] == {"description": "List orders."}
+
+
+def test_sanitize_hoists_misindented_property(spec_manager):
+    """A property nested under its neighbour's $ref is moved back."""
+    spec = {
+        "components": {
+            "schemas": {
+                "Network": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "$ref": "#/components/schemas/NetworkType",
+                            "name": {"type": "string", "description": "Name"},
+                            "x-extra": {"type": "string"},
+                        },
+                        "scope": {
+                            "$ref": "#/components/schemas/Scope",
+                            "uuid": {"type": "string"},
+                        },
+                        "uuid": {"type": "string", "format": "uuid"},
+                    },
+                }
+            }
+        }
+    }
+
+    spec_manager._sanitize_schema_quirks(spec)
+
+    props = spec["components"]["schemas"]["Network"]["properties"]
+    assert props["type"] == {
+        "$ref": "#/components/schemas/NetworkType",
+        "x-extra": {"type": "string"},
+    }
+    assert props["name"] == {"type": "string", "description": "Name"}
+    # A stray copy of an existing property is dropped, not merged
+    assert props["uuid"] == {"type": "string", "format": "uuid"}
+    assert props["scope"] == {"$ref": "#/components/schemas/Scope"}

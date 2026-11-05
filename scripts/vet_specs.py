@@ -16,7 +16,6 @@ Usage:  python scripts/vet_specs.py [--families a,b,c] [--report vet-report.md]
 
 import argparse
 import asyncio
-import json
 import logging
 import sys
 from collections import Counter, defaultdict
@@ -285,7 +284,12 @@ async def vet(families_filter=None, report_path="vet-report.md"):
     async with Client(search_server.mcp) as client:
         for tool in tools:
             r = await client.call_tool("search_tools", {"query": tool.name})
-            names = {t["name"] for t in json.loads(r.content[0].text)}
+            # Each match is a "### <name> — <title>" heading
+            names = {
+                line[4:].split(" — ", 1)[0]
+                for line in r.content[0].text.splitlines()
+                if line.startswith("### ")
+            }
             if tool.name not in names:
                 not_searchable.append(tool.name)
 
