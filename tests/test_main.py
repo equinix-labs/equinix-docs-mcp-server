@@ -250,7 +250,7 @@ class TestEquinixMCPServer:
 
     @pytest.mark.asyncio
     async def test_search_catalog_hides_api_tools(self):
-        """Default catalog: only docs tools plus search_tools/call_tool are listed."""
+        """Default catalog: docs tools plus the search, schema and call tools."""
         server = make_server(tool_catalog="search")
         await server.initialize()
 
@@ -260,6 +260,7 @@ class TestEquinixMCPServer:
 
         assert names == {
             "search_tools",
+            "get_tool_schema",
             "call_tool",
             FILTER_TOOL_NAME,
             *DOCS_TOOL_NAMES,

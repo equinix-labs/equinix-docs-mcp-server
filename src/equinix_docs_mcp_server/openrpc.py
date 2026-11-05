@@ -425,8 +425,9 @@ def build_openrpc_document(
                 '"<method>", "arguments": {<params>}}`. API tools are '
                 "generated from the Equinix OpenAPI specs and named "
                 "`<family>_<operationId>`; by default the server lists only "
-                "the docs tools plus `search_tools`/`call_tool`, and the API "
-                "tools documented here are reached through them."
+                "the docs tools plus `search_tools`/`get_tool_schema`/"
+                "`call_tool`, and the API tools documented here are reached "
+                "through them."
             ),
             "license": {
                 "name": "MIT",
