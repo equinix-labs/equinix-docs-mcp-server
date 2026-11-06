@@ -8,8 +8,8 @@
         "equinix-docs-mcp-server"
       ],
       "env": {
-        "EQUINIX_CLIENT_ID": "YOUR_EQUINIX_CLIENT_ID",
-        "EQUINIX_CLIENT_SECRET": "YOUR_EQUINIX_CLIENT_SECRET"
+        "EQUINIX_API_CLIENTID": "YOUR_EQUINIX_CLIENT_ID",
+        "EQUINIX_API_CLIENTSECRET": "YOUR_EQUINIX_CLIENT_SECRET"
       }
     }
   }

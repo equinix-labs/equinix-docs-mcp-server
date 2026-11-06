@@ -60,8 +60,8 @@ The packaged configuration lives at `src/equinix_docs_mcp_server/data/config/api
 ## Adding the MCP Server to Claude Code
 
 ```bash
-claude mcp add --env EQUINIX_CLIENT_ID=your_client_id \
-  --env EQUINIX_CLIENT_SECRET=your_client_secret \
+claude mcp add --env EQUINIX_API_CLIENTID=your_client_id \
+  --env EQUINIX_API_CLIENTSECRET=your_client_secret \
   --transport stdio equinix \
   -- uvx --system-certs --from git+https://github.com/equinix-labs/equinix-docs-mcp-server equinix-docs-mcp-server
 ```
@@ -96,8 +96,8 @@ Or create a `.vscode/mcp.json` in your workspace to prompt for credentials on fi
         "equinix-docs-mcp-server"
       ],
       "env": {
-        "EQUINIX_CLIENT_ID": "${input:equinix-client-id}",
-        "EQUINIX_CLIENT_SECRET": "${input:equinix-client-secret}"
+        "EQUINIX_API_CLIENTID": "${input:equinix-client-id}",
+        "EQUINIX_API_CLIENTSECRET": "${input:equinix-client-secret}"
       }
     }
   },
@@ -128,11 +128,23 @@ Set your Equinix API credentials as environment variables, or configure them onc
 
 ```bash
 # OAuth2 Client Credentials
-export EQUINIX_CLIENT_ID="your_client_id"
-export EQUINIX_CLIENT_SECRET="your_client_secret"
+export EQUINIX_API_CLIENTID="your_client_id"
+export EQUINIX_API_CLIENTSECRET="your_client_secret"
 ```
 
-If you have already run `equinix init`, credentials are stored in `~/.config/equinix/equinix.yaml` (keys: `equinix_client_id`, `equinix_client_secret`). No environment variables are needed in that case.
+These are the names the [Equinix Terraform provider](https://github.com/equinix/terraform-provider-equinix) and the Equinix SDKs use. The earlier `EQUINIX_CLIENT_ID` and `EQUINIX_CLIENT_SECRET` still work but are deprecated, and the server logs a warning when it falls back to them.
+
+If you have already run `equinix init`, credentials are stored in `~/.config/equinix/equinix.yaml` (keys: `equinix_client_id`, `equinix_client_secret`). No environment variables are needed in that case. Environment variables take priority over that file.
+
+#### API Endpoint
+
+Requests and token requests go to `https://api.equinix.com`. To use another environment, such as a test environment or a mock server, set `EQUINIX_API_ENDPOINT`, as with the Terraform provider:
+
+```bash
+export EQUINIX_API_ENDPOINT="https://mockapi.example.com"
+```
+
+This replaces the `api.equinix.com` host for every API family and for the token URL (`$EQUINIX_API_ENDPOINT/oauth2/v1/token`). Families served from their own hosts, such as `access.eqix.equinix.com`, keep them. The generated tool catalog and `--export-openrpc` output still document the production URLs.
 
 #### API Spec Fetching
 
