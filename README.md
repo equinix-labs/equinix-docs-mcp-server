@@ -35,15 +35,19 @@ This scans [docs.equinix.com/api-catalog](https://docs.equinix.com/api-catalog) 
 
 ### Installation
 
-No clone or checkout is required. With [uv](https://docs.astral.sh/uv/getting-started/installation/) installed, run the server directly from GitHub (uv fetches a suitable Python automatically):
+The server is published on [PyPI](https://pypi.org/project/equinix-docs-mcp-server/). With [uv](https://docs.astral.sh/uv/getting-started/installation/) installed, run it directly (uv fetches a suitable Python automatically):
 
 ```bash
-uvx --system-certs --from git+https://github.com/equinix-labs/equinix-docs-mcp-server equinix-docs-mcp-server
+uvx --system-certs equinix-docs-mcp-server
 ```
+
+`--system-certs` makes uv trust your operating system's certificate store, which you need behind a proxy that inspects TLS. If your package index holds back or blocks recently published releases, uv may pick a version it then can't download. In that case, also pass `--exclude-newer` so uv only considers releases older than a cutoff, for example `uvx --system-certs --exclude-newer "3 days" equinix-docs-mcp-server`, or set `exclude-newer` in your [uv configuration](https://docs.astral.sh/uv/reference/settings/#exclude-newer). The same flags work in the MCP client configurations below.
+
+To run the latest unreleased code from `main` instead, use `uvx --system-certs --from git+https://github.com/equinix-labs/equinix-docs-mcp-server equinix-docs-mcp-server`.
 
 The bundled API/docs configuration ships inside the package, and caches are written to your user cache directory (override with the `EQUINIX_MCP_CACHE_DIR` environment variable). Pass `--config path/to/apis.yaml` to use a custom configuration.
 
-Equivalent alternatives: `pipx run --spec git+https://github.com/equinix-labs/equinix-docs-mcp-server equinix-docs-mcp-server`, or `pip install git+https://github.com/equinix-labs/equinix-docs-mcp-server` (Python 3.13+) followed by `equinix-docs-mcp-server`.
+Equivalent alternatives: `pipx run equinix-docs-mcp-server`, or `pip install equinix-docs-mcp-server` (Python 3.13+) followed by `equinix-docs-mcp-server`.
 
 ### Developer installation
 
@@ -63,7 +67,7 @@ The packaged configuration lives at `src/equinix_docs_mcp_server/data/config/api
 claude mcp add --env EQUINIX_API_CLIENTID=your_client_id \
   --env EQUINIX_API_CLIENTSECRET=your_client_secret \
   --transport stdio equinix \
-  -- uvx --system-certs --from git+https://github.com/equinix-labs/equinix-docs-mcp-server equinix-docs-mcp-server
+  -- uvx --system-certs equinix-docs-mcp-server
 ```
 
 > [!TIP]
@@ -78,7 +82,7 @@ For more details, see the [Claude Code MCP documentation](https://code.claude.co
 Add the server with a single command (the JSON is one server object, with the name inline):
 
 ```bash
-code --add-mcp '{"name":"equinix","type":"stdio","command":"uvx","args":["--system-certs","--from","git+https://github.com/equinix-labs/equinix-docs-mcp-server","equinix-docs-mcp-server"]}'
+code --add-mcp '{"name":"equinix","type":"stdio","command":"uvx","args":["--system-certs","equinix-docs-mcp-server"]}'
 ```
 
 Or create a `.vscode/mcp.json` in your workspace to prompt for credentials on first use:
@@ -91,8 +95,6 @@ Or create a `.vscode/mcp.json` in your workspace to prompt for credentials on fi
       "command": "uvx",
       "args": [
         "--system-certs",
-        "--from",
-        "git+https://github.com/equinix-labs/equinix-docs-mcp-server",
         "equinix-docs-mcp-server"
       ],
       "env": {
