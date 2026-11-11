@@ -189,6 +189,23 @@ class TestEquinixAuth:
         with pytest.raises(StopAsyncIteration):
             await flow.asend(httpx2.Response(401, request=retried))
 
+    @pytest.mark.asyncio
+    async def test_401_not_resent_when_new_token_fails(self):
+        """If refreshing fails, the 401 is returned, not resent with the stale token."""
+        auth_manager = MagicMock()
+        auth_manager.get_auth_header = AsyncMock(
+            side_effect=[{"Authorization": "Bearer stale"}, ValueError("token 500")]
+        )
+        auth = EquinixAuth(auth_manager, "fabric")
+
+        request = httpx2.Request("GET", "https://api.equinix.com/fabric/v4/ports")
+        flow = auth.async_auth_flow(request)
+        sent = await anext(flow)
+
+        with pytest.raises(StopAsyncIteration):
+            await flow.asend(httpx2.Response(401, request=sent))
+        auth_manager.clear_token_cache.assert_called_once()
+
     @pytest.mark.parametrize("status", [200, 403])
     @pytest.mark.asyncio
     async def test_other_statuses_are_not_retried(self, status):
