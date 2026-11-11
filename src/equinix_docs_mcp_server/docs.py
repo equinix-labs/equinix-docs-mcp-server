@@ -13,14 +13,18 @@ import time
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urljoin, urlparse
 
 import aiofiles
 import httpx2
+from lunr import lunr
+from lunr.exceptions import BaseLunrException
+from lunr.index import Index
 
 from .config import Config, cache_root
 from .lunr_search.search_client import Client as SearchClient
+from .lunr_search.search_client import query_text
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +34,21 @@ DOCS_BASE_URL = "https://docs.equinix.com"
 _LLMS_ENTRY = re.compile(
     r"^-\s*\[(?P<title>[^\]]+)\]\((?P<url>[^)\s]+)\)\s*(?::\s*(?P<desc>.*))?$"
 )
+
+# Page index fields for find_docs and list_docs filtering, and their boosts.
+# A title match outweighs a description that mentions the term in passing.
+_PAGE_FIELDS = [
+    {"field_name": "title", "boost": 10},
+    {"field_name": "category", "boost": 3},
+    {"field_name": "path", "boost": 2},
+    {"field_name": "description", "boost": 1},
+]
+
+# list_docs keeps filtered pages scoring at least this fraction of the best.
+_LIST_RELATIVE_CUTOFF = 0.3
+
+# Added to a page's score when the whole query appears in its title.
+_TITLE_PHRASE_BONUS = 10.0
 
 _CATEGORY_ACRONYMS = {"api": "API", "iam": "IAM", "ibx": "IBX", "loa": "LOA"}
 
@@ -66,6 +85,8 @@ class DocsManager:
         self.sitemap_cache: List[Dict[str, str]] = []
         self._index_loaded_at: Optional[float] = None
         self._index_source: Optional[Path] = None
+        self._page_index: Optional[Index] = None
+        self._page_index_docs: Optional[List[Dict[str, str]]] = None
         self._search_client: Optional[SearchClient] = None
         self._search_loaded_at: Optional[float] = None
 
@@ -273,51 +294,13 @@ class DocsManager:
 
         filtered_docs = self.sitemap_cache
 
-        if filter_term:
-            filter_term = filter_term.lower()
-            # Split filter term into individual words for more flexible matching
-            filter_words = [
-                word.strip() for word in filter_term.split() if word.strip()
-            ]
-
-            if filter_words:
-                # Score documents based on how many filter words they contain
-                scored_docs = []
-                for doc in self.sitemap_cache:
-                    doc_text = (
-                        f"{doc['title']} {doc['category']} {doc['url']} "
-                        f"{doc.get('description', '')}"
-                    ).lower()
-                    score = 0.0
-
-                    # Count how many filter words appear in the document
-                    for word in filter_words:
-                        word_lower = word.lower()
-                        if word_lower in doc_text:
-                            score += 1.0
-                        # Also check for common word variations (handle singular/plural)
-                        elif word_lower.endswith("s") and word_lower[:-1] in doc_text:
-                            score += 0.8  # Slightly lower score for stem matches
-                        elif (
-                            not word_lower.endswith("s")
-                            and f"{word_lower}s" in doc_text
-                        ):
-                            score += 0.8  # Handle plural forms
-
-                    # Bonus points for exact phrase matches
-                    if filter_term in doc_text:
-                        score += 0.5
-
-                    if score > 0.0:
-                        scored_docs.append((score, doc))
-
-                # Sort by score (highest first) and extract documents
-                filtered_docs = [
-                    doc
-                    for score, doc in sorted(
-                        scored_docs, key=lambda x: x[0], reverse=True
-                    )
-                ]
+        ranked = bool(filter_term and query_text(filter_term))
+        if ranked:
+            hits = self._rank_pages(filter_term or "")
+            # Any one common word ("fabric") matches hundreds of pages; keep
+            # the pages that match about as well as the best one.
+            cutoff = hits[0][0] * _LIST_RELATIVE_CUTOFF if hits else 0.0
+            filtered_docs = [doc for score, doc in hits if score >= cutoff]
 
         # Group by category
         categories: Dict[str, List[Dict[str, str]]] = {}
@@ -330,7 +313,9 @@ class DocsManager:
         # Format output
         result = ["# Equinix Documentation\n"]
 
-        for category, docs in sorted(categories.items()):
+        # Filtered: categories in order of their best match. Otherwise A-Z.
+        groups = categories.items() if ranked else sorted(categories.items())
+        for category, docs in groups:
             result.append(f"## {category}\n")
             for doc in docs[:10]:  # Limit to 10 per category
                 desc = f" - {doc['description']}" if doc.get("description") else ""
@@ -348,57 +333,60 @@ class DocsManager:
 
         return "\n".join(result)
 
+    def _page_index_for_cache(self) -> Index:
+        """BM25 index over the page list, rebuilt when the list is replaced."""
+        if self._page_index is None or self._page_index_docs is not self.sitemap_cache:
+            documents = [
+                {
+                    "ref": str(n),
+                    "title": doc.get("title", ""),
+                    "category": doc.get("category", ""),
+                    "path": " ".join(re.split(r"[/_.-]+", urlparse(doc["url"]).path)),
+                    "description": doc.get("description", ""),
+                }
+                for n, doc in enumerate(self.sitemap_cache)
+            ]
+            self._page_index = lunr(ref="ref", fields=_PAGE_FIELDS, documents=documents)
+            self._page_index_docs = self.sitemap_cache
+        return self._page_index
+
+    def _rank_pages(self, query: str) -> List[Tuple[float, Dict[str, str]]]:
+        """Pages matching any query word, best first.
+
+        lunr matches whole, stemmed words ("ports" finds "Port" but "port"
+        does not find "Portal") and ranks them with BM25 across _PAGE_FIELDS.
+        """
+        text = query_text(query)
+        if not text or not self.sitemap_cache:
+            return []
+        try:
+            hits = self._page_index_for_cache().search(text)
+        except BaseLunrException:
+            return []
+
+        phrase = " ".join(text.lower().split())
+        ranked = []
+        for hit in hits:
+            doc = self.sitemap_cache[int(hit["ref"])]
+            score = hit["score"]
+            if phrase in doc.get("title", "").lower():
+                score += _TITLE_PHRASE_BONUS
+            ranked.append((score, doc))
+        ranked.sort(key=lambda pair: pair[0], reverse=True)
+        return ranked
+
     async def find_docs(self, query: str) -> str:
-        """Find documentation by title, section, URL and description."""
+        """Find documentation pages by title, section, URL and description."""
         await self._ensure_index()
 
-        query = query.lower()
-
-        # Score documents based on relevance
-        scored_docs = []
-
-        for doc in self.sitemap_cache:
-            score = 0.0
-
-            # Title matches are most important
-            if query in doc["title"].lower():
-                score += 10
-
-            # Category matches
-            if query in doc["category"].lower():
-                score += 5
-
-            # URL matches
-            if query in doc["url"].lower():
-                score += 3
-
-            description = doc.get("description", "").lower()
-            if query in description:
-                score += 4
-
-            # Keyword scoring
-            query_words = query.split()
-            for word in query_words:
-                if word in doc["title"].lower():
-                    score += 2
-                if word in doc["category"].lower():
-                    score += 1
-                if word in description:
-                    score += 1
-
-            if score > 0:
-                scored_docs.append((score, doc))
-
-        # Sort by score and take top results
-        scored_docs.sort(key=lambda x: x[0], reverse=True)
-        top_results = scored_docs[:20]
+        top_results = self._rank_pages(query)[:20]
 
         if not top_results:
             return f"No documentation found for query: '{query}'"
 
         result = [f"# Find Results for '{query}'\n"]
 
-        for score, doc in top_results:
+        for _, doc in top_results:
             result.append(f"**{doc['title']}** ({doc['category']})")
             result.append(f"  {doc['url']}")
             if doc.get("description"):

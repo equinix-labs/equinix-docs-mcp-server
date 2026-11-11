@@ -140,7 +140,7 @@ async def test_list_docs_with_filter(docs_manager):
 
 @pytest.mark.asyncio
 async def test_find_docs(docs_manager):
-    """Test documentation find (filename-based search)."""
+    """Test documentation find (page index search)."""
     # Setup sample data
     docs_manager.sitemap_cache = [
         {

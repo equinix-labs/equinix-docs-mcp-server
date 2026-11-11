@@ -308,3 +308,151 @@ async def test_stale_search_index_is_kept_when_refresh_fails(manager, cache_dir)
 
     assert site.requests == [SEARCH_URL]
     assert "No search results found" in result
+
+
+PAGES = [
+    {
+        "url": "https://docs.equinix.com/customer-portal/",
+        "title": "About the Customer Portal",
+        "category": "Customer Portal",
+        "description": "Manage products, orders and account information.",
+    },
+    {
+        "url": "https://docs.equinix.com/fabric/ports/fabric-port-utilization",
+        "title": "Monitoring Port Utilization",
+        "category": "Fabric",
+        "description": "Bandwidth usage graphs for your ports.",
+    },
+    {
+        "url": "https://docs.equinix.com/fabric/ports/creating-ports",
+        "title": "Creating Ports",
+        "category": "Fabric",
+        "description": "Order a new Fabric port.",
+    },
+    {
+        "url": "https://docs.equinix.com/fabric/managing-connections/fabric-connection-traffic",
+        "title": "Monitoring Connection Utilization",
+        "category": "Fabric",
+        "description": "Traffic statistics for a virtual connection.",
+    },
+    {
+        "url": "https://docs.equinix.com/network-edge/vendors-devices/",
+        "title": "Supported Vendors",
+        "category": "Network Edge",
+        "description": "Port counts and licensing for each device type.",
+    },
+]
+
+
+def _with_pages(manager, pages):
+    manager.sitemap_cache = [dict(p, lastmod="") for p in pages]
+    manager._index_loaded_at = time.time()
+
+
+def _titles(result):
+    return [
+        line[2:].split("**", 1)[0]
+        for line in result.splitlines()
+        if line.startswith("**")
+    ]
+
+
+@pytest.mark.asyncio
+async def test_find_docs_matches_whole_words(manager):
+    """'port' must not find 'Portal' (the substring matcher did)."""
+    _with_pages(manager, PAGES)
+
+    titles = _titles(await manager.find_docs("port"))
+
+    assert "About the Customer Portal" not in titles
+    assert "Monitoring Port Utilization" in titles
+    assert "Creating Ports" in titles  # same stem
+
+
+@pytest.mark.asyncio
+async def test_find_docs_ranks_titles_above_descriptions(manager):
+    _with_pages(manager, PAGES)
+
+    titles = _titles(await manager.find_docs("port utilization"))
+
+    assert titles[0] == "Monitoring Port Utilization"
+    # Mentions "port" only in its description, so it ranks below title hits
+    assert titles.index("Supported Vendors") > titles.index("Creating Ports")
+
+
+@pytest.mark.asyncio
+async def test_find_docs_matches_category_and_url_path(manager):
+    _with_pages(manager, PAGES)
+
+    assert _titles(await manager.find_docs("network edge")) == ["Supported Vendors"]
+    assert _titles(await manager.find_docs("managing connections"))[0] == (
+        "Monitoring Connection Utilization"
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("query", ["", "+++", "the", "kubernetes"])
+async def test_find_docs_no_match(manager, query):
+    _with_pages(manager, PAGES)
+
+    assert "No documentation found" in await manager.find_docs(query)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("query", ['"port"', "title:port", "-port", "port~2"])
+async def test_find_docs_ignores_query_syntax(manager, query):
+    _with_pages(manager, PAGES)
+
+    assert "Monitoring Port Utilization" in _titles(await manager.find_docs(query))
+
+
+@pytest.mark.asyncio
+async def test_list_docs_filter_uses_word_matching(manager):
+    _with_pages(manager, PAGES)
+
+    result = await manager.list_docs("ports")
+
+    assert "Creating Ports" in result
+    assert "Customer Portal" not in result
+
+
+@pytest.mark.asyncio
+async def test_page_index_rebuilds_when_index_reloads(manager):
+    _with_pages(manager, PAGES)
+    await manager.find_docs("port")
+
+    _with_pages(manager, [dict(PAGES[0], title="Port Reference")])
+
+    assert _titles(await manager.find_docs("port")) == ["Port Reference"]
+
+
+@pytest.mark.asyncio
+async def test_list_docs_filter_orders_categories_by_best_match(manager):
+    _with_pages(manager, PAGES)
+
+    result = await manager.list_docs("port utilization")
+    headings = [line for line in result.splitlines() if line.startswith("## ")]
+
+    # Fabric holds the best match; Network Edge only mentions "port" in a
+    # description and is not listed A-Z first.
+    assert headings[0] == "## Fabric"
+
+
+@pytest.mark.asyncio
+async def test_list_docs_filter_drops_weak_matches(manager):
+    pages = PAGES + [
+        {
+            "url": f"https://docs.equinix.com/misc/page-{n}",
+            "title": f"Misc {n}",
+            "category": "Misc",
+            "description": "Mentions utilization once among many other words "
+            + " ".join(f"filler{m}" for m in range(40)),
+        }
+        for n in range(5)
+    ]
+    _with_pages(manager, pages)
+
+    result = await manager.list_docs("port utilization")
+
+    assert "Monitoring Port Utilization" in result
+    assert "Misc 0" not in result

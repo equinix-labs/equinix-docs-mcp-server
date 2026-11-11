@@ -155,7 +155,7 @@ URL: [invalid-url]
 The following tools remain available for existing workflows:
 
 - **`list_docs`**: List and filter documentation by keywords
-- **`find_docs`**: Find documentation by filename/title matching
+- **`find_docs`**: Find documentation pages by title, section and description, ranked with BM25
 
 These tools complement the new `search` and `fetch` tools but don't follow the OpenAI MCP specification.
 
