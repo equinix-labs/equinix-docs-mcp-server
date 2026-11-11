@@ -1,6 +1,6 @@
 [project]
 name = "equinix-docs-mcp-server"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Equinix Docs and API specifications MCP Server (experimental)"
 authors = [
     { name = "Equinix Labs" }
@@ -50,6 +50,10 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["equinix_docs_mcp_server*"]
+
+[tool.setuptools.dynamic]
+# Written by semantic-release (.releaserc.json) when a release is made
+version = {file = "version"}
 
 [tool.setuptools.package-data]
 equinix_docs_mcp_server = ["data/config/*.yaml", "data/overlays/*.yaml"]
