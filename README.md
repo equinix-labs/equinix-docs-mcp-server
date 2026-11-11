@@ -15,17 +15,18 @@ This project is an experimental Model Context Protocol (MCP) server, for local u
    - **API Authentication**: OAuth2 Client Credentials
    - **Configurable Overlays**: Use overlay specifications to normalize API specs before tools are generated from them
    - **Arazzo Workflows (Experimental)**: Define and execute higher-level workflows chaining multiple API operations
-- **Documentation Integration**: Search Equinix documentation via sitemap and Lunr search, fetch full markdown content
+- **Documentation Integration**: Search Equinix documentation via llms.txt and Lunr search, fetch full markdown content
    - OpenAI MCP compatible `search` and `fetch` tools for ChatGPT Connectors and deep research
 
 ### Built on docs.equinix.com's agent features
 
 docs.equinix.com describes the formats it publishes for AI agents in [`/AGENTS.md`](https://docs.equinix.com/AGENTS.md). This server uses them directly rather than scraping HTML:
 
+- **llms.txt**: `list_docs` and `find_docs` work from [`/llms.txt`](https://docs.equinix.com/llms.txt), which lists every English page with its title, description and product section, and return page URLs (falling back to `sitemap.xml` if llms.txt is unavailable).
 - **Markdown pages**: `fetch` reads each page's `.md` version, which has no navigation, scripts or styling and uses fewer tokens.
 - **API catalog**: `--discover-apis` reads the [RFC 9727](https://www.rfc-editor.org/rfc/rfc9727) catalog at [`/.well-known/api-catalog`](https://docs.equinix.com/.well-known/api-catalog) to find OpenAPI specs (see [Supported APIs](#supported-apis)).
 
-Search uses the site's own search index (`/search-index.json`), and `list_docs`/`find_docs` use its `sitemap.xml`. You can also point your agent at `https://docs.equinix.com/AGENTS.md` for the site's guidelines, such as citing page URLs rather than `.md` URLs and never asking users to paste API secrets into a conversation.
+Full-text `search` uses the site's own search index (`/search-index.json`). These files are cached and refreshed daily (`docs.cache_max_age_hours` in the configuration). You can also point your agent at `https://docs.equinix.com/AGENTS.md` for the site's guidelines, such as citing page URLs rather than `.md` URLs and never asking users to paste API secrets into a conversation.
 
 ## Supported APIs
 
