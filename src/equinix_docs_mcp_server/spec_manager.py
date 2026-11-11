@@ -24,6 +24,9 @@ from .swagger2openapi.converter import Swagger2OpenAPIConverter
 
 logger = logging.getLogger(__name__)
 
+# Splits text after a sentence-ending ".", "!" or "?" followed by a space
+_SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
+
 
 def deep_merge(d: Dict[str, Any], u: collections.abc.Mapping) -> Dict[str, Any]:
     """
@@ -231,7 +234,9 @@ class SpecManager:
         label = re.sub(r"\s+APIs?(\s+v\d+)?$", "", label) or api_name
         parts = [f"Part of the Equinix {label} API family ({api_name})."]
         if family_desc and family_desc.rstrip(".") != title.rstrip("."):
-            parts.append(family_desc.rstrip(".") + ".")
+            if not family_desc.endswith((".", "…", "!", "?")):
+                family_desc += "."
+            parts.append(family_desc)
         context = " ".join(parts)
 
         for path_item in (spec.get("paths") or {}).values():
@@ -283,12 +288,26 @@ class SpecManager:
 
     @staticmethod
     def _summarize_info_description(text: str, max_len: int = 300) -> str:
-        """Collapse an info.description to a short single-line summary."""
+        """Collapse an info.description to a short single-line summary.
+
+        Long descriptions keep as many whole sentences as fit in ``max_len``.
+        Only when the first sentence is too long is it cut at a word and
+        ended with "…".
+        """
         collapsed = " ".join(text.split())
         if len(collapsed) <= max_len:
             return collapsed
-        cut = collapsed[:max_len].rsplit(" ", 1)[0]
-        return cut + "…"
+        sentences = _SENTENCE_END.split(collapsed)
+        summary = ""
+        for sentence in sentences:
+            candidate = f"{summary} {sentence}" if summary else sentence
+            if len(candidate) > max_len:
+                break
+            summary = candidate
+        if summary:
+            return summary
+        cut = collapsed[: max_len - 1].rsplit(" ", 1)[0]
+        return cut.rstrip(",;:") + "…"
 
     async def _fetch_and_cache_spec(
         self, spec_key: str, url: str
