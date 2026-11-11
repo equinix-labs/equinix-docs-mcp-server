@@ -352,10 +352,16 @@ auth:
 
 # Documentation configuration
 docs:
+  # The page index comes from llms.txt, falling back to the sitemap
+  llms_txt_url: "https://docs.equinix.com/llms.txt"
   sitemap_url: "https://docs.equinix.com/sitemap.xml"
   # Relative cache paths resolve under the user cache directory
-  # (override the root with EQUINIX_MCP_CACHE_DIR)
+  # (override the root with EQUINIX_MCP_CACHE_DIR). llms.txt is cached
+  # alongside it with a .txt suffix.
   cache_path: "docs/sitemap_cache.xml"
+  # Refresh cached llms.txt, sitemap and search index after this many hours
+  # (0 = never)
+  cache_max_age_hours: 24
 arazzo:
    specs:
       - config/workflows.yaml

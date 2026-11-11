@@ -1,16 +1,60 @@
-"""Documentation management using Equinix sitemap."""
+"""Documentation discovery for docs.equinix.com.
+
+The page index comes from the site's llms.txt (titles, descriptions and
+product sections for every English page), falling back to sitemap.xml.
+Search uses the site's prebuilt lunr index. All three are cached on disk and
+refreshed after ``docs.cache_max_age_hours``.
+"""
 
 import json
+import logging
+import re
+import time
 import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 import aiofiles
 import httpx2
 
 from .config import Config, cache_root
 from .lunr_search.search_client import Client as SearchClient
+
+logger = logging.getLogger(__name__)
+
+DOCS_BASE_URL = "https://docs.equinix.com"
+
+# llms.txt entries: "- [Title](/path.md): Description"
+_LLMS_ENTRY = re.compile(
+    r"^-\s*\[(?P<title>[^\]]+)\]\((?P<url>[^)\s]+)\)\s*(?::\s*(?P<desc>.*))?$"
+)
+
+_CATEGORY_ACRONYMS = {"api": "API", "iam": "IAM", "ibx": "IBX", "loa": "LOA"}
+
+
+def _category_name(heading: str) -> str:
+    """Turn an llms.txt section slug (``fabric-cloud-router``) into a name."""
+    words = [w for w in re.split(r"[-_\s]+", heading.strip()) if w]
+    return " ".join(
+        _CATEGORY_ACRONYMS.get(w.lower(), w if w.isupper() else w.capitalize())
+        for w in words
+    )
+
+
+def _page_url(link: str) -> str:
+    """Page URL for an llms.txt link, which points at the page's .md version.
+
+    Agents should cite page URLs, not .md URLs (docs.equinix.com/AGENTS.md);
+    fetch adds .md back.
+    """
+    url = urljoin(DOCS_BASE_URL + "/", link)
+    if url.endswith(".md"):
+        url = url[: -len(".md")]
+    if url.endswith("/index"):
+        url = url[: -len("index")]
+    return url
 
 
 class DocsManager:
@@ -20,7 +64,10 @@ class DocsManager:
         """Initialize with configuration."""
         self.config = config
         self.sitemap_cache: List[Dict[str, str]] = []
+        self._index_loaded_at: Optional[float] = None
+        self._index_source: Optional[Path] = None
         self._search_client: Optional[SearchClient] = None
+        self._search_loaded_at: Optional[float] = None
 
     def _index_cache_path(self) -> Path:
         """Filesystem location of the docs index cache.
@@ -30,6 +77,46 @@ class DocsManager:
         """
         p = Path(self.config.docs.cache_path)
         return p if p.is_absolute() else cache_root() / p
+
+    def _llms_cache_path(self) -> Path:
+        """Cache file for llms.txt, alongside the sitemap cache."""
+        return self._index_cache_path().with_suffix(".txt")
+
+    def _max_age_seconds(self) -> Optional[float]:
+        """Cache lifetime, or None when caches never expire."""
+        hours = self.config.docs.cache_max_age_hours
+        return hours * 3600 if hours > 0 else None
+
+    def _is_fresh_time(self, timestamp: Optional[float]) -> bool:
+        if timestamp is None:
+            return False
+        max_age = self._max_age_seconds()
+        return max_age is None or time.time() - timestamp < max_age
+
+    def _is_fresh(self, path: Path) -> bool:
+        """Whether a cache file exists and is younger than the max age."""
+        return path.exists() and self._is_fresh_time(path.stat().st_mtime)
+
+    async def _ensure_index(self) -> None:
+        """Load the page index, refreshing it from the site when stale.
+
+        If the refresh fails, a stale cached copy is used rather than none.
+        """
+        if self.sitemap_cache and self._is_fresh_time(self._index_loaded_at):
+            return
+
+        llms_cache = self._llms_cache_path()
+        sitemap_cache = self._index_cache_path()
+        if not (self._is_fresh(llms_cache) or self._is_fresh(sitemap_cache)):
+            try:
+                await self.update_index()
+                return
+            except Exception as e:
+                if not (llms_cache.exists() or sitemap_cache.exists()):
+                    raise
+                logger.warning(f"Could not refresh the docs index, using cache: {e}")
+
+        await self._load_cached_index()
 
     async def update_sitemap(self) -> None:
         """Update the sitemap cache from the remote sitemap."""
@@ -48,78 +135,70 @@ class DocsManager:
 
             # Parse the sitemap
             await self._parse_sitemap(response.text)
+            self._loaded(cache_path)
 
     async def update_index(self) -> None:
-        """Update the documentation index (llms.txt or sitemap)."""
-        # Try llms.txt first
+        """Refresh the page index from llms.txt, falling back to the sitemap."""
         llms_txt_url = self.config.docs.llms_txt_url
         try:
             async with httpx2.AsyncClient() as client:
-                response = await client.get(llms_txt_url)
-                if response.status_code == 200:
-                    await self._parse_llms_txt(response.text)
-                    # Cache it
-                    cache_path = self._index_cache_path().with_suffix(".txt")
-                    cache_path.parent.mkdir(parents=True, exist_ok=True)
-                    async with aiofiles.open(cache_path, "w") as f:
-                        await f.write(response.text)
-                    return
-        except Exception as e:
-            # Log error but continue to sitemap
-            print(f"Failed to fetch llms.txt: {e}")
+                response = await client.get(llms_txt_url, timeout=30.0)
+                response.raise_for_status()
+            await self._parse_llms_txt(response.text)
+            if not self.sitemap_cache:
+                raise ValueError("no page entries found")
 
-        # Fallback to sitemap
+            cache_path = self._llms_cache_path()
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            async with aiofiles.open(cache_path, "w") as f:
+                await f.write(response.text)
+            self._loaded(cache_path)
+            return
+        except Exception as e:
+            logger.warning(f"Could not use {llms_txt_url}, trying the sitemap: {e}")
+
         await self.update_sitemap()
 
+    def _loaded(self, source: Path) -> None:
+        self._index_loaded_at = time.time()
+        self._index_source = source
+
     async def _parse_llms_txt(self, content: str) -> None:
-        """Parse llms.txt content."""
+        """Parse llms.txt: "## section" headings and "- [Title](url): Description".
+
+        A description may continue on the lines after its entry.
+        """
         self.sitemap_cache = []
         current_category = "General"
+        current: Optional[Dict[str, str]] = None
 
-        for line in content.splitlines():
-            line = line.strip()
+        for raw in content.splitlines():
+            line = raw.strip()
             if not line:
+                current = None
                 continue
 
-            # Check for headers as categories
             if line.startswith("#"):
-                current_category = line.lstrip("#").strip()
+                current = None
+                # The single "#" heading is the site title, not a section.
+                if line.startswith("##"):
+                    current_category = _category_name(line.lstrip("#"))
                 continue
 
-            # Check for links: - [Title](url) - Description
-            if line.startswith("-") and "[" in line and "](" in line:
-                try:
-                    # Extract title and URL
-                    start_bracket = line.find("[")
-                    end_bracket = line.find("]")
-                    start_paren = line.find("(", end_bracket)
-                    end_paren = line.find(")", start_paren)
-
-                    if (
-                        start_bracket != -1
-                        and end_bracket != -1
-                        and start_paren != -1
-                        and end_paren != -1
-                    ):
-                        title = line[start_bracket + 1 : end_bracket]
-                        url = line[start_paren + 1 : end_paren]
-
-                        # Extract description if present (after the link)
-                        description = line[end_paren + 1 :].strip(" -:")
-
-                        self.sitemap_cache.append(
-                            {
-                                "url": url,
-                                "title": title,
-                                "category": current_category,
-                                "description": description,
-                                "lastmod": "",
-                                "changefreq": "",
-                                "priority": "",
-                            }
-                        )
-                except Exception:
-                    continue
+            match = _LLMS_ENTRY.match(line)
+            if match:
+                current = {
+                    "url": _page_url(match["url"]),
+                    "title": match["title"].strip(),
+                    "category": current_category,
+                    "description": (match["desc"] or "").strip(),
+                    "lastmod": "",
+                    "changefreq": "",
+                    "priority": "",
+                }
+                self.sitemap_cache.append(current)
+            elif current is not None:
+                current["description"] = f"{current['description']} {line}".strip()
 
     async def _parse_sitemap(self, sitemap_xml: str) -> None:
         """Parse the sitemap XML and extract URL information."""
@@ -190,8 +269,7 @@ class DocsManager:
 
     async def list_docs(self, filter_term: Optional[str] = None) -> str:
         """List documentation with optional filtering."""
-        if not self.sitemap_cache:
-            await self._load_cached_index()
+        await self._ensure_index()
 
         filtered_docs = self.sitemap_cache
 
@@ -206,7 +284,10 @@ class DocsManager:
                 # Score documents based on how many filter words they contain
                 scored_docs = []
                 for doc in self.sitemap_cache:
-                    doc_text = f"{doc['title']} {doc['category']} {doc['url']}".lower()
+                    doc_text = (
+                        f"{doc['title']} {doc['category']} {doc['url']} "
+                        f"{doc.get('description', '')}"
+                    ).lower()
                     score = 0.0
 
                     # Count how many filter words appear in the document
@@ -268,9 +349,8 @@ class DocsManager:
         return "\n".join(result)
 
     async def find_docs(self, query: str) -> str:
-        """Find documentation by filename-based search."""
-        if not self.sitemap_cache:
-            await self._load_cached_sitemap()
+        """Find documentation by title, section, URL and description."""
+        await self._ensure_index()
 
         query = query.lower()
 
@@ -292,12 +372,18 @@ class DocsManager:
             if query in doc["url"].lower():
                 score += 3
 
+            description = doc.get("description", "").lower()
+            if query in description:
+                score += 4
+
             # Keyword scoring
             query_words = query.split()
             for word in query_words:
                 if word in doc["title"].lower():
                     score += 2
                 if word in doc["category"].lower():
+                    score += 1
+                if word in description:
                     score += 1
 
             if score > 0:
@@ -315,6 +401,8 @@ class DocsManager:
         for score, doc in top_results:
             result.append(f"**{doc['title']}** ({doc['category']})")
             result.append(f"  {doc['url']}")
+            if doc.get("description"):
+                result.append(f"  {doc['description']}")
             if doc["lastmod"]:
                 result.append(f"  *Last modified: {doc['lastmod']}*")
             result.append("")
@@ -330,24 +418,31 @@ class DocsManager:
         # Ensure cache directory exists
         cache_dir.mkdir(parents=True, exist_ok=True)
 
-        # Check if we need to fetch the search index
-        if not cache_file.exists():
+        # Fetch the search index when missing or stale; keep a stale copy if
+        # the refresh fails
+        if not self._is_fresh(cache_file):
             try:
                 async with httpx2.AsyncClient() as client:
-                    response = await client.get(search_index_url)
+                    response = await client.get(search_index_url, timeout=30.0)
                     response.raise_for_status()
 
                     # Save to cache
                     async with aiofiles.open(cache_file, "w") as f:
                         await f.write(response.text)
+                self._search_client = None
             except Exception as e:
-                return f"Error fetching search index: {str(e)}"
+                if not cache_file.exists():
+                    return f"Error fetching search index: {str(e)}"
+                logger.warning(f"Could not refresh the search index, using cache: {e}")
 
         try:
-            if self._search_client is None:
+            if self._search_client is None or not self._is_fresh_time(
+                self._search_loaded_at
+            ):
                 search_client = SearchClient(str(cache_file))
                 search_client.load()
                 self._search_client = search_client
+                self._search_loaded_at = time.time()
 
             results = self._search_client.search(query, limit=limit)
 
@@ -375,30 +470,23 @@ class DocsManager:
         except Exception as e:
             return f"Error searching documentation: {str(e)}"
 
-    async def _load_cached_sitemap(self) -> None:
-        """Load sitemap from cache file if available."""
-        cache_path = self._index_cache_path()
-
-        if cache_path.exists():
-            async with aiofiles.open(cache_path, "r") as f:
-                content = await f.read()
-                await self._parse_sitemap(content)
-        else:
-            # If no cache, update from remote
-            await self.update_sitemap()
-
     async def _load_cached_index(self) -> None:
-        """Load index from cache (llms.txt or sitemap)."""
-        # Try llms.txt cache first
-        llms_cache = self._index_cache_path().with_suffix(".txt")
-        if llms_cache.exists():
-            async with aiofiles.open(llms_cache, "r") as f:
-                content = await f.read()
-                await self._parse_llms_txt(content)
-                return
+        """Load the newest cached page index (llms.txt or sitemap)."""
+        candidates = [
+            p for p in (self._llms_cache_path(), self._index_cache_path()) if p.exists()
+        ]
+        if not candidates:
+            await self.update_index()
+            return
 
-        # Fallback to sitemap cache
-        await self._load_cached_sitemap()
+        source = max(candidates, key=lambda p: p.stat().st_mtime)
+        async with aiofiles.open(source, "r") as f:
+            content = await f.read()
+        if source.suffix == ".txt":
+            await self._parse_llms_txt(content)
+        else:
+            await self._parse_sitemap(content)
+        self._loaded(source)
 
     async def fetch_doc(self, url: str) -> str:
         """Fetch the markdown content of a documentation page.
@@ -440,8 +528,7 @@ class DocsManager:
 
     async def get_docs_summary(self) -> str:
         """Get a summary of available documentation."""
-        if not self.sitemap_cache:
-            await self._load_cached_sitemap()
+        await self._ensure_index()
 
         # Count by category
         categories: Dict[str, int] = {}
@@ -456,8 +543,14 @@ class DocsManager:
         for category, count in sorted(categories.items()):
             result.append(f"- **{category}**: {count} documents")
 
-        result.append(
-            f"\nLast updated: {self._index_cache_path().stat().st_mtime if self._index_cache_path().exists() else 'Never'}"
-        )
+        source = self._index_source
+        if source is not None and source.exists():
+            updated = datetime.fromtimestamp(source.stat().st_mtime, timezone.utc)
+            result.append(
+                f"\nSource: {source.name}, last updated "
+                f"{updated.isoformat(timespec='seconds')}"
+            )
+        else:
+            result.append("\nLast updated: Never")
 
         return "\n".join(result)
