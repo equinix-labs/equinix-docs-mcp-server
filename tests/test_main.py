@@ -359,7 +359,7 @@ class TestEquinixMCPServer:
             "search": "Search Equinix Docs",
             "fetch": "Fetch Equinix Doc",
             "list_docs": "List Equinix Docs",
-            "find_docs": "Find Equinix Docs by Filename",
+            "find_docs": "Find Equinix Docs",
         }
 
 

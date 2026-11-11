@@ -46,6 +46,11 @@ _PAGE_LEVEL_TYPES = {0, 2, 3}
 _SECONDARY_WEIGHT = 0.3
 
 
+def query_text(query: str) -> str:
+    """Free text as a lunr query that always parses (see _WORD)."""
+    return " ".join(_WORD.findall(query))
+
+
 @dataclass
 class _Indexed:
     weight: float
@@ -86,10 +91,6 @@ class Client:
                     if d.get("u") and d.get("t")
                 }
 
-    @staticmethod
-    def _query_text(query: str) -> str:
-        return " ".join(_WORD.findall(query))
-
     def search(self, query: str, limit: int = 8) -> List[Dict[str, Any]]:
         """Return up to ``limit`` pages, best first.
 
@@ -97,7 +98,7 @@ class Client:
         by page (see _SECONDARY_WEIGHT), and each result points at the
         highest-scoring section within its page.
         """
-        text = self._query_text(query)
+        text = query_text(query)
         if not text:
             return []
 

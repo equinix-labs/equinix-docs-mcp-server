@@ -223,8 +223,8 @@ The server exposes MCP tools for:
 2. **Documentation**: 
    - `search` - Full-text search documentation using indexed content (OpenAI MCP compatible)
    - `fetch` - Fetch full markdown content of a documentation page by URL (OpenAI MCP compatible)
-   - `list_docs` - List and filter documentation
-   - `find_docs` - Find documentation by filename/title matching
+   - `list_docs` - List documentation pages by product section, optionally filtered by keywords
+   - `find_docs` - Find documentation pages by title, section and description, ranked with BM25
 3. **Workflows (Arazzo)**:
    - Tools prefixed with `workflow__` run multi-step workflows defined in [Arazzo](https://spec.openapis.org/arazzo/latest.html) files, for example `workflow__list_ne_metros`.
    - `arazzo_list_workflows` and `arazzo_describe_workflow` list the loaded workflows and describe one.

@@ -466,28 +466,27 @@ class EquinixMCPServer:
         @self.mcp.tool(
             name="list_docs",
             title="List Equinix Docs",
-            description="List and filter Equinix documentation by topic, product, or keywords. Supports flexible word matching (e.g., 'Fabric providers' will find 'Fabric Provider Guide', 'Provider Management', etc.)",
+            description="List Equinix documentation pages grouped by product section, optionally filtered by keywords matched against page titles, sections, URLs and descriptions (e.g. 'Fabric providers' finds 'Connect to a Service Provider'). Use 'search' for full-text search of page content.",
             tags={"docs"},
         )
         async def list_docs(filter_term: Optional[str] = None) -> str:
-            """List documentation with optional filtering by keywords.
+            """List documentation, optionally filtered by keywords.
 
-            Supports flexible matching:
-            - Multiple words: finds docs containing any of the words
-            - Singular/plural variations: 'provider' matches 'providers' and vice versa
-            - Partial phrases: 'Fabric providers' finds 'Fabric Provider Guide'
-            - No filter: returns all available documentation
+            Keywords match whole words in any form ('provider' and 'providers'
+            are the same word, but 'port' does not match 'Portal'). Pages
+            matching any keyword are listed, best matches first. With no
+            filter, all pages are listed.
             """
             return await self.docs_manager.list_docs(filter_term)
 
         @self.mcp.tool(
             name="find_docs",
-            title="Find Equinix Docs by Filename",
-            description="Find Equinix documentation by filename",
+            title="Find Equinix Docs",
+            description="Find Equinix documentation pages by title, product section, URL and description, ranked by relevance. Returns page URLs for the 'fetch' tool. Use 'search' for full-text search of page content.",
             tags={"docs"},
         )
         async def find_docs(query: str) -> str:
-            """Find documentation by filename-based search."""
+            """Find documentation pages ranked by relevance (BM25)."""
             return await self.docs_manager.find_docs(query)
 
     async def run(self, force_update_specs: bool = False) -> None:
