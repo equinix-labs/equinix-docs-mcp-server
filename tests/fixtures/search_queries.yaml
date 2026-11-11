@@ -11,7 +11,8 @@
 # expected to fail (strict xfail), so a change that fixes one fails the test
 # until the `gap` is removed.
 #
-# `source` is where the case came from: #53 (the first ranking work) or #70.
+# `source` is where the case came from: #53 (the first ranking work), #70,
+# #21 (family descriptions) or #72 (this test).
 
 - query: create network edge virtual device
   expect: [network-edge_createVirtualDevice]
@@ -45,7 +46,7 @@
 - query: list network edge metros
   expect: [workflow__list_ne_metros, network-edge_getMetros]
   within: 1
-  source: "#53"
+  source: "#72"
 - query: delete virtual device
   expect: [network-edge_deleteVirtualDeviceByUuid]
   within: 1
