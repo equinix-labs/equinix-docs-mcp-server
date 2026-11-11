@@ -1,6 +1,6 @@
 # Spec vetting report
 
-689 tools OK, 1 failures, 6 not discoverable by exact-name search.
+551 tools OK, 0 failures, 0 not discoverable by exact-name search.
 
 | family | ok | failed |
 |---|---|---|
@@ -13,12 +13,11 @@
 | billingv1 | 3 | 0 |
 | crossconnects | 3 | 0 |
 | diloa | 14 | 0 |
-| fabric | 194 | 0 |
+| fabric | 274 | 0 |
 | getprojects | 1 | 0 |
 | internetaccess | 27 | 0 |
 | internetaccessv2 | 6 | 0 |
 | lookup | 5 | 0 |
-| metal | 218 | 1 |
 | network-edge | 54 | 0 |
 | notifications | 4 | 0 |
 | orderhistory | 2 | 0 |
@@ -38,17 +37,65 @@
 | unifiednotification | 1 | 0 |
 | workvisit | 4 | 0 |
 
-## Failure categories
-- other: 1
+## POST tools marked read-only by name
 
-## Failures by family
-### metal
-- `metal_updateBgpSession` [other]: Error calling tool 'metal_updateBgpSession': Error building request for PUT /metal/v1/bgp/sessions/{id}: TypeError: Unexpected type for 'content', <class 'bool'>
+These POST operations have a read verb in their operationId or a `/search` or `/validate` path. Tools an overlay marks as writes are labelled *write (overlay)*.
 
-## Not discoverable via search_tools (exact name query)
-- `metal_createDevice`
-- `network-edge_createVirtualDevice`
-- `network-edge_createVirtualDeviceByUuid`
-- `network-edge_updateVirtualDeviceByUuid`
-- `network-edge_createDeviceRMAByUuid`
-- `smartview_getAlerts`
+- `accesstoken_GetOAuth2AccessToken` `/oauth2/v1/token` — write (overlay)
+- `assets_searchAssets` `/v1/assets/search`
+- `bas_searchBillingAccount` `/billing/v2/billingAccounts/search`
+- `diloa_search` `/diloa/v1/digitalLoas/search`
+- `fabric_searchAsns` `/fabric/v4/asns/search`
+- `fabric_searchCloudEvents` `/fabric/v4/cloudevents/search`
+- `fabric_searchLastOpEvents` `/fabric/v4/liveEvents/search`
+- `fabric_searchMetrics` `/fabric/v4/metrics/search`
+- `fabric_searchConnectionAdvertisedRoutes` `/fabric/v4/connections/{connectionId}/advertisedRoutes/search`
+- `fabric_searchConnectionReceivedRoutes` `/fabric/v4/connections/{connectionId}/receivedRoutes/search`
+- `fabric_searchExchangeService` `/fabric/v4/exchangeServices/search`
+- `fabric_searchEiaServices` `/fabric/v4/internetAccessServices/search`
+- `fabric_searchIpBlocks` `/fabric/v4/ipBlocks/search`
+- `fabric_searchConnections` `/fabric/v4/connections/search`
+- `fabric_searchPrices` `/fabric/v4/prices/search`
+- `fabric_searchServiceProfiles` `/fabric/v4/serviceProfiles/search`
+- `fabric_searchServiceTokens` `/fabric/v4/serviceTokens/search`
+- `fabric_searchOpticalConnect` `/fabric/v4/opticalConnects/search`
+- `fabric_searchPorts` `/fabric/v4/ports/search`
+- `fabric_searchRouteFilters` `/fabric/v4/routeFilters/search`
+- `fabric_searchRouteFilterRules` `/fabric/v4/routeFilters/{routeFilterId}/routeFilterRules/search`
+- `fabric_searchRouteAggregations` `/fabric/v4/routeAggregations/search`
+- `fabric_searchRouteAggregationRules` `/fabric/v4/routeAggregations/{routeAggregationId}/routeAggregationRules/search`
+- `fabric_searchRouterActions` `/fabric/v4/routers/{routerId}/actions/search`
+- `fabric_searchCloudRouterCommands` `/fabric/v4/routers/{routerId}/commands/search`
+- `fabric_searchCloudRouterRoutes` `/fabric/v4/routers/{routerId}/routes/search`
+- `fabric_validateRoutingProtocol` `/fabric/v4/routers/{routerId}/validate`
+- `fabric_searchCloudRouterRouteFilterAttachments` `/fabric/v4/routers/{routerId}/routeFilters/search`
+- `fabric_searchCloudRouterRouteAggregationAttachments` `/fabric/v4/routers/{routerId}/routeAggregations/search`
+- `fabric_searchCloudRouters` `/fabric/v4/routers/search`
+- `fabric_validateConnections` `/fabric/v4/connections/validate`
+- `fabric_searchNetworks` `/fabric/v4/networks/search`
+- `fabric_searchTimeServices` `/fabric/v4/timeServices/search`
+- `fabric_searchStreams` `/fabric/v4/streams/search`
+- `fabric_searchStreamAssets` `/fabric/v4/streamAssets/search`
+- `fabric_searchStreamSubscriptions` `/fabric/v4/streamSubscriptions/search`
+- `fabric_searchCompanyProfile` `/fabric/v4/companyProfiles/search`
+- `fabric_searchLoa` `/fabric/v4/loas/search`
+- `fabric_searchLoaAction` `/fabric/v4/loas/{loaId}/actions/search`
+- `fabric_searchCrossConnects` `/fabric/v4/crossConnects/search`
+- `fabric_searchCrossConnectAction` `/fabric/v4/crossConnects/{crossConnectId}/actions/search`
+- `fabric_searchCrossConnectSchedules` `/fabric/v4/crossConnectSchedules/search`
+- `fabric_searchAppDomains` `/fabric/v4/appDomains/search`
+- `fabric_searchAppLinks` `/fabric/v4/appLinks/search`
+- `fabric_searchAttachedAppDomains` `/fabric/v4/appLinks/{appLinkId}/appDomains/search`
+- `fabric_searchAttachedAppServices` `/fabric/v4/appLinks/{appLinkId}/appServices/search`
+- `fabric_searchAttachedAppProcessors` `/fabric/v4/appLinks/{appLinkId}/appProcessors/search`
+- `fabric_searchAppProcessors` `/fabric/v4/appProcessors/search`
+- `fabric_searchAppServices` `/fabric/v4/appServices/search`
+- `fabric_searchAttachedAppSubscriptionsByAppServiceId` `/fabric/v4/appServices/{appServiceId}/appSubscriptions/search`
+- `fabric_searchAppSubscriptions` `/fabric/v4/appSubscriptions/search`
+- `internetaccess_searchPrices` `/internetAccess/v1/prices/search`
+- `internetaccess_getEquinixInternetAccessServices` `/internetAccess/v1/services/search`
+- `internetaccessv2_getEquinixInternetAccessServices` `/internetAccess/v2/services/search`
+- `network-edge_getDownloadImageByDeviceType` `/ne/v1/devices/{deviceType}/repositories/{version}/download`
+- `smartview_getAlerts` `/smartview/v2/systemAlerts/search`
+- `sts_listAccessPoliciesGranted` `/v1/accessPoliciesGranted`
+- `unifiednotification_getNotifications` `/notifications/v2/events/findAll`

@@ -26,11 +26,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 import exrex  # noqa: E402
 import httpx2  # noqa: E402
 from fastmcp import Client  # noqa: E402
+from fastmcp.utilities.openapi import parse_openapi_to_http_routes  # noqa: E402
 
 from equinix_docs_mcp_server.main import (  # noqa: E402
     DOCS_TOOL_NAMES,
     EquinixMCPServer,
 )
+from equinix_docs_mcp_server.openapi_annotations import is_read_by_name  # noqa: E402
 
 MAX_DEPTH = 8
 
@@ -190,7 +192,7 @@ class VettingServer(EquinixMCPServer):
         self.holder = {"body": None}
         super().__init__(*args, **kwargs)
 
-    def _build_api_client(self, api_config):
+    def _build_api_client(self, api_config, spec):
         def handler(request: httpx2.Request) -> httpx2.Response:
             return httpx2.Response(200, json=self.holder["body"], request=request)
 
@@ -277,6 +279,19 @@ async def vet(families_filter=None, report_path="vet-report.md"):
             if (i + 1) % 250 == 0:
                 print(f"  {i + 1}/{len(tools)} vetted")
 
+    # POST tools the name heuristic marks read-only, and whether an overlay
+    # (x-mcp-annotations) turned them back into writes.
+    read_only = {
+        t.name: bool(t.annotations and t.annotations.readOnlyHint) for t in tools
+    }
+    read_by_name = []
+    for family in families:
+        spec = server.spec_manager.get_provider_spec(family)
+        for route in parse_openapi_to_http_routes(spec) if spec else []:
+            name = f"{family}_{route.operation_id}"
+            if is_read_by_name(route) and name in read_only:
+                read_by_name.append((name, route.path, read_only[name]))
+
     # Search discoverability pass
     search_server = VettingServer(tool_catalog="search")
     await search_server.initialize()
@@ -328,6 +343,20 @@ async def vet(families_filter=None, report_path="vet-report.md"):
         lines.append("## Not discoverable via search_tools (exact name query)")
         for name in not_searchable[:50]:
             lines.append(f"- `{name}`")
+        lines.append("")
+
+    if read_by_name:
+        lines.append("## POST tools marked read-only by name")
+        lines.append("")
+        lines.append(
+            "These POST operations have a read verb in their operationId or a "
+            "`/search` or `/validate` path. Tools an overlay marks as writes "
+            "are labelled *write (overlay)*."
+        )
+        lines.append("")
+        for name, path, is_read in read_by_name:
+            label = "" if is_read else " — write (overlay)"
+            lines.append(f"- `{name}` `{path}`{label}")
         lines.append("")
 
     Path(report_path).write_text("\n".join(lines), encoding="utf-8")

@@ -149,6 +149,7 @@ apis:
     service_name: "accesstoken"
     specs:
       - url: "https://docs.equinix.com/api-catalog/accesstokenv1/openapi.yaml"
+        overlay: "overlays/accesstoken.yaml"
 
   access:
     tags: [identity, permissions]

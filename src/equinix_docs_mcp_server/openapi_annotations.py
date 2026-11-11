@@ -16,9 +16,17 @@ Policy (conservative — hints only ever err toward "may modify state"):
 * Every tool: ``openWorldHint`` is true — all of them call external Equinix
   APIs.
 
-Precedence, lowest to highest: method-derived defaults, then an operation's
-``x-mcp-annotations`` vendor extension (camelCase or snake_case keys), then
-any annotations already set on the component.
+Many Equinix APIs use POST for searches that only read data. A POST whose
+operationId starts with a read verb (``searchConnections``,
+``validateUserdata``) or whose path ends in ``/search`` or ``/validate`` gets
+the ``GET`` hints instead. The operationId is split into words the same way
+the tool search index splits it, so ``searchlightCreate`` doesn't match.
+
+Precedence, lowest to highest: method-derived defaults, then the read-verb
+name heuristic, then an operation's ``x-mcp-annotations`` vendor extension
+(camelCase or snake_case keys), then any annotations already set on the
+component. An overlay can set ``x-mcp-annotations`` to mark a "search"
+endpoint that does change state as a write.
 """
 
 import logging
@@ -27,6 +35,8 @@ from typing import Any, Dict
 from fastmcp.server.providers.openapi import OpenAPITool
 from fastmcp.utilities.openapi import HTTPRoute
 from mcp_types import ToolAnnotations
+
+from .tool_ranking import split_identifier
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +66,26 @@ METHOD_ANNOTATIONS: Dict[str, Dict[str, Any]] = {
     "PATCH": {"read_only_hint": False, "idempotent_hint": False},
 }
 
+# operationId verbs that mark a POST as a read, e.g. searchConnections
+READ_VERBS = frozenset(
+    {"search", "get", "list", "query", "find", "validate", "check", "count"}
+)
+# Path suffixes that mark a POST as a read, e.g. POST /streams/{id}/search
+READ_PATH_SUFFIXES = ("/search", "/validate")
+
+
+def is_read_by_name(route: HTTPRoute) -> bool:
+    """Whether a POST route reads data, judged by its operationId and path.
+
+    Only POST is considered: other methods already have accurate defaults.
+    """
+    if route.method.upper() != "POST":
+        return False
+    if route.path.rstrip("/").lower().endswith(READ_PATH_SUFFIXES):
+        return True
+    words = split_identifier(route.operation_id or "").split()
+    return bool(words) and words[0].lower() in READ_VERBS
+
 
 def _hints(annotations: Any) -> Dict[str, Any]:
     """Return the explicitly set (non-None) fields of a ToolAnnotations."""
@@ -73,6 +103,12 @@ def derive_tool_annotations(
     """Build annotations for an OpenAPI route, merged with existing ones."""
     merged: Dict[str, Any] = {"open_world_hint": True}
     merged.update(METHOD_ANNOTATIONS.get(route.method.upper(), {}))
+    if is_read_by_name(route):
+        merged.update(_READ_ONLY)
+        logger.debug(
+            f"Treating {route.method} {route.path} ({route.operation_id}) as "
+            "read-only from its name"
+        )
 
     override = route.extensions.get(ANNOTATIONS_EXTENSION)
     if override is not None:
