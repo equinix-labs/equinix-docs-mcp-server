@@ -292,6 +292,8 @@ pip install -e '.[dev]'
 pytest
 ```
 
+`tests/test_search_ranking.py` checks how `search_tools` ranks a set of everyday queries (`tests/fixtures/search_queries.yaml`) against a snapshot of the real tool catalog (`tests/fixtures/search_corpus.json`). Run `python tests/test_search_ranking.py` for a table of every case. If a change improves a case, tighten its `within` bound; if it makes a case worse, the test fails. `python scripts/export_search_corpus.py --refresh` regenerates the snapshot from the published specs, and the *Refresh Search Corpus* workflow does this weekly and opens a PR with the ranking results.
+
 See [`docs/SPEC_VETTING.md`](docs/SPEC_VETTING.md) for exercising every generated tool against mock responses, [`docs/SEARCH_FETCH_USAGE.md`](docs/SEARCH_FETCH_USAGE.md) for the documentation `search` and `fetch` tools, and [`docs/INTEGRATION_EXAMPLE.md`](docs/INTEGRATION_EXAMPLE.md) for an example of using them together.
 
 ## License
