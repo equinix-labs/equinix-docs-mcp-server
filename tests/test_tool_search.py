@@ -60,6 +60,17 @@ class TestSummaries:
         tool = make_tool(description=f"Creates a virtual device.\n\n{FAMILY_BLURB}")
         assert tool_summary(tool) == "Creates a virtual device."
 
+    def test_summary_of_deprecated_tool(self):
+        tool = make_tool(
+            description=(
+                "Deprecated: this operation may be removed. Prefer a "
+                "non-deprecated alternative where one exists.\n\n"
+                f"Gets port traffic metrics.\n\n{FAMILY_BLURB}"
+            ),
+            tags={"deprecated"},
+        )
+        assert tool_summary(tool) == "Deprecated. Gets port traffic metrics."
+
     def test_summary_strips_html_and_shortens(self):
         long = 'Beta <font color="red">feature</font>. ' + "word " * 100
         summary = tool_summary(make_tool(description=long))
