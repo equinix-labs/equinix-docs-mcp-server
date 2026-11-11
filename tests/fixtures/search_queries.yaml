@@ -1,0 +1,192 @@
+# Ranking regression cases for search_tools (see tests/test_search_ranking.py
+# and issue #71).
+#
+# Each case is a query a person might type, the tools that answer it (any one
+# of them counts), and `within`: the rank the best of them must reach. `within`
+# records today's ranking, so the test fails when a change makes a case rank
+# worse. When a change makes a case rank better, tighten `within` in the same
+# PR.
+#
+# `gap` marks a query the catalog can't answer yet, with the reason. These are
+# expected to fail (strict xfail), so a change that fixes one fails the test
+# until the `gap` is removed.
+#
+# `source` is where the case came from: #53 (the first ranking work) or #70.
+
+- query: create network edge virtual device
+  expect: [network-edge_createVirtualDevice]
+  within: 1
+  source: "#53"
+- query: create virtual device
+  expect: [network-edge_createVirtualDevice]
+  within: 1
+  source: "#53"
+- query: provision a router in network edge
+  expect: [network-edge_createVirtualDevice]
+  within: 10
+  gap: Shares no words with the tool's name, title or summary.
+  source: "#53"
+- query: list fabric connections
+  expect: [fabric_searchConnections]
+  within: 3
+  source: "#53"
+- query: create fabric connection
+  expect: [fabric_createConnection]
+  within: 1
+  source: "#53"
+- query: list metros
+  expect: [fabric_getMetros, network-edge_getMetros, workflow__list_ne_metros]
+  within: 1
+  source: "#53"
+- query: network edge metros
+  expect: [network-edge_getMetros, workflow__list_ne_metros]
+  within: 1
+  source: "#53"
+- query: list network edge metros
+  expect: [workflow__list_ne_metros, network-edge_getMetros]
+  within: 1
+  source: "#53"
+- query: delete virtual device
+  expect: [network-edge_deleteVirtualDeviceByUuid]
+  within: 1
+  source: "#53"
+- query: create cloud router
+  expect: [fabric_createCloudRouter]
+  within: 1
+  source: "#53"
+- query: download invoice
+  expect: [billingv1_downloadBillingDocument]
+  within: 1
+  source: "#53"
+- query: list ports
+  expect: [fabric_getPorts, fabric_searchPorts]
+  within: 3
+  source: "#53"
+- query: search ports
+  expect: [fabric_searchPorts]
+  within: 1
+  source: "#53"
+- query: create port
+  expect: [fabric_createPort]
+  within: 1
+  source: "#53"
+- query: get connection by uuid
+  expect: [fabric_getConnectionByUuid]
+  within: 1
+  source: "#53"
+- query: list service profiles
+  expect: [fabric_searchServiceProfiles, fabric_listServiceProfiles]
+  within: 1
+  source: "#53"
+- query: create service token
+  expect: [fabric_createServiceToken]
+  within: 1
+  source: "#53"
+- query: list virtual devices
+  expect: [network-edge_getVirtualDevices]
+  within: 5
+  source: "#53"
+- query: upload license file
+  expect: [network-edge_uploadLicense]
+  within: 1
+  source: "#53"
+- query: list device types
+  expect: [network-edge_getVirtualDeviceTypes]
+  within: 1
+  source: "#53"
+- query: device types
+  expect: [network-edge_getVirtualDeviceTypes]
+  within: 1
+  source: "#70"
+- query: port stats
+  expect: [fabric_getPortStatsByPortUuid, fabric_searchMetrics]
+  within: 1
+  source: "#70"
+- query: port statistics
+  expect: [fabric_getPortStatsByPortUuid, fabric_searchMetrics]
+  within: 15
+  source: "#70"
+- query: port utilization
+  expect: [fabric_searchMetrics, fabric_getPortStatsByPortUuid]
+  within: 10
+  gap: '"Utilization" appears in no operation text; the replacement for port stats, fabric_searchMetrics, is described only as "search metrics".'
+  source: "#70"
+- query: connection metrics
+  expect: [fabric_searchMetrics]
+  within: 1
+  source: "#70"
+- query: used vlans
+  expect: [fabric_getVlans]
+  within: 1
+  source: "#70"
+- query: invoices
+  expect: [billing_Retrieve_billing_summary, billing_Retrieve_billing_details, billingv1_downloadBillingDocument]
+  within: 1
+  source: "#70"
+- query: billing history
+  expect: [billing_Retrieve_billing_summary, billing_Retrieve_billing_details]
+  within: 5
+  source: "#70"
+- query: cross connect order
+  expect: [crossconnects_Order_cross_connects]
+  within: 1
+  source: "#70"
+- query: bgp routes
+  expect: [fabric_searchConnectionReceivedRoutes, fabric_searchConnectionAdvertisedRoutes]
+  within: 10
+  gap: Route search operations are titled "Search Received/Advertised Routes"; "BGP" appears only in the BGP action operations.
+  source: "#70"
+- query: access token
+  expect: [accesstoken_GetOAuth2AccessToken, accesstoken_RefreshOAuth2AccessToken]
+  within: 1
+  source: "#70"
+- query: my orders
+  expect: [orderhistory_POST_orders_history, orders_GET_Order_details]
+  within: 3
+  source: "#70"
+- query: precision time
+  expect: [fabric_searchTimeServices, fabric_getTimeServicesById, fabric_createTimeServices]
+  within: 1
+  source: "#70"
+- query: aws connection
+  expect: [fabric_searchServiceProfiles, fabric_createConnection]
+  within: 1
+  gap: AWS appears only in data (service profiles); smartview_getCertificate ranks first through its AWS_IOT_CORE channel type.
+  source: "#70"
+- query: search connections by name
+  expect: [fabric_searchConnections]
+  within: 3
+  source: "#70"
+- query: delete port
+  expect: [fabric_deletePort]
+  within: 1
+  source: "#70"
+- query: smart hands
+  expect: [smarthands_smartHandTypes]
+  within: 1
+  source: "#70"
+- query: trouble ticket
+  expect: [support_createTicketsV2, troubleticket_getTroubleTicketType]
+  within: 1
+  source: "#70"
+- query: power usage
+  expect: [smartview_getCurrentPowerData, smartview_getTrendingPowerData]
+  within: 3
+  source: "#70"
+- query: environmental sensors
+  expect: [smartview_getSensorReadings, smartview_getCurrentEnvironmentData]
+  within: 1
+  source: "#70"
+- query: streaming subscriptions
+  expect: [fabric_searchStreamSubscriptions, fabric_getStreamSubscriptions, smartview_getAllSubscriptions]
+  within: 3
+  source: "#70"
+- query: letter of authorization
+  expect: [diloa_search, diloa_create, diloa_findByUuid]
+  within: 3
+  gap: >-
+    #21 wrote family descriptions in apis.yaml to carry terms like this, but
+    the index keeps only the family name ("Digital LOA"), not the
+    description. Indexing the description's first sentence fixes this and
+    "port statistics", but moves "list ports" and "list virtual devices" down.
+  source: "#21"
