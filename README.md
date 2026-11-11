@@ -13,7 +13,7 @@ This project is an experimental Model Context Protocol (MCP) server, for local u
    - **Tool annotations**: API tools carry MCP behavior hints derived from their HTTP method — `GET` is `readOnlyHint`, `PUT`/`DELETE` are `destructiveHint` + `idempotentHint`, `POST`/`PATCH` are neither read-only nor idempotent — and all are `openWorldHint`; an operation's `x-mcp-annotations` extension (e.g. via an overlay) overrides these
    - **Cache hints**: `tools/list` and related results carry `ttlMs`/`cacheScope` hints per the MCP 2026-07-28 caching utility
    - **API Authentication**: OAuth2 Client Credentials
-   - **Configurable Overlays**: Use overlay specifications to normalize API responses before LLM processing
+   - **Configurable Overlays**: Use overlay specifications to normalize API specs before tools are generated from them
    - **Arazzo Workflows (Experimental)**: Define and execute higher-level workflows chaining multiple API operations
 - **Documentation Integration**: Search Equinix documentation via sitemap and Lunr search, fetch full markdown content
    - OpenAI MCP compatible `search` and `fetch` tools for ChatGPT Connectors and deep research
@@ -52,7 +52,7 @@ To work on this project, clone it and install editable:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate    # Windows: .venv\Scripts\activate
-pip install -e .[dev]
+pip install -e '.[dev]'
 ```
 
 The packaged configuration lives at `src/equinix_docs_mcp_server/data/config/apis.yaml` (with overlays alongside in `data/overlays/`), so with an editable install your edits there take effect directly.
@@ -206,14 +206,15 @@ The server exposes MCP tools for:
    - `search_tools` - Find API tools by natural-language query. Each match is a short entry: name, title, access (read-only, write or destructive), a one-paragraph summary, required parameters with types, and optional parameter names. Results run about 4-6K characters for 15 matches.
    - `get_tool_schema` - Return one tool's full definition, with every parameter's description and examples. Pass `output_schema: true` to include the response schema, for example to write a `call_api_filtered` query.
    - `call_tool` - Execute a discovered tool by name
+   - `call_api_filtered` - Run an API tool and return only what a [JMESPath](https://jmespath.org/specification.html) query selects from its response, rendered as YAML. Use it when a full response would be too large, for example `data[].{code: code, name: name}` on `fabric_getMetros`.
 2. **Documentation**: 
    - `search` - Full-text search documentation using indexed content (OpenAI MCP compatible)
    - `fetch` - Fetch full markdown content of a documentation page by URL (OpenAI MCP compatible)
    - `list_docs` - List and filter documentation
    - `find_docs` - Find documentation by filename/title matching
 3. **Workflows (Arazzo)**:
-    - Tools prefixed with `workflow__` represent multi-step orchestrations defined in Arazzo-like YAML files.
-    - Example: `workflow__list_ne_metros_then_accounts`
+   - Tools prefixed with `workflow__` run multi-step workflows defined in [Arazzo](https://spec.openapis.org/arazzo/latest.html) files, for example `workflow__list_ne_metros`.
+   - `arazzo_list_workflows` and `arazzo_describe_workflow` list the loaded workflows and describe one.
 
 ### Tool Catalog Reference (OpenRPC)
 
@@ -232,48 +233,53 @@ Then open `site/index.html` in a browser. `site/` is git-ignored.
 
 ### Defining Arazzo Workflows (Experimental)
 
-Add an `arazzo` section to your `apis.yaml` (spec paths resolve relative to the config file's parent directory):
+Workflows are [Arazzo 1.0](https://spec.openapis.org/arazzo/latest.html) documents, run with [arazzo-runner](https://pypi.org/project/arazzo-runner/). List them in the `arazzo` section of `apis.yaml`. Paths resolve relative to the config file's parent directory, and the bundled configuration loads `config/workflows.yaml`:
 
 ```yaml
 arazzo:
-   specs:
-      - examples/workflows.yaml
+  specs:
+    - config/workflows.yaml
 ```
 
-Example workflow spec (`examples/workflows.yaml`):
+Each workflow becomes a `workflow__<workflowId>` tool. Its parameters come from the workflow's `inputs` schema, and an `inputs_json` parameter accepts the inputs as one JSON or YAML object. The bundled workflow:
 
 ```yaml
+arazzo: 1.0.1
+info:
+  title: Equinix Workflows to get metros
+  version: 2.0.0
+sourceDescriptions:
+  - name: ne
+    url: https://docs.equinix.com/api-catalog/network-edgev1/openapi.yaml
+    type: openapi
 workflows:
-   list_ne_metros_then_accounts:
-      description: Retrieve Network Edge metros then your accounts in one of them.
-      inputs:
-         metro: "SV"
-      steps:
-         - id: get_metros
-            operation: network-edge_getMetros
-            saveAs: metros
-         - id: get_accounts
-            operation: network-edge_getAccountsWithStatus
-            params:
-               metro: "{{ metro }}"
-            saveAs: accounts
+  - workflowId: list_ne_metros
+    summary: Retrieve Network Edge metros
+    steps:
+      - stepId: get_metros
+        operationId: getMetros
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          metros: $response.body#/data
+    outputs:
+      metros: $steps.get_metros.outputs.metros
 ```
 
-Run the server and invoke: `workflow__list_ne_metros_then_accounts`.
+Steps call operations from the `sourceDescriptions` specs, not the server's MCP tools. Values pass between steps with runtime expressions such as `$inputs.<name>` and `$steps.<stepId>.outputs.<name>`. When a workflow declares a `bearerToken` input and the caller doesn't supply one, the server fills it in with its own OAuth token.
 
-Currently supported features:
-- Sequential steps referencing existing API tools
-- Simple variable capture via `saveAs`
-- Jinja2 templated parameter rendering (falls back to Python `str.format`)
-  
+The server also supports `forEach` on a step, which isn't part of Arazzo 1.0. It runs the step's nested `steps` once per item of a collection, with `$item.<field>` substituted. Only one level of nesting is supported. `data/config/workflows-dcim.yaml` is a larger example that uses it. It isn't loaded by default.
+
 ## Development
 
 ### Running Tests
 
 ```bash
-pip install -e .[dev]
+pip install -e '.[dev]'
 pytest
 ```
+
+See [`docs/SPEC_VETTING.md`](docs/SPEC_VETTING.md) for exercising every generated tool against mock responses, [`docs/SEARCH_FETCH_USAGE.md`](docs/SEARCH_FETCH_USAGE.md) for the documentation `search` and `fetch` tools, and [`docs/INTEGRATION_EXAMPLE.md`](docs/INTEGRATION_EXAMPLE.md) for an example of using them together.
 
 ## License
 
