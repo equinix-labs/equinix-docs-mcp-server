@@ -1,5 +1,6 @@
 """Test documentation manager functionality."""
 
+import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx2
@@ -16,8 +17,9 @@ def config():
 
 
 @pytest.fixture
-def docs_manager(config):
-    """Create docs manager instance."""
+def docs_manager(config, tmp_path, monkeypatch):
+    """Create docs manager instance with an empty, isolated cache."""
+    monkeypatch.setenv("EQUINIX_MCP_CACHE_DIR", str(tmp_path))
     return DocsManager(config)
 
 
@@ -122,6 +124,7 @@ async def test_list_docs_with_filter(docs_manager):
             "lastmod": "2023-12-02",
         },
     ]
+    docs_manager._index_loaded_at = time.time()
 
     # Test without filter
     result = await docs_manager.list_docs()
@@ -153,6 +156,7 @@ async def test_find_docs(docs_manager):
             "lastmod": "2023-12-02",
         },
     ]
+    docs_manager._index_loaded_at = time.time()
 
     # Test find
     result = await docs_manager.find_docs("network")
@@ -200,7 +204,7 @@ async def test_search_docs(
 
     # Should have attempted to fetch the search index
     mock_client.get.assert_called_once_with(
-        "https://docs.equinix.com/search-index.json"
+        "https://docs.equinix.com/search-index.json", timeout=30.0
     )
     mock_search_client.load.assert_called_once()
 
@@ -217,6 +221,7 @@ async def test_get_docs_summary(docs_manager):
         {"category": "Network Edge", "url": "url2", "title": "title2", "lastmod": ""},
         {"category": "Fabric", "url": "url3", "title": "title3", "lastmod": ""},
     ]
+    docs_manager._index_loaded_at = time.time()
 
     result = await docs_manager.get_docs_summary()
 
@@ -300,6 +305,57 @@ async def test_fetch_doc_relative_url(mock_httpx, docs_manager):
     mock_client.get.assert_called_once()
     call_args = mock_client.get.call_args
     assert call_args[0][0] == "https://docs.equinix.com/network-edge/api-reference.md"
+
+
+@pytest.mark.asyncio
+@patch("equinix_docs_mcp_server.docs.httpx2.AsyncClient")
+async def test_fetch_doc_drops_anchor(mock_httpx, docs_manager):
+    """Search results link to sections; fetch the page's markdown."""
+    mock_response = MagicMock()
+    mock_response.raise_for_status = MagicMock()
+    mock_response.text = "# Connections"
+    mock_client = AsyncMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+    mock_httpx.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_httpx.return_value.__aexit__ = AsyncMock(return_value=None)
+
+    await docs_manager.fetch_doc(
+        "https://docs.equinix.com/fabric/connections#connection-status"
+    )
+
+    assert (
+        mock_client.get.call_args[0][0]
+        == "https://docs.equinix.com/fabric/connections.md"
+    )
+
+
+@pytest.mark.asyncio
+async def test_search_docs_formats_sections(docs_manager, tmp_path, monkeypatch):
+    """Results show the page, the matching section and a full URL."""
+    monkeypatch.setattr("equinix_docs_mcp_server.docs.cache_root", lambda: tmp_path)
+    (tmp_path / "search").mkdir()
+    (tmp_path / "search" / "search-index.json").write_text("[]")
+
+    fake = MagicMock()
+    fake.search.return_value = [
+        {
+            "title": "Connections Inventory",
+            "url": "/fabric/connections",
+            "section": "Connection Status",
+            "anchor": "#connection-status",
+        },
+        {"title": "Ports", "url": "/fabric/ports", "section": None, "anchor": ""},
+    ]
+    with patch("equinix_docs_mcp_server.docs.SearchClient", return_value=fake) as cls:
+        result = await docs_manager.search_docs("connection status")
+        await docs_manager.search_docs("ports")
+
+    assert "**Connections Inventory — Connection Status**" in result
+    assert "https://docs.equinix.com/fabric/connections#connection-status" in result
+    assert "**Ports**\n  https://docs.equinix.com/fabric/ports\n" in result
+    # The index is loaded once and reused.
+    cls.assert_called_once()
+    fake.load.assert_called_once()
 
 
 @pytest.mark.asyncio
