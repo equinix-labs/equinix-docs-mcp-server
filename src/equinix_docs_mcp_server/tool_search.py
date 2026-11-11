@@ -22,7 +22,7 @@ from fastmcp.utilities.versions import VersionSpec
 from mcp_types import TextContent, ToolAnnotations
 from pydantic import Field
 
-from .tool_ranking import ToolIndex
+from .tool_ranking import ToolIndex, is_deprecated, summary_paragraph
 
 SEARCH_TOOL_NAME = "search_tools"
 SCHEMA_TOOL_NAME = "get_tool_schema"
@@ -41,12 +41,16 @@ def tool_title(tool: Tool) -> str:
 
 
 def tool_summary(tool: Tool) -> str:
-    """The first paragraph of a tool's description, shortened.
+    """The paragraph describing the operation, shortened.
 
     Generated API tools end with a paragraph describing the whole API family,
     which is the same for every tool in that family, so it is left out.
+    Deprecated operations start with a generic notice; the summary shows
+    "Deprecated." and the operation's own description instead.
     """
-    text = (tool.description or "").strip().split("\n\n", 1)[0]
+    text = summary_paragraph(tool.description or "")
+    if is_deprecated(tool):
+        text = f"Deprecated. {text}".strip()
     # Some specs mark betas with inline HTML such as <font color="red">
     text = " ".join(_HTML_TAG.sub("", text).split())
     if len(text) <= _SUMMARY_LIMIT:
