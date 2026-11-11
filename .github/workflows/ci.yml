@@ -9,17 +9,14 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.13']
-        
+
     steps:
     - uses: actions/checkout@v7
     
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python
       uses: actions/setup-python@v7
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version-file: .python-version
         
     - name: Install dependencies
       run: |
@@ -58,7 +55,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v7
       with:
-        python-version: '3.13'
+        python-version-file: .python-version
         
     - name: Install dependencies
       run: |
