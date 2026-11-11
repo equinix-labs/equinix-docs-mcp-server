@@ -99,17 +99,21 @@ class EquinixAuth(httpx2.Auth):
             # one and retry once
             logger.info(f"401 from {self._service_name}; retrying with a new token")
             self._auth_manager.clear_token_cache()
-            await self._add_auth_headers(request)
-            yield request
+            # If no new token can be had, return the original 401 rather than
+            # resending the rejected token; the token error is already logged
+            if await self._add_auth_headers(request):
+                yield request
 
-    async def _add_auth_headers(self, request: httpx2.Request) -> None:
+    async def _add_auth_headers(self, request: httpx2.Request) -> bool:
+        """Set the service's auth headers; False if they couldn't be fetched."""
         try:
             headers = await self._auth_manager.get_auth_header(self._service_name)
         except Exception as e:
             logger.error(f"Auth error for {self._service_name}: {e}")
-            headers = {}
+            return False
         for key, value in headers.items():
             request.headers[key] = value
+        return bool(headers)
 
 
 class ResponseFormattingMiddleware(Middleware):
