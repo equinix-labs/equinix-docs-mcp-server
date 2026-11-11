@@ -217,16 +217,18 @@ The server exposes MCP tools for:
 
 ### Tool Catalog Reference (OpenRPC)
 
-The complete tool catalog, including every generated API tool, is published as an [OpenRPC](https://open-rpc.org/) document in [`docs/openrpc/openrpc.json`](docs/openrpc/openrpc.json), with a browsable single-page rendering in [`docs/openrpc/index.html`](docs/openrpc/index.html). Each OpenRPC method is one MCP tool: its by-name params are the tool arguments, sent over MCP as `tools/call` with `{"name": "<method>", "arguments": {...}}`.
+The complete tool catalog, including every generated API tool, is published at <https://equinix-labs.github.io/equinix-docs-mcp-server/> as a browsable single-page reference, with the [OpenRPC](https://open-rpc.org/) document it is rendered from at [`openrpc.json`](https://equinix-labs.github.io/equinix-docs-mcp-server/openrpc.json). Each OpenRPC method is one MCP tool: its by-name params are the tool arguments, sent over MCP as `tools/call` with `{"name": "<method>", "arguments": {...}}`.
 
-Regenerate both files after changing the server (specs are always refreshed, so the output does not depend on your local cache):
+The *OpenRPC Docs* workflow generates and lints the catalog on every pull request and uploads it as the `openrpc-docs` artifact. Pushes to `main`, a weekly run (to pick up upstream API spec changes) and manual runs also deploy it to GitHub Pages. The generated files are not committed.
+
+To build the site locally (specs are always refreshed, so the output does not depend on your local cache):
 
 ```bash
-equinix-docs-mcp-server --export-openrpc docs/openrpc
-npx @redocly/cli lint docs/openrpc/openrpc.json   # optional validation
+equinix-docs-mcp-server --export-openrpc site   # writes site/openrpc.json and site/index.html
+npx @redocly/cli lint site/openrpc.json         # optional validation
 ```
 
-The *OpenRPC Docs* workflow regenerates and lints the catalog on every pull request, uploads it as the `openrpc-docs` artifact, and fails when a PR changes the server without committing regenerated docs. Drift caused only by upstream spec updates is reported as a warning and refreshed by a weekly PR.
+Then open `site/index.html` in a browser. `site/` is git-ignored.
 
 ### Defining Arazzo Workflows (Experimental)
 
