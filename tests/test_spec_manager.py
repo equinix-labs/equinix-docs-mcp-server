@@ -286,10 +286,31 @@ def test_summarize_info_description():
     text = "First line\nof a very long description. " * 30
     summary = SpecManager._summarize_info_description(text)
     assert "\n" not in summary
-    assert len(summary) <= 301
-    assert summary.endswith("…")
+    assert len(summary) <= 300
+    # Whole sentences only
+    assert summary.endswith("description.")
     # Short descriptions pass through collapsed but untruncated
     assert SpecManager._summarize_info_description("a  b\nc") == "a b c"
+
+
+def test_summarize_info_description_cuts_long_sentence():
+    """A first sentence longer than the limit is cut at a word."""
+    summary = SpecManager._summarize_info_description("word " * 100)
+    assert len(summary) <= 300
+    assert summary.endswith("word…")
+
+
+def test_inject_family_context_does_not_end_with_ellipsis_and_period(spec_manager):
+    """A cut-off family description isn't followed by a stray period."""
+    spec = {
+        "info": {"title": "Network Edge APIs", "description": "word " * 100},
+        "paths": {"/x": {"get": {}}},
+    }
+
+    spec_manager._inject_family_context(spec, "ne", APIConfig(name="ne"))
+
+    desc = spec["paths"]["/x"]["get"]["description"]
+    assert desc.endswith("word…")
 
 
 def test_config_family_search_metadata(config):
