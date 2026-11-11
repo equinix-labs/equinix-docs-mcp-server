@@ -1,5 +1,6 @@
 """Test documentation manager functionality."""
 
+import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx2
@@ -16,8 +17,9 @@ def config():
 
 
 @pytest.fixture
-def docs_manager(config):
-    """Create docs manager instance."""
+def docs_manager(config, tmp_path, monkeypatch):
+    """Create docs manager instance with an empty, isolated cache."""
+    monkeypatch.setenv("EQUINIX_MCP_CACHE_DIR", str(tmp_path))
     return DocsManager(config)
 
 
@@ -122,6 +124,7 @@ async def test_list_docs_with_filter(docs_manager):
             "lastmod": "2023-12-02",
         },
     ]
+    docs_manager._index_loaded_at = time.time()
 
     # Test without filter
     result = await docs_manager.list_docs()
@@ -153,6 +156,7 @@ async def test_find_docs(docs_manager):
             "lastmod": "2023-12-02",
         },
     ]
+    docs_manager._index_loaded_at = time.time()
 
     # Test find
     result = await docs_manager.find_docs("network")
@@ -200,7 +204,7 @@ async def test_search_docs(
 
     # Should have attempted to fetch the search index
     mock_client.get.assert_called_once_with(
-        "https://docs.equinix.com/search-index.json"
+        "https://docs.equinix.com/search-index.json", timeout=30.0
     )
     mock_search_client.load.assert_called_once()
 
@@ -217,6 +221,7 @@ async def test_get_docs_summary(docs_manager):
         {"category": "Network Edge", "url": "url2", "title": "title2", "lastmod": ""},
         {"category": "Fabric", "url": "url3", "title": "title3", "lastmod": ""},
     ]
+    docs_manager._index_loaded_at = time.time()
 
     result = await docs_manager.get_docs_summary()
 

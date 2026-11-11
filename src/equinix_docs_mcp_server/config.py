@@ -153,6 +153,9 @@ class DocsConfig(BaseModel):
     sitemap_url: str = Field(default="https://docs.equinix.com/sitemap.xml")
     llms_txt_url: str = Field(default="https://docs.equinix.com/llms.txt")
     cache_path: str = Field(default="docs/sitemap_cache.xml")
+    # Refresh llms.txt, the sitemap and the search index after this many
+    # hours; 0 keeps cached copies forever.
+    cache_max_age_hours: float = Field(default=24.0)
 
 
 class Config(BaseModel):
