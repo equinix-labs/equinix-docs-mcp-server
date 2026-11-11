@@ -29,9 +29,31 @@ To find catalog APIs not yet configured, run:
 equinix-docs-mcp-server --discover-apis
 ```
 
-This scans [docs.equinix.com/api-catalog](https://docs.equinix.com/api-catalog) for `openapi.yaml` specs and prints ready-to-paste `apis.yaml` entries for anything new (AsyncAPI-only entries such as `emgv1` are reported but skipped). Add `--write` to append them to the configuration file directly — the *Discover New APIs* GitHub workflow does exactly that on a weekly schedule (or on demand via workflow dispatch) and opens a PR with the additions. Operations missing an `operationId` get one synthesized automatically during spec processing.
+This reads the [RFC 9727](https://www.rfc-editor.org/rfc/rfc9727) API catalog that docs.equinix.com publishes at [`/.well-known/api-catalog`](https://docs.equinix.com/.well-known/api-catalog), takes each API's `service-desc` link to its OpenAPI spec, and prints ready-to-paste `apis.yaml` entries for anything new (AsyncAPI-only entries such as `emgv1` are reported but skipped). Add `--write` to append them to the configuration file directly — the *Discover New APIs* GitHub workflow does exactly that on a weekly schedule (or on demand via workflow dispatch) and opens a PR with the additions. Operations missing an `operationId` get one synthesized automatically during spec processing.
 
 ## Quick Start
+
+### Credentials
+
+API tools need Equinix OAuth2 client credentials (a client ID and secret). The simplest setup is to configure them once for the [Equinix CLI](https://github.com/equinix/cli); the server reads the same config file, so no credential environment variables are needed anywhere below.
+
+1. Install the CLI with Homebrew, or download a binary from the [releases page](https://github.com/equinix/cli/releases/latest):
+
+   ```bash
+   brew tap equinix/homebrew-tap
+   brew install equinix
+   ```
+
+2. Put your credentials in `~/.config/equinix/equinix.yaml`:
+
+   ```yaml
+   equinix_client_id: your_client_id
+   equinix_client_secret: your_client_secret
+   ```
+
+3. Check that they work, for example with `equinix api /fabric/v4/ports`.
+
+Documentation search works without credentials. To pass credentials as environment variables instead, see [Configuration](#configuration).
 
 ### Installation
 
@@ -63,6 +85,16 @@ The packaged configuration lives at `src/equinix_docs_mcp_server/data/config/api
 
 ## Adding the MCP Server to Claude Code
 
+With credentials in the Equinix CLI config file:
+
+```bash
+claude mcp add --transport stdio equinix -- uvx --system-certs equinix-docs-mcp-server
+```
+
+Add `--scope project` to share the configuration with the team via a `.mcp.json` file; each person's credentials stay in their own config file.
+
+Without the CLI config file, pass the credentials with `--env`:
+
 ```bash
 claude mcp add --env EQUINIX_API_CLIENTID=your_client_id \
   --env EQUINIX_API_CLIENTSECRET=your_client_secret \
@@ -70,22 +102,19 @@ claude mcp add --env EQUINIX_API_CLIENTID=your_client_id \
   -- uvx --system-certs equinix-docs-mcp-server
 ```
 
-> [!TIP]
-> The `--env` flags are optional if you already have credentials configured via the [Equinix CLI](https://github.com/equinix/cli) config file (`~/.config/equinix/equinix.yaml`). The server reads `equinix_client_id` and `equinix_client_secret` from that file automatically.
-
-Add `--scope project` to share the configuration with the team via a `.mcp.json` file (omit the `--env` flags in that case and export the credentials in your shell instead, so secrets stay out of the committed file). Note the flag ordering: another option (here `--transport stdio`) must sit between the last `--env` and the server name, or the CLI parses the name as another KEY=value pair.
+Keep `--env` out of project-scoped configurations so secrets stay out of the committed file. Note the flag ordering: another option (here `--transport stdio`) must sit between the last `--env` and the server name, or the CLI parses the name as another KEY=value pair.
 
 For more details, see the [Claude Code MCP documentation](https://code.claude.com/docs/en/mcp).
 
 ## Adding the MCP Server to VS Code
 
-Add the server with a single command (the JSON is one server object, with the name inline):
+With credentials in the Equinix CLI config file, add the server with a single command (the JSON is one server object, with the name inline):
 
 ```bash
 code --add-mcp '{"name":"equinix","type":"stdio","command":"uvx","args":["--system-certs","equinix-docs-mcp-server"]}'
 ```
 
-Or create a `.vscode/mcp.json` in your workspace to prompt for credentials on first use:
+Without the CLI config file, create a `.vscode/mcp.json` in your workspace that prompts for credentials on first use:
 
 ```json
 {
@@ -126,7 +155,7 @@ For more details, see the [VS Code MCP Server documentation](https://code.visual
 
 ### Configuration
 
-Set your Equinix API credentials as environment variables, or configure them once via the [Equinix CLI](https://github.com/equinix/cli) (`~/.config/equinix/equinix.yaml`) — the server reads the same file automatically:
+The server reads credentials from the Equinix CLI config file (`~/.config/equinix/equinix.yaml`, keys `equinix_client_id` and `equinix_client_secret`; see [Credentials](#credentials)) or from environment variables, which take priority over the file:
 
 ```bash
 # OAuth2 Client Credentials
@@ -135,8 +164,6 @@ export EQUINIX_API_CLIENTSECRET="your_client_secret"
 ```
 
 These are the names the [Equinix Terraform provider](https://github.com/equinix/terraform-provider-equinix) and the Equinix SDKs use. The earlier `EQUINIX_CLIENT_ID` and `EQUINIX_CLIENT_SECRET` still work but are deprecated, and the server logs a warning when it falls back to them.
-
-If you have already run `equinix init`, credentials are stored in `~/.config/equinix/equinix.yaml` (keys: `equinix_client_id`, `equinix_client_secret`). No environment variables are needed in that case. Environment variables take priority over that file.
 
 #### API Endpoint
 

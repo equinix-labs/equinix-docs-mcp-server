@@ -40,7 +40,7 @@ jobs:
         commit-message: "feat(specs): add newly discovered Equinix API specs"
         title: "Add newly discovered Equinix API specs"
         body: |
-          Automated scan of [docs.equinix.com/api-catalog](https://docs.equinix.com/api-catalog)
+          Automated scan of the [docs.equinix.com API catalog](https://docs.equinix.com/.well-known/api-catalog)
           found API specs that are not yet in the packaged configuration.
 
           New entries default to `client_credentials` auth. Review each one:
