@@ -18,6 +18,15 @@ This project is an experimental Model Context Protocol (MCP) server, for local u
 - **Documentation Integration**: Search Equinix documentation via sitemap and Lunr search, fetch full markdown content
    - OpenAI MCP compatible `search` and `fetch` tools for ChatGPT Connectors and deep research
 
+### Built on docs.equinix.com's agent features
+
+docs.equinix.com describes the formats it publishes for AI agents in [`/AGENTS.md`](https://docs.equinix.com/AGENTS.md). This server uses them directly rather than scraping HTML:
+
+- **Markdown pages**: `fetch` reads each page's `.md` version, which has no navigation, scripts or styling and uses fewer tokens.
+- **API catalog**: `--discover-apis` reads the [RFC 9727](https://www.rfc-editor.org/rfc/rfc9727) catalog at [`/.well-known/api-catalog`](https://docs.equinix.com/.well-known/api-catalog) to find OpenAPI specs (see [Supported APIs](#supported-apis)).
+
+Search uses the site's own search index (`/search-index.json`), and `list_docs`/`find_docs` use its `sitemap.xml`. You can also point your agent at `https://docs.equinix.com/AGENTS.md` for the site's guidelines, such as citing page URLs rather than `.md` URLs and never asking users to paste API secrets into a conversation.
+
 ## Supported APIs
 
 Any Equinix API specification can be added to the configuration file but operations may need to be filtered and overlays may be needed for this tool to use the spec in the MCP server.
