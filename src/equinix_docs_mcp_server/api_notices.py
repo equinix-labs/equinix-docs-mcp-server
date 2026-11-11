@@ -18,7 +18,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Mapping, Optional
 
 import httpx2
 from fastmcp.exceptions import ToolError
@@ -110,33 +110,56 @@ class ApiNotice:
         return None
 
 
-def notice_from_response(response: httpx2.Response) -> Optional[ApiNotice]:
-    """Build a notice when a response carries Deprecation or Sunset headers."""
-    deprecation = response.headers.get("Deprecation")
-    sunset = response.headers.get("Sunset")
+def notice_from_headers(
+    method: str, url: str, status_code: int, headers: Mapping[str, str]
+) -> Optional[ApiNotice]:
+    """Build a notice when response headers carry Deprecation or Sunset.
+
+    ``headers`` must look names up case-insensitively, as both httpx and
+    requests headers do. ``url`` should have its query removed.
+    """
+    deprecation = headers.get("Deprecation")
+    sunset = headers.get("Sunset")
     if not deprecation and not sunset:
         return None
     return ApiNotice(
-        method=response.request.method,
-        url=str(response.request.url.copy_with(query=None)),
-        status_code=response.status_code,
+        method=method,
+        url=url,
+        status_code=status_code,
         # A Sunset header alone is not a deprecation. Early drafts of the
         # Deprecation header used "true" rather than a date.
         deprecated=bool(deprecation),
         deprecated_since=parse_http_date(deprecation),
         sunset=parse_http_date(sunset),
-        links=tuple(parse_links(response.headers.get("Link"))),
+        links=tuple(parse_links(headers.get("Link"))),
     )
+
+
+def notice_from_response(response: httpx2.Response) -> Optional[ApiNotice]:
+    """Build a notice when a response carries Deprecation or Sunset headers."""
+    return notice_from_headers(
+        response.request.method,
+        str(response.request.url.copy_with(query=None)),
+        response.status_code,
+        response.headers,
+    )
+
+
+def record_notice(notice: Optional[ApiNotice]) -> None:
+    """Note a notice for the running tool call, if a tool call is running.
+
+    Safe from a worker thread started with ``asyncio.to_thread``, which
+    copies the tool call's context.
+    """
+    notices = _notices.get()
+    if notices is not None and notice is not None:
+        notices.append(notice)
 
 
 async def record_response(response: httpx2.Response) -> None:
     """httpx response hook: note deprecation headers for the running tool call."""
-    notices = _notices.get()
-    if notices is None:
-        return
-    notice = notice_from_response(response)
-    if notice is not None:
-        notices.append(notice)
+    if _notices.get() is not None:
+        record_notice(notice_from_response(response))
 
 
 def _day(when: Optional[datetime]) -> str:

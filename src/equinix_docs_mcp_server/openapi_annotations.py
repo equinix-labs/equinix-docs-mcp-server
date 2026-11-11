@@ -79,11 +79,16 @@ def is_read_by_name(route: HTTPRoute) -> bool:
 
     Only POST is considered: other methods already have accurate defaults.
     """
-    if route.method.upper() != "POST":
+    return is_read_operation_name(route.method, route.path, route.operation_id)
+
+
+def is_read_operation_name(method: str, path: str, operation_id: str | None) -> bool:
+    """``is_read_by_name`` for an operation given by method, path and ID."""
+    if method.upper() != "POST":
         return False
-    if route.path.rstrip("/").lower().endswith(READ_PATH_SUFFIXES):
+    if path.rstrip("/").lower().endswith(READ_PATH_SUFFIXES):
         return True
-    words = split_identifier(route.operation_id or "").split()
+    words = split_identifier(operation_id or "").split()
     return bool(words) and words[0].lower() in READ_VERBS
 
 

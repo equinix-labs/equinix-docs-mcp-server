@@ -3,6 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 import yaml
+from arazzo_runner.models import ExecutionState, WorkflowExecutionStatus
 
 from equinix_docs_mcp_server.arazzo_manager import ArazzoManager
 
@@ -65,8 +66,14 @@ async def test_simplified_step_normalization(tmp_path, monkeypatch):
             self.step_executor = DummyStepExecutor()
             self.execution_states = {}
 
-        def execute_workflow(self, workflow_id, inputs):
+        def start_workflow(self, workflow_id, inputs):
+            self.execution_states["run"] = ExecutionState(workflow_id=workflow_id)
+            self.workflow_id = workflow_id
+            return "run"
+
+        def execute_next_step(self, execution_id):
             # Simulate minimal run: ensure steps normalized
+            workflow_id = self.workflow_id
             workflows = self.arazzo_doc.get("workflows", {})
             wf = workflows.get(workflow_id)
             if wf is None and workflows:
@@ -78,12 +85,12 @@ async def test_simplified_step_normalization(tmp_path, monkeypatch):
                 any(k in s for k in ("operationId", "operationPath")) for s in steps
             )
             return {
-                "status": "WORKFLOW_COMPLETE",
+                "status": WorkflowExecutionStatus.WORKFLOW_COMPLETE,
                 "workflow_id": workflow_id,
                 "outputs": {},
             }
 
-    async def fake_get_runner(path):
+    async def fake_get_runner(path, http_client=None):
         dr = DummyRunner()
         await asyncio.sleep(0)
         return dr
@@ -93,4 +100,4 @@ async def test_simplified_step_normalization(tmp_path, monkeypatch):
     status = getattr(
         res, "status", res.get("status") if isinstance(res, dict) else None
     )
-    assert status == "WORKFLOW_COMPLETE"
+    assert status == WorkflowExecutionStatus.WORKFLOW_COMPLETE

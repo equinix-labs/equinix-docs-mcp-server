@@ -79,6 +79,30 @@ def backoff(attempt: int) -> float:
     return (2**attempt) * random.uniform(0.75, 1.25)
 
 
+def retry_wait(
+    method: str,
+    status_code: int,
+    retry_after: Optional[str],
+    attempt: int,
+    waited: float,
+    max_retries: int,
+    max_wait: float,
+) -> Optional[float]:
+    """Seconds to wait before resending a response, or None to return it.
+
+    Shared by the async ``RetryTransport`` and the synchronous workflow
+    session, so both follow one policy and budget.
+    """
+    if attempt >= max_retries or not is_retryable(method, status_code):
+        return None
+    wait = parse_retry_after(retry_after)
+    if wait is None:
+        wait = backoff(attempt)
+    if waited + wait > max_wait:
+        return None
+    return wait
+
+
 class RetryTransport(httpx2.AsyncBaseTransport):
     """Resend retryable responses within a small total wait budget.
 
@@ -106,15 +130,16 @@ class RetryTransport(httpx2.AsyncBaseTransport):
         attempt = 0
         while True:
             response = await self._transport.handle_async_request(request)
-            if attempt >= self.max_retries or not is_retryable(
-                request.method, response.status_code
-            ):
-                return response
-
-            wait = parse_retry_after(response.headers.get("Retry-After"))
+            wait = retry_wait(
+                request.method,
+                response.status_code,
+                response.headers.get("Retry-After"),
+                attempt,
+                waited,
+                self.max_retries,
+                self.max_wait,
+            )
             if wait is None:
-                wait = backoff(attempt)
-            if waited + wait > self.max_wait:
                 return response
 
             await response.aread()
