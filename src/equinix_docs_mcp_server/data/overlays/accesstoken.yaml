@@ -1,0 +1,17 @@
+# Overlay for the OAuth2 access token API
+overlay: "1.0.0"
+info:
+  title: "Overlay for Access Token API"
+  version: "1.0.0"
+  description: >-
+    GetOAuth2AccessToken starts with a read verb, so the name heuristic in
+    openapi_annotations.py would mark it read-only. It issues a new
+    credential, so keep the POST write hints.
+
+actions:
+  # The engine splits targets on "."; the path has no dots.
+  - target: "$.paths./oauth2/v1/token.post.x-mcp-annotations"
+    update:
+      readOnlyHint: false
+      destructiveHint: false
+      idempotentHint: false

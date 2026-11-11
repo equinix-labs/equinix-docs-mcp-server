@@ -10,6 +10,7 @@ from mcp_types import ToolAnnotations
 from equinix_docs_mcp_server.openapi_annotations import (
     annotate_openapi_component,
     derive_tool_annotations,
+    is_read_by_name,
 )
 
 
@@ -52,8 +53,24 @@ SPEC = {
                     "schema": {"type": "string"},
                 }
             ],
+            # No read verb in the name: read-only from the path alone.
+            "post": _op("widgetLookup"),
+        },
+        "/widgets/search": {
             "post": _op(
-                "searchWidget",
+                "searchWidgets",
+                **{
+                    # An overlay marking a "search" that changes state.
+                    "x-mcp-annotations": {"readOnlyHint": False}
+                },
+            ),
+        },
+        "/gadgets/search": {"post": _op("searchGadgets")},
+        "/gadgets/query": {"post": _op("searchlightCreate")},
+        "/gadgets/validate": {"post": _op("gadgetCheck")},
+        "/gadgets/actions": {
+            "post": _op(
+                "triggerGadget",
                 **{
                     "x-mcp-annotations": {
                         "readOnlyHint": True,
@@ -122,10 +139,56 @@ async def test_delete_is_destructive_and_idempotent(tools):
 
 
 async def test_vendor_extension_overrides_method_defaults(tools):
-    ann = tools["searchWidget"]
+    ann = tools["triggerGadget"]
     assert ann.read_only_hint is True
     assert ann.destructive_hint is False
     assert ann.idempotent_hint is False  # method default kept where not overridden
+
+
+async def test_post_with_read_verb_is_read_only(tools):
+    ann = tools["searchGadgets"]
+    assert ann.read_only_hint is True
+    assert ann.destructive_hint is False
+    assert ann.idempotent_hint is True
+    assert ann.open_world_hint is True
+
+
+async def test_post_on_search_or_validate_path_is_read_only(tools):
+    for name in ("widgetLookup", "gadgetCheck"):
+        ann = tools[name]
+        assert ann.read_only_hint is True, name
+        assert ann.destructive_hint is False, name
+
+
+async def test_read_verb_must_be_a_whole_word(tools):
+    ann = tools["searchlightCreate"]
+    assert ann.read_only_hint is False
+    assert ann.destructive_hint is None
+
+
+async def test_vendor_extension_overrides_name_heuristic(tools):
+    ann = tools["searchWidgets"]
+    assert ann.read_only_hint is False
+    # Hints the extension doesn't set keep the heuristic's values.
+    assert ann.destructive_hint is False
+
+
+@pytest.mark.parametrize(
+    ("method", "path", "operation_id", "expected"),
+    [
+        ("POST", "/connections/search", "searchConnections", True),
+        ("POST", "/streams/{id}/assets/search", "getStreamsAssets", True),
+        ("POST", "/userdata/validate", "validateUserdata", True),
+        ("POST", "/capacity", "checkCapacityForMetro", True),
+        ("POST", "/connections", "createConnection", False),
+        ("POST", "/things", None, False),
+        ("GET", "/connections/search", "searchConnections", False),
+        ("PUT", "/x/validate", "validateX", False),
+    ],
+)
+def test_is_read_by_name(method, path, operation_id, expected):
+    route = HTTPRoute(path=path, method=method, operation_id=operation_id)
+    assert is_read_by_name(route) is expected
 
 
 def test_annotations_serialize_with_camel_case_aliases():
