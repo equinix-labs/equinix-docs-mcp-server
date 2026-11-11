@@ -20,6 +20,7 @@ class DocsManager:
         """Initialize with configuration."""
         self.config = config
         self.sitemap_cache: List[Dict[str, str]] = []
+        self._search_client: Optional[SearchClient] = None
 
     def _index_cache_path(self) -> Path:
         """Filesystem location of the docs index cache.
@@ -342,13 +343,13 @@ class DocsManager:
             except Exception as e:
                 return f"Error fetching search index: {str(e)}"
 
-        # Initialize search client with cached file
         try:
-            search_client = SearchClient(str(cache_file))
-            search_client.load()
+            if self._search_client is None:
+                search_client = SearchClient(str(cache_file))
+                search_client.load()
+                self._search_client = search_client
 
-            # Perform search
-            results = search_client.search(query, limit=limit)
+            results = self._search_client.search(query, limit=limit)
 
             if not results:
                 return f"No search results found for query: '{query}'"
@@ -357,9 +358,11 @@ class DocsManager:
 
             for result in results:
                 title = result.get("title", "No title")
-                url = result.get("url", "")
+                url = f"https://docs.equinix.com{result.get('url', '')}"
+                if result.get("section"):
+                    title = f"{title} — {result['section']}"
                 result_lines.append(f"**{title}**")
-                result_lines.append(f"  {url}")
+                result_lines.append(f"  {url}{result.get('anchor', '')}")
                 result_lines.append("")
 
             if len(results) == limit:
@@ -407,7 +410,9 @@ class DocsManager:
         Returns:
             The markdown content of the page, or an error message if fetch fails.
         """
-        # Normalize the URL to ensure it ends with .md
+        # Drop any #anchor (search results point at sections), then make
+        # sure the URL ends with .md
+        url = url.split("#", 1)[0]
         if not url.endswith(".md"):
             # Remove trailing slash if present
             url = url.rstrip("/")

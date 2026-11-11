@@ -304,6 +304,57 @@ async def test_fetch_doc_relative_url(mock_httpx, docs_manager):
 
 @pytest.mark.asyncio
 @patch("equinix_docs_mcp_server.docs.httpx2.AsyncClient")
+async def test_fetch_doc_drops_anchor(mock_httpx, docs_manager):
+    """Search results link to sections; fetch the page's markdown."""
+    mock_response = MagicMock()
+    mock_response.raise_for_status = MagicMock()
+    mock_response.text = "# Connections"
+    mock_client = AsyncMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+    mock_httpx.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_httpx.return_value.__aexit__ = AsyncMock(return_value=None)
+
+    await docs_manager.fetch_doc(
+        "https://docs.equinix.com/fabric/connections#connection-status"
+    )
+
+    assert (
+        mock_client.get.call_args[0][0]
+        == "https://docs.equinix.com/fabric/connections.md"
+    )
+
+
+@pytest.mark.asyncio
+async def test_search_docs_formats_sections(docs_manager, tmp_path, monkeypatch):
+    """Results show the page, the matching section and a full URL."""
+    monkeypatch.setattr("equinix_docs_mcp_server.docs.cache_root", lambda: tmp_path)
+    (tmp_path / "search").mkdir()
+    (tmp_path / "search" / "search-index.json").write_text("[]")
+
+    fake = MagicMock()
+    fake.search.return_value = [
+        {
+            "title": "Connections Inventory",
+            "url": "/fabric/connections",
+            "section": "Connection Status",
+            "anchor": "#connection-status",
+        },
+        {"title": "Ports", "url": "/fabric/ports", "section": None, "anchor": ""},
+    ]
+    with patch("equinix_docs_mcp_server.docs.SearchClient", return_value=fake) as cls:
+        result = await docs_manager.search_docs("connection status")
+        await docs_manager.search_docs("ports")
+
+    assert "**Connections Inventory — Connection Status**" in result
+    assert "https://docs.equinix.com/fabric/connections#connection-status" in result
+    assert "**Ports**\n  https://docs.equinix.com/fabric/ports\n" in result
+    # The index is loaded once and reused.
+    cls.assert_called_once()
+    fake.load.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch("equinix_docs_mcp_server.docs.httpx2.AsyncClient")
 async def test_fetch_doc_http_error(mock_httpx, docs_manager):
     """Test handling of HTTP errors when fetching documents."""
     # Mock HTTP error response
