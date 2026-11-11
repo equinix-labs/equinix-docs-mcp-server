@@ -165,6 +165,19 @@ API requests that get HTTP 429 (or 408) are sent again after the wait the `Retry
 
 When an API response carries `Deprecation` or `Sunset` headers, the tool result gets a notice with the dates and any successor `Link`. The notice is given in full once per API family, and in one line on later calls. An error from an endpoint past its sunset says it appears to be retired. Operations marked `deprecated` in their OpenAPI spec say so in their tool description and have a `deprecated` tag.
 
+#### Workflow Runs
+
+Workflow tools (see [Defining Arazzo Workflows](#defining-arazzo-workflows-experimental)) run in a worker thread, so a long workflow doesn't hold up other tool calls. Their requests behave like the API tools': each gets the server's OAuth token, a 401 fetches a new token and resends once, 429/408 and gateway errors are retried under the same rules and `EQUINIX_MCP_RETRY_*` budget, deprecation notices are added to the result, and each request times out after 30 seconds.
+
+A step that fails, by not meeting its `successCriteria` or by its request failing, makes the tool call an error that names the step. A `retry` failure action waits `retryAfter` seconds and reruns the step up to `retryLimit` times. A whole run has a time limit. Once it passes, no further requests are sent and the error names the step the run stopped at. Requests from earlier steps may already have been applied.
+
+Only read-only workflows are registered by default: every step, including those in `forEach` loops, must call a `GET`, `HEAD` or `OPTIONS` operation, or a `POST` that the API tools also treat as a read (an operationId starting with a verb such as `search` or `get`, or a path ending in `/search` or `/validate`). A workflow with any other step, or with a step whose operation can't be found in its `sourceDescriptions`, is skipped with a warning in the log. Read-only workflow tools are annotated `readOnlyHint: true`.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `EQUINIX_MCP_WORKFLOW_TIMEOUT` | `60` | Seconds one workflow run may take; `0` turns the limit off |
+| `EQUINIX_MCP_ALLOW_WRITE_WORKFLOWS` | unset | Set to `1` to also register workflows that change resources |
+
 ## Server Configuration
 
 The server is configured via the packaged `apis.yaml` (or a file passed with `--config`). This file defines:
