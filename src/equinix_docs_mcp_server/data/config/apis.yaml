@@ -344,6 +344,12 @@ apis:
     specs:
       - url: "https://docs.equinix.com/api-catalog/unifiednotificationv2/openapi.yaml"
 
+  networkedge:
+    auth_type: "client_credentials"
+    service_name: "networkedge"
+    specs:
+      - url: "https://docs.equinix.com/api-catalog/networkedgev1/openapi.yaml"
+
 # Authentication configuration
 auth:
   # Client Credentials flow for most APIs
