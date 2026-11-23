@@ -492,22 +492,6 @@
   ]
  },
  {
-  "name": "arazzo_describe_workflow",
-  "title": "Describe Workflow",
-  "description": "Describe a specific Arazzo workflow (summary, inputs).",
-  "tags": [
-   "workflows"
-  ]
- },
- {
-  "name": "arazzo_list_workflows",
-  "title": "List Workflows",
-  "description": "List registered Arazzo workflow IDs.",
-  "tags": [
-   "workflows"
-  ]
- },
- {
   "name": "assets_getAssetById",
   "title": "Get details of an asset",
   "description": "The Get assets by Id API returns all details for a specific asset from its identification number. The authorization token and content-type are the only headers that are passed to this API and a response is received based on the values passed.\n\nPart of the Equinix Install Bases Asset API family (assets). Assets are all the products and equipment belonging to your organization that are installed in Equinix's IBXs. These assets can be viewed by users with the appropriate permissions. Assets can be searched by a filter criterion, or the details of an individual asset can be looked up by its asset ID.",
@@ -4634,654 +4618,6 @@
   ]
  },
  {
-  "name": "network-edge_checkRestoreAnalysisOfBackupByUuid",
-  "title": "Checks Feasibility of Restore",
-  "description": "Checks the feasibility of restoring the backup of a virtual device. Authorization checks are performed on the users of this API.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Device-Backup-and-Restore",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_createAgreement",
-  "title": "Create an agreement",
-  "description": "Call this API to post an agreement. The authorization token and content-type are the only headers that are passed to this API and a response is received based on the values passed.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Availability-and-Metros",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_createDeviceACLTemplate",
-  "title": "Create ACL Template",
-  "description": "Creates ACL templates. You can find the unique ID of the ACL template in the location header.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "ACL Template",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_createDeviceBackup",
-  "title": "Creates Device Backup",
-  "description": "Creates the backup of a virtual device. Authorization checks are performed on the users of this API.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Device-Backup-and-Restore",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_createDeviceLinkGroup",
-  "title": "Create Device Link",
-  "description": "Call this API to create a device link between virtual devices. You can include any devices that are registered and provisioned.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Device-Link-Groups-and-Connections",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_createDeviceRMAByUuid",
-  "title": "Trigger Device RMA",
-  "description": "Triggers a request to create an RMA of a device. The payload to create an RMA is different for different vendors. You will need to enter a license to create an RMA.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Device-RMA",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_createDeviceReloadByUuid",
-  "title": "Trigger Virtual Device Soft Reboot",
-  "description": "Triggers the soft reboot of a device. Please send the unique Id of the device as a path parameter.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Virtual-Device",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_createDeviceTemplatesbyUuid",
-  "title": "Add ACL to Virtual Device",
-  "description": "Updates the details of ACL templates associated with a device. You must provide the unique ID of an existing virtual device as a path parameter.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "ACL Template",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_createVirtualDevice",
-  "title": "Create Virtual Device",
-  "description": "Creates a virtual device. Sub-customers cannot choose the subscription licensing option. To create a device, you must accept the Order Terms. Call Get Order Terms to review the details. If you are creating an Equinix-Configured device, read your vendor's terms by calling Get Vendor Terms.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Virtual-Device",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_createVirtualDeviceByUuid",
-  "title": "Update Device Draft",
-  "description": "This API is for updating a virtual device draft <br/>and does not support device update as of now.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Virtual-Device",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_deleteDeviceACLByUuid",
-  "title": "Delete ACL template By Uuid",
-  "description": "Deletes an ACL template. You must provide the unique Id of the ACL template as a path parameter.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "ACL Template",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_deleteDeviceBackupByUuid",
-  "title": "Delete Backup of Device",
-  "description": "Deletes a backup by its unique ID. Authorization checks are performed on users of this API.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Device-Backup-and-Restore",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_deleteDeviceLinkGroupByUuid",
-  "title": "Delete Device Link By Uuid",
-  "description": "This method deletes a device link group. Authorization checks are performed on the users of this API.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Device-Link-Groups-and-Connections",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_deleteVirtualDeviceByUuid",
-  "title": "Delete Virtual Device By Uuid",
-  "description": "Delete a virtual device. For some device types (e.g., Palo Alto devices), you also need to provide a deactivation key as a body parameter. For a device pair, the deleteRedundantDevice field must be marked True so we delete both the devices simultaneously.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Virtual-Device",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_downloadDeviceBackupByUuid",
-  "title": "Download a Backup",
-  "description": "Downloads the backup of a device by its backup ID. Authorization checks are performed on the users of this API.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Device-Backup-and-Restore",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getAccountsWithStatus",
-  "title": "List Accounts by Metro",
-  "description": "Gets accounts by metro. You must have an account in a metro to create a virtual device there. To create an account go to \"accountCreateUrl\".\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Availability-and-Metros",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getAgreementStatus",
-  "title": "Get Agreement Status",
-  "description": "Call this API to find out the status of your agreement, whether it is valid or not, or to just read the agreement terms.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Availability-and-Metros",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getAllowedInterfaces",
-  "title": "List Allowed Interfaces",
-  "description": "Returns the interface details for a device type with a chosen configuration. You must pass the device type as the path parameter.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Availability-and-Metros",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getDetailsOfBackupsByUuid",
-  "title": "Get Backups of Device By Uuid",
-  "description": "Returns the details of a backup by its unique ID. Authorization checks are performed on the users of this API.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Device-Backup-and-Restore",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getDeviceACLTemplate",
-  "title": "Get ACL Templates",
-  "description": "Returns all ACL templates. The ACL templates list the networks that require access to the device.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "ACL Template",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getDeviceBackups",
-  "title": "Get Backups of Device",
-  "description": "Returns the backups of a virtual device. Authorization checks are performed on the users of this API.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Device-Backup-and-Restore",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getDeviceLinkGroupByUUID",
-  "title": "Get Device Link By Uuid",
-  "description": "This API will return a device link by its unique Id. Authorization checks are performed on the users of this API.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Device-Link-Groups-and-Connections",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getDeviceLinkGroups",
-  "title": "Get Device Links",
-  "description": "This method returns device links. You can link any two or more devices that are registered and provisioned.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Device-Link-Groups-and-Connections",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getDeviceReloadByUuid",
-  "title": "List Device Reload History By Uuid",
-  "description": "Returns the reload history of a device. Please send the unique Id of the device as a path parameter.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Virtual-Device",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getDeviceTemplateByUuid",
-  "title": "Get ACL Template By Uuid",
-  "description": "Returns details of any existing template. You must provide the unique ID of an existing template as a path parameter.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "ACL Template",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getDeviceTemplatesByUuid",
-  "title": "Get ACL of Virtual Device",
-  "description": "Returns the details of ACL templates associated with a device. You must provide the unique ID of an existing virtual device as a path parameter.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "ACL Template",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getDeviceUpgradeByUuid",
-  "title": "Get Device Upgrade History",
-  "description": "Returns the upgrade history of a device. Please send the unique Id of the device as a path parameter.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Virtual-Device",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getDownloadImageByDeviceType",
-  "title": "Download an Image",
-  "description": "Returns a link to download image. You need to provide a device type and version as path parameters.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Download-Image",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getDownloadableImagesByDeviceType",
-  "title": "Get Downloadable Images",
-  "description": "Returns the downloadable images of a device type. Pass any device type as a path parameter to get the list of downloadable images.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Download-Image",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getInterfaceStatisticsByUuid",
-  "title": "Get Interface Statistics",
-  "description": "Returns the throughput statistics of a device interface. Pass the unique Id of the device and the interface Id as path parameters.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Virtual-Device",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getMetros",
-  "title": "List Available Metros",
-  "description": "Gets the available list of metros where NE platform is available. Please note that an account must be created for each country where virtual devices are being purchased.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Availability-and-Metros",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getNotifications",
-  "title": "Get Downtime Notifications",
-  "description": "Returns all planned and unplanned downtime notifications related to APIs and infrastructure. Please pass a token in the header.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Availability-and-Metros",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getOrderSummary",
-  "title": "Get Order Summary",
-  "description": "Gets the order summary as a printable pdf file. This API helps customers who have to go through a PO process at their end to make a purchase and need a formal quote\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Availability-and-Metros",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getOrderTerms",
-  "title": "Get Order Terms",
-  "description": "Retrieves the terms and conditions of orders. Please read the terms and conditions before placing an order.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Availability-and-Metros",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getPublicKeys",
-  "title": "Get Public Keys",
-  "description": "Returns the SSH public keys associated with this organization. If you are a reseller, please pass the account number of you customer to get the public keys.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Availability-and-Metros",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getVendorTerms",
-  "title": "Get Vendor Terms",
-  "description": "Returns a link to a vendor's terms. The term \"vendor\" refers to the vendor of a virtual device on the Network Edge platform.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Availability-and-Metros",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getVirtualDeviceByUuid",
-  "title": "Get Virtual Device By Uuid",
-  "description": "Returns the virtual device details of an existing device on the Network Edge platform. You must provide the unique ID of the existing device as a path parameter.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Virtual-Device",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getVirtualDeviceInterfacesByUuid",
-  "title": "Get Device Interfaces",
-  "description": "Returns the status of the interfaces of a device. You must pass the unique Id of the device as a path parameter.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Virtual-Device",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getVirtualDeviceTypes",
-  "title": "List Device Types",
-  "description": "Returns device types (e.g., routers and firewalls) that can be launched on the NE platform.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Availability-and-Metros",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_getVirtualDevices",
-  "title": "Get Virtual Devices",
-  "description": "Returns all virtual devices available on the Network Edge platform.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Virtual-Device",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_pingDeviceByUuid",
-  "title": "Ping Virtual Device",
-  "description": "Pings a virtual device to ensure it's reachable. At this point, you can only ping a few SELF-CONFIGURED devices.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Virtual-Device",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_postPublicKey",
-  "title": "Create Public Key",
-  "description": "Creates a public key. If you are a reseller, pass the account number of your customer to create a key-name and key-value pair.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Availability-and-Metros",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_restoreDeviceBackupByUuid",
-  "title": "Restores a backup",
-  "description": "Restores any backup of a device. Authorization checks are performed on users of this API.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Device-Backup-and-Restore",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_retrievePrice",
-  "title": "Calculate Price",
-  "description": "Returns the price of a virtual device and license based on account number and other fields. Please note that the listed price does not include the price of any optional features added to the device, some of which are charged.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Availability-and-Metros",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_updateAdditionalBandwidthByUuid",
-  "title": "Update Additional Bandwidth of Virtual Device",
-  "description": "You can use this method to change or add additional bandwidth to a virtual device.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Virtual-Device",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_updateDeviceACLTemplateByUuid",
-  "title": "Update ACL Template By Uuid",
-  "description": "Updates an ACL template. You must pass the unique Id of the ACL template as a path parameter.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "ACL Template",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_updateDeviceBackupByUuid",
-  "title": "Update Device Backup",
-  "description": "Updates the name of a backup. Authorization checks are performed on users of this API.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Device-Backup-and-Restore",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_updateDeviceLinkGroupByUuid",
-  "title": "Update Device Link By Uuid",
-  "description": "Call this API to update a device link. Authorization checks are performed on the users of this API.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Device-Link-Groups-and-Connections",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_updateDeviceTemplatesbyUuid",
-  "title": "Update ACL of Virtual Device",
-  "description": "Updates or removes the details of ACL templates associated with a device. You must provide the unique ID of an existing virtual device as a path parameter.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "ACL Template",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_updateLicenseToken",
-  "title": "Update License Token/ID/Code",
-  "description": "If you want to bring your own license (BYOL), you can use this API to post or update a license token after a virtual device is created.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Availability-and-Metros",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_updateVirtualDeviceByUuid",
-  "title": "Update Virtual Device By Uuid",
-  "description": "Updates certain fields of a virtual device. You can only update the name, term length, status, and notification list of a virtual device.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Virtual-Device",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_uploadFile",
-  "title": "Upload File",
-  "description": "Uploads a license or an initialization file. You can use this API to upload your bootstrap file generated from the Aviatrix controller portal. The response includes the unique ID of the uploaded file.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Availability-and-Metros",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_uploadLicense",
-  "title": "Upload License File",
-  "description": "In case you want to bring your own license (BYOL), you can use this API to post a license file before creating a virtual device.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Availability-and-Metros",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
-  "name": "network-edge_uploadLicenseForDevice",
-  "title": "Upload License for a Virtual Device",
-  "description": "In case you want to bring your own license and have already created a virtual device, use this API to post a license file. You can also use this API to renew a license that is about to expire.\n\nPart of the Equinix Network Edge API family (network-edge). Network Edge (NE) is a platform for deploying and running virtual network services and appliances such as routers, load balancers, and firewalls on generic hardware. This eliminates the need for dedicated hardware, upfront capital expenditure (CapEx), and colocation space.",
-  "tags": [
-   "Availability-and-Metros",
-   "equinix",
-   "network",
-   "network-edge",
-   "virtual-devices"
-  ]
- },
- {
   "name": "notifications_get_ibx_Notification",
   "title": "Get Ibx Notification",
   "description": "This API retrieves the details of a user's IBX notification by its identification (ID) number.\n\nPart of the Equinix Notification API family (notifications). Users can receive voice, SMS, or email notifications based on their notifications permissions in the Equinix Customer Portal. Once a user is granted notification permissions, they may view, subscribe, and select their notification preferences.",
@@ -5932,7 +5268,7 @@
  {
   "name": "smartview_getCurrentEnvironmentData",
   "title": "Retrieve current environmental data",
-  "description": "The API returns environment information on temperature and humidity from inputs (ibx, zone, cage, sensor)\n\nPart of the Equinix SmartView API family (smartview). Equinix Smart View is a comprehensive Data Center Infrastructure Management (DCIM) platform designed to facilitate advanced data collection related to customer deployments.",
+  "description": "The API returns environment information on temperature and humidity from inputs (ibx, zone)\n\nPart of the Equinix SmartView API family (smartview). Equinix Smart View is a comprehensive Data Center Infrastructure Management (DCIM) platform designed to facilitate advanced data collection related to customer deployments.",
   "tags": [
    "SmartView Environment APIs",
    "colocation",
@@ -6049,7 +5385,7 @@
  {
   "name": "smartview_getSubscriptionData",
   "title": "Retrieve subscription data via REST",
-  "description": "This endpoint allows users to obtain API+ near real time data via a simple REST endpoint by employing subscription ID alongside other specified criteria, enabling a comprehensive and targeted approach to data retrieval. Subscription data endpoint works for all channels and not just REST channel.\n\nPart of the Equinix SmartView API family (smartview). Equinix Smart View is a comprehensive Data Center Infrastructure Management (DCIM) platform designed to facilitate advanced data collection related to customer deployments.",
+  "description": "This endpoint allows users to obtain API+ near real time data via a simple REST endpoint by employing subscription ID alongside other specified criteria, enabling a comprehensive and targeted approach to data retrieval. Subscription data endpoint works for the REST Channel only.\n\nPart of the Equinix SmartView API family (smartview). Equinix Smart View is a comprehensive Data Center Infrastructure Management (DCIM) platform designed to facilitate advanced data collection related to customer deployments.",
   "tags": [
    "Streaming Subscription API",
    "colocation",
@@ -6062,7 +5398,7 @@
  {
   "name": "smartview_getTrendingEnvironmentData",
   "title": "Retrieve trending environmental data",
-  "description": "The API returns trending environment information (temperature and humidity) for input ibx, zone, cage, sensor.\n\nPart of the Equinix SmartView API family (smartview). Equinix Smart View is a comprehensive Data Center Infrastructure Management (DCIM) platform designed to facilitate advanced data collection related to customer deployments.",
+  "description": "The API returns trending environment information (temperature and humidity) for input ibx, zone.\n\nPart of the Equinix SmartView API family (smartview). Equinix Smart View is a comprehensive Data Center Infrastructure Management (DCIM) platform designed to facilitate advanced data collection related to customer deployments.",
   "tags": [
    "SmartView Environment APIs",
    "colocation",
@@ -6088,7 +5424,7 @@
  {
   "name": "smartview_listCurrentEnvironmentData",
   "title": "Retrieve a list of environmental data",
-  "description": "The API returns environment info (humidity and temperature) for all the values for input level type IBX, ZONE, CAGE, SENSOR.\n\nPart of the Equinix SmartView API family (smartview). Equinix Smart View is a comprehensive Data Center Infrastructure Management (DCIM) platform designed to facilitate advanced data collection related to customer deployments.",
+  "description": "The API returns environment info (humidity and temperature) for all the values for input level type IBX, ZONE.\n\nPart of the Equinix SmartView API family (smartview). Equinix Smart View is a comprehensive Data Center Infrastructure Management (DCIM) platform designed to facilitate advanced data collection related to customer deployments.",
   "tags": [
    "SmartView Environment APIs",
    "colocation",
@@ -6349,21 +5685,11 @@
   ]
  },
  {
-  "name": "support_cancelTicket",
-  "title": "Cancel a trouble ticket by case / order number",
-  "description": "This method cancels a trouble ticket by case or order number.\n\nPart of the Equinix Case Management API family (support). The API for the Case Management Service.",
+  "name": "support_cancelCaseById",
+  "title": "Cancel Case",
+  "description": "Cancels an existing case using its case or order number.\nA cancellation reason must be provided to explain why the case is being cancelled.\n\nPart of the Equinix Case Management API family (support). The API for the Case Management Service.",
   "tags": [
-   "Trouble Ticket / Case",
-   "equinix",
-   "support"
-  ]
- },
- {
-  "name": "support_createTicketsV2",
-  "title": "Create a trouble ticket / case",
-  "description": "This method create a trouble ticket or case.\n\nPart of the Equinix Case Management API family (support). The API for the Case Management Service.",
-  "tags": [
-   "Trouble Ticket / Case",
+   "Case",
    "equinix",
    "support"
   ]
@@ -6371,9 +5697,19 @@
  {
   "name": "support_downloadAttachment",
   "title": "Download an attachment by case ID and attachment ID",
-  "description": "This method downloads an attachment by case ID and attachment ID.\n\nPart of the Equinix Case Management API family (support). The API for the Case Management Service.",
+  "description": "Deprecated: this operation may be removed. Prefer a non-deprecated alternative where one exists.\n\nThis endpoint is deprecated. Please use the [Download Attachment](/api-catalog/attachmentsv1/#tag/Attachments/operation/getAttachedFile) endpoint to download attachments.\n\nPart of the Equinix Case Management API family (support). The API for the Case Management Service.",
   "tags": [
-   "Attachment",
+   "Case",
+   "deprecated",
+   "equinix",
+   "support"
+  ]
+ },
+ {
+  "name": "support_getCaseDetailsById",
+  "title": "Get Case Details",
+  "description": "Retrieves detailed information for a case using its case or order number.\nThe response includes the current status, contacts, notes, attachments, related products and other case-specific details.\n\nPart of the Equinix Case Management API family (support). The API for the Case Management Service.",
+  "tags": [
    "Case",
    "equinix",
    "support"
@@ -6382,20 +5718,40 @@
  {
   "name": "support_getEmailDetailsByCaseNumber",
   "title": "Get email details by email ID and case number",
-  "description": "This method retrieves email details by email ID and case number.\n\nPart of the Equinix Case Management API family (support). The API for the Case Management Service.",
+  "description": "Deprecated: this operation may be removed. Prefer a non-deprecated alternative where one exists.\n\nThis endpoint is deprecated. This method retrieves email details by email ID and case number.\n\nPart of the Equinix Case Management API family (support). The API for the Case Management Service.",
   "tags": [
    "Case",
-   "Email",
+   "deprecated",
    "equinix",
    "support"
   ]
  },
  {
-  "name": "support_getTicketDetails",
-  "title": "Get a trouble ticket by case / order number",
-  "description": "This method get a trouble ticket by case or order number.\n\nPart of the Equinix Case Management API family (support). The API for the Case Management Service.",
+  "name": "support_getTicketCodeRequestSchema",
+  "title": "Get Request Schema And Example By Ticket Code",
+  "description": "Retrieves the request payload schema and a sample request for the specified ticket code. The response defines the fields, required values, data types, and validation constraints applicable to creating a case with the selected ticket code.\n\nThe available fields, required fields, validation rules, and example values may vary depending on the ticket code. The sample request is illustrative and intended as a reference; it may differ for other ticket codes.\n\nPart of the Equinix Case Management API family (support). The API for the Case Management Service.",
   "tags": [
-   "Trouble Ticket / Case",
+   "Case",
+   "equinix",
+   "support"
+  ]
+ },
+ {
+  "name": "support_listTicketCodes",
+  "title": "Get Ticket Codes",
+  "description": "Retrieves the ticket codes available to the authenticated user, including their classification, description, lifecycle status, and deprecation information.\nUse the `categories` parameter to optionally filter codes by product category.\n\nThe response is paginated. Use the `limit` and `offset` query parameters to page through the results, or follow the `next` and `previous` links returned in the `pagination` object.\n\nPart of the Equinix Case Management API family (support). The API for the Case Management Service.",
+  "tags": [
+   "Case",
+   "equinix",
+   "support"
+  ]
+ },
+ {
+  "name": "support_modifyCaseById",
+  "title": "Modify Case",
+  "description": "Adds a note and optional attachments to an existing case.\nTo include attachments, first upload each file with the [Attachments File](/api-catalog/attachmentsv1/#tag/Attachments/operation/createAttachment) endpoint, then reference the returned values in the `attachments` array: `attachmentId` maps to `id` and `attachmentName` maps to `name`. Do not set the `purpose` query parameter on the upload request; it is not used for support cases.\nUse this operation to provide additional information, updates, or supporting details related to the case.\n\nPart of the Equinix Case Management API family (support). The API for the Case Management Service.",
+  "tags": [
+   "Case",
    "equinix",
    "support"
   ]
@@ -6403,19 +5759,20 @@
  {
   "name": "support_modifyTicketDetailsByCaseNumber",
   "title": "Modify a case by case number",
-  "description": "This method modify a case by case number.\n\nPart of the Equinix Case Management API family (support). The API for the Case Management Service.",
+  "description": "Deprecated: this operation may be removed. Prefer a non-deprecated alternative where one exists.\n\nThis endpoint is deprecated. To add or update details for a case, please use the [Modify Case](#tag/Case/operation/modifyCaseById) endpoint to add or update details to a case.\n\nPart of the Equinix Case Management API family (support). The API for the Case Management Service.",
   "tags": [
-   "Trouble Ticket / Case",
+   "Case",
+   "deprecated",
    "equinix",
    "support"
   ]
  },
  {
-  "name": "support_modifyTicketDetailsById",
-  "title": "Modify a ticket by ID",
-  "description": "This method adds a note to a ticket by ID.\n\nPart of the Equinix Case Management API family (support). The API for the Case Management Service.",
+  "name": "support_submitCase",
+  "title": "Create case",
+  "description": "Creates a new case using the specified ticket code and request details.\nTo ensure a valid request, first use GET /support/v2/tickets/codes to identify the\nappropriate ticket code, then use GET /support/v2/tickets/codes/{code}/schema\nto retrieve the fields, required values, data types, and validation rules applicable to\nthat ticket code.\n\nBuild the request payload based on the returned request payload schema and submit it using\nthis operation. The request schema is ticket code specific and should be treated as the\nsource of truth for the payload structure.\n\nPart of the Equinix Case Management API family (support). The API for the Case Management Service.",
   "tags": [
-   "Trouble Ticket / Case",
+   "Case",
    "equinix",
    "support"
   ]
@@ -6528,14 +5885,6 @@
    "equinix",
    "notifications",
    "unifiednotification"
-  ]
- },
- {
-  "name": "workflow__list_ne_metros",
-  "title": "Retrieve Network Edge metros",
-  "description": "Retrieve Network Edge metros",
-  "tags": [
-   "workflows"
   ]
  },
  {
